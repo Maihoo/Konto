@@ -5,6 +5,7 @@ $(document).ready(function () {
     dataType: "text",
   success: function (data) {
     dataset = data;
+    getFromSessionStorage();
     initTextLines();
     initControls();
     init(); }
@@ -12,10 +13,9 @@ $(document).ready(function () {
 });
 
 //Constants
-const STARTBUDGET = 4576.33;
+const STARTBUDGET = (8050.33 + 0.0);
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 500;
-const FOREGROUNDOFFSET = 5;
 
 //Variables
 let dragging = false;
@@ -30,7 +30,7 @@ let verticalZoomFactor = 1.0;
 let pastEventsDataset = 70;
 let pastEventsOffsetDataset = 0;
 
-let pastEvents = pastEventsDataset-1;
+let pastEvents = pastEventsDataset - 1;
 let pastEventsOffset = 0;
 
 let legendMultiplier = 0.2;
@@ -43,7 +43,9 @@ let highest = 0.0;
 let moveOffsetX = 0.0;
 let moveOffsetY = 0.0;
 let dragstartX = 0.0;
+let dragstartXstorage = 0.0;
 let dragstartY = 0.0;
+let dragstartYstorage = 0.0;
 let ts1 = 0;
 
 let startDate = "";
@@ -73,13 +75,30 @@ function reset() {
   monthlyEntries = [];
   ospaEntries = [];
   restEntries = [];
-  document.getElementById('canvas').style.opacity = '100%';
-  document.getElementById('pathCanvas').style.opacity = '0%';
-  document.getElementById('pathCanvas').innerHTML = '';
-  document.getElementById('uiline').innerHTML = '';
-  document.getElementById('uicanvas').innerHTML = '';
-  document.getElementById('uipopup').innerHTML = '';
-  document.getElementById('canvas').innerHTML = '';
+
+  let canvas = document.getElementById('canvas');
+  let pathCanvas = document.getElementById('pathCanvas');
+  let uiline = document.getElementById('uiline');
+  let uicanvas = document.getElementById('uicanvas');
+  let uipopup = document.getElementById('uipopup');
+
+  canvas.style.opacity = '100%';
+  pathCanvas.style.opacity = '0%';
+  pathCanvas.innerHTML = '';
+  uiline.innerHTML = '';
+  uicanvas.innerHTML = '';
+  uipopup.innerHTML = '';
+  canvas.innerHTML = '';
+
+  canvas.style.marginLeft     = '';
+  canvas.style.marginTop      = '';
+  pathCanvas.style.marginLeft = '';
+  pathCanvas.style.marginTop  = '';
+  uiline.style.marginLeft     = '';
+  uiline.style.marginTop      = '-600px';
+  uilinetemp.style.marginLeft = '';
+  uilinetemp.style.marginTop  = '-600px';
+
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend' + categories[i]).innerHTML = '';
   }
@@ -96,6 +115,28 @@ function initTextLines() {
       tempBudget -= parseFloat(entries[14].slice(1, -1));
       cutTextLines[i] += ';' + tempBudget;
     }
+  }
+}
+
+function getFromSessionStorage() {
+  let sessionValue = sessionStorage.getItem("pastEventsDataset");
+  if (sessionValue && parseInt(sessionValue) >= 0) {
+    pastEventsDataset = parseInt(sessionValue);
+  }
+
+  sessionValue = sessionStorage.getItem("pastEventsOffsetDataset");
+  if (sessionValue && parseInt(sessionValue) >= 0) {
+    pastEventsOffsetDataset = parseInt(sessionValue);
+  }
+
+  sessionValue = sessionStorage.getItem("pastEvents");
+  if (sessionValue && parseInt(sessionValue) >= 0) {
+    pastEvents = parseInt(sessionValue);
+  }
+
+  sessionValue = sessionStorage.getItem("pastEventsOffset");
+  if (sessionValue && parseInt(sessionValue) >= 0) {
+    pastEventsOffset = parseInt(sessionValue);
   }
 }
 
@@ -156,19 +197,18 @@ function setAmounts() {
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvas.appendChild(valueBottom);
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 100; i++) {
     let valueLine = document.createElement('div');
     valueLine.classList.add('vertical');
     valueLine.style.position = 'absolute';
     valueLine.style.zIndex = '80';
     valueLine.style.height = '1px';
     valueLine.style.width = '2000px';
-    if (i % 2 === 0) {
-      valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
-    }
-    else {
-      valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
-    }
+    valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }
+    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'; }
+    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.7)'; }
+    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(255, 255, 255, 1.0)'; }
 
     valueLine.style.opacity = '100%';
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
@@ -204,17 +244,17 @@ function setDates() {
   for (let i = 0; i < dateLines.length; i++) {
     let dateLine = document.createElement('div');
     dateLine.classList.add('horizontal');
+    dateLine.classList.add('vertical');
     dateLine.style.position = 'absolute';
     dateLine.style.zIndex = '80';
-    dateLine.style.height = '2000px';
+    dateLine.style.height = '' + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
-    dateLine.style.marginTop = '-1px';
-    dateLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
     dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
+    dateLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
     if (dateLines[i].charAt(0) === 'y') {
-      dateLine.style.backgroundColor = 'rgba(255, 255, 255, 1.0)';
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
+      dateLine.style.backgroundColor = 'rgba(255, 255, 255, 1.0)';
     }
 
     uiCanvas.appendChild(dateLine);
@@ -245,11 +285,15 @@ function drawCanvas() {
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
   let dayWidth = 1000 / totalDays;
 
+  let foregroundoffset = dayWidth/4;
+
   //pushing date lines
-  for (let year = 0; year < 6; year++) {
+  for (let year = 0; year < 20; year++) {
     for (let month = 1; month <= 12; month++) {
-      if (month !== 1) { dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px'); }
-      else             { dateLines.push('y' +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px'); }
+      dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
+      if (month === 1) {
+        dateLines[dateLines.length - 1] = 'y' + dateLines[dateLines.length - 1]
+      }
     }
   }
 
@@ -285,7 +329,7 @@ function drawCanvas() {
     diffHight -= value;
     if (diffDays > 0) { square.id = "linePoint" + diffHightIndex; diffHightIndex += 2; }
     if (entries[14].charAt(1) !== '-') { square.style.marginTop = diffHight + 'px'; }
-    else                              { square.style.marginTop = (diffHight + value) + 'px'; }
+    else                               { square.style.marginTop = (diffHight + value) + 'px'; }
 
     //Fill empty days
     if (diffDays > 1) {
@@ -320,12 +364,16 @@ function drawCanvas() {
     if (cutTextLines[i+1] !== null && cutTextLines[i+1].split(';')[14] !== null) {
       pastNegative = cutTextLines[i+1].split(';')[14].charAt(1) === '-';
     }
-    let tes = 0;
 
     if (diffDays === 0 && ((entries[14].charAt(1) === '-' && !pastNegative) || (entries[14].charAt(1) !== '-' && pastNegative))) {
-      fgOffset += FOREGROUNDOFFSET;
-      square.style.width =      (         -2 + (              dayWidth) - fgOffset) + 'px';
-      square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth) + fgOffset) + 'px';
+      fgOffset += foregroundoffset;
+    }
+
+    square.style.width =      (         -2 + (              dayWidth) - fgOffset) + 'px';
+    square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth) + fgOffset) + 'px';
+
+    if (entries[0].charAt(0) === '_') {
+      square.style.opacity = '50%';
     }
 
     //Push Path Points
@@ -336,8 +384,8 @@ function drawCanvas() {
 
     //legend filling - Kategorien
     if (entries[11].includes('ADAC') ||
-      entries[11].includes('klarmobil') ||
-      entries[4].includes('Miete')) {
+        entries[11].includes('klarmobil') ||
+        entries[4].includes('Miete')) {
       square.classList.add('monthly-background');
       square.category = 'Monthly';
       monthlyEntries.push(cutTextLines[i]);
@@ -372,10 +420,6 @@ function drawCanvas() {
       decided = true;
     }
 
-    if (entries[0].charAt(0) === "_") {
-      square.style.opacity = '50%';
-    }
-
     if (!decided) {
       restEntries.push(cutTextLines[i]);
     }
@@ -405,7 +449,6 @@ function drawCanvas() {
     let popup = document.createElement('div');
     popup.innerHTML = '<p class="popupText">Index: ' + i + '</p>'
                     + '<p class="popupText">Date: ' + entries[1].slice(1, -1) + '</p>'
-                    + '<p class="popupText">fgOffset: ' + fgOffset + '</p>'
                     + '<p class="popupText">Value: ' + entries[14].slice(1, -1) + '€</p>'
                     + '<p class="popupText">Total: '  + (parseInt(entries[17]) + parseInt(entries[14].slice(1, -1))) + ',00€</p>'
                     + '<p class="popupText">Category: ' + square.category + '</p>';
@@ -442,8 +485,7 @@ function getTotal(input) {
   for (let i = 0; i < input.length; i++) {
     let entries = input[i].split(';');
     if (entries[14].charAt(1) === '-') {
-      let value = Math.abs(legendMultiplier * valueToPx(entries[14].slice(1, -1)));
-      total += value;
+      total += Math.abs(parseFloat(entries[14].slice(1, -1)));
     }
   }
 
@@ -456,11 +498,9 @@ function drawLegend(input, groupname, total) {
     let entries = input[i].split(';');
     if (entries[14].charAt(1) === '-') {
       let legendSquare = document.createElement('div');
-      legendSquare.className = 'square';
+      legendSquare.className = 'legendsquare';
       legendSquare.classList.add(groupname + '-background');
-      legendSquare.style.position = 'relative';
-      legendSquare.style.marginTop = '-2px';
-      let value = Math.abs(0.001 * total * valueToPx(entries[14].slice(1, -1)));
+      let value = Math.abs(400 * parseFloat(entries[14].slice(1, -1)) / (total));
       legendSquare.style.height = '' + (value) + 'px';
       legendSquare.style.width = '' + (1000 / 20) + 'px';
       legend.appendChild(legendSquare);
@@ -555,7 +595,7 @@ function initControls() {
   let staticwrapper = document.getElementById('staticwrapper');
   let uiCanvas = document.getElementById('uicanvas');
   let uiLine = document.getElementById('uiline');
-  let uipopup = document.getElementById('uipopup');
+  let uilinetemp = document.getElementById('uilinetemp');
 
   document.body.addEventListener('keyup', function(event) {
     // +
@@ -577,6 +617,7 @@ function initControls() {
       } else {
         pastEventsOffset = 0;
       }
+
       if (pastEvents + totalChange < cutTextLines.length) {
         pastEvents += totalChange;
       } else {
@@ -584,6 +625,7 @@ function initControls() {
       }
       init();
     }
+
     if (event.keyCode === 189 && !zoomOutPressed) {
       zoomOutPressed = true;
       let totalChange = parseInt((pastEvents - pastEventsOffset) * ZOOMFACTOR - (pastEvents - pastEventsOffset));
@@ -603,76 +645,96 @@ function initControls() {
 
   //drag move
   staticwrapper.onmousedown = function(event) {
+    if (event.button !== 0) {
+      return;
+    }
+
     dragging = true;
     dragstartX = event.clientX;
     dragstartY = event.clientY;
+    dragstartXstorage = event.clientX
+    dragstartYstorage = event.clientY
     ts1 = Date.now();
   };
-  staticwrapper.onmouseup   = function(event) {
-    if (Date.now() - ts1 > 100) { dragging = false; }
-    else {
+  staticwrapper.onclick = function(event) {
+    if (event.button !== 0 || ((dragstartXstorage !== event.clientX || dragstartYstorage !== event.clientY) && ts1 - Date.now() < 50) ) {
       dragging = false;
-      if (linepoint.length === 0) {
-        linepoint.push(event.clientX);
-        linepoint.push(event.clientY + window.scrollY);
-      } else {
-        if (!uiLine.index) {
-          uiLine.index = 0;
-        }
-
-        uiLine.index = parseInt(uiLine.index) + 1;
-        ctx = uiLine.getContext('2d');
-        drawLine( ctx,
-                  parseInt(linepoint[0]                   - $("#uiline").offset().left),
-                  parseInt(linepoint[1]                   - $("#uiline").offset().top ),
-                  parseInt(event.clientX                  - $("#uiline").offset().left),
-                  parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
-                  'red',
-                  3);
-        linepoint = [];
-
-        //Adding Popups
-        let circle = document.createElement('div');
-        circle.hovered = '0';
-        circle.className = 'circle'
-        circle.id = "circle" + (uiLine.index + 0);
-        circle.style.top  = parseInt(event.clientY - $("#uiline").offset().top  - 8 + window.scrollY) + 'px';
-        circle.style.left = parseInt(event.clientX - $("#uiline").offset().left - 8                 ) + 'px';
-
-        circle.onmouseover = function() {
-          let pop = document.getElementById('popupCircle' + uiLine.index);
-          pop.style.top = (event.clientY + window.scrollY - 100) + 'px';
-          pop.style.left = (event.clientX + 5) + 'px';
-
-
-
-          pop.style.opacity = '100%';
-          pop.style.zIndex = '210';
-          this.hovered = '1';
-        };
-
-        circle.onmouseout = function() {
-          let pop = document.getElementById('popupCircle' + uiLine.index);
-          pop.style.opacity = '0%';
-          pop.style.zIndex = '-1';
-          this.hovered = '0';
-        };
-
-        let popup = document.createElement('div');
-        popup.innerHTML = '<p class="popupText">Index: ' + uiLine.index + '</p>'
-                        + '<p class="popupText">Date: '  + pxToDate(circle.style.left) + '</p>'
-                        + '<p class="popupText">Total: ' + (pxToValue(circle.style.top)) + ',00€</p>';
-        popup.id = 'popupCircle' + uiLine.index;
-        popup.className = 'popup';
-        popup.style.position = 'absolute';
-
-        document.getElementById('uipopup').appendChild(popup);
-        document.getElementById('canvas').appendChild(circle);
+      return;
+    }
+    dragging = false;
+    if (linepoint.length === 0) {
+      staticwrapper.style.cursor = 'crosshair';
+      linepoint.push(event.clientX);
+      linepoint.push(event.clientY + window.scrollY);
+    } else {
+      staticwrapper.style.cursor = '';
+      let uiltCtx = uilinetemp.getContext('2d');
+      uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+      if (!uiLine.index) {
+        uiLine.index = 0;
       }
-     }
-  };
+
+      uiLine.index = parseInt(uiLine.index) + 1;
+      ctx = uiLine.getContext('2d');
+      drawLine( ctx,
+                parseInt(linepoint[0] - $("#uiline").offset().left),
+                parseInt(linepoint[1] - $("#uiline").offset().top ),
+                parseInt(event.clientX - $("#uiline").offset().left),
+                parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+                'red',
+                2);
+      linepoint = [];
+
+      //Adding Popups
+      let circle = document.createElement('div');
+      circle.hovered = '0';
+      circle.className = 'circle'
+      circle.id = "circle" + (uiLine.index + 0);
+      circle.style.top  = (parseInt(event.clientY - $("#uiline").offset().top  - 6 + window.scrollY) - 600) + 'px';
+      circle.style.left =  parseInt(event.clientX - $("#uiline").offset().left - 6) + 'px';
+
+      circle.onmouseover = function(e) {
+        let pop = document.getElementById('popupCircle' + uiLine.index);
+        pop.style.top  = (e.clientY + window.scrollY - 100) + 'px';
+        pop.style.left = (e.clientX + 5) + 'px';
+        pop.style.position = 'absolute';
+        pop.style.opacity = '100%';
+        pop.style.zIndex = '210';
+        this.hovered = '1';
+      };
+
+      circle.onmouseout = function() {
+        let pop = document.getElementById('popupCircle' + uiLine.index);
+        pop.style.opacity = '0%';
+        pop.style.zIndex = '-1';
+        this.hovered = '0';
+      };
+
+      let popup = document.createElement('div');
+      popup.innerHTML = '<p class="popupText">Index: ' + uiLine.index + '</p>'
+                      + '<p class="popupText">Date: '  + pxToDate(circle.style.left) + '</p>'
+                      + '<p class="popupText">Total: ' + (pxToValue(circle.style.top)) + ',00€</p>';
+      popup.id = 'popupCircle' + uiLine.index;
+      popup.className = 'popup';
+      popup.style.position = 'absolute';
+
+      document.getElementById('uipopup').appendChild(popup);
+      document.getElementById('canvas').appendChild(circle);
+    }
+  }
   staticwrapper.onmousemove = function(event) {
-    if (dragging && dragstartX !== event.clientX && dragstartY !== event.clientY && Date.now() - ts1 > 50) {
+    if (!dragging && linepoint.length !== 0) {
+      let uiltCtx = uilinetemp.getContext('2d');
+      uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+      drawLine( uiltCtx,
+                parseInt(linepoint[0] - $("#uiline").offset().left),
+                parseInt(linepoint[1] - $("#uiline").offset().top ),
+                parseInt(event.clientX - $("#uiline").offset().left),
+                parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+                'rgba(255, 0, 0, 0.5)',
+                1);
+    }
+    if (dragging && dragstartX !== event.clientX && dragstartY !== event.clientY) {
       let clientX = event.clientX;
       let clientY = event.clientY;
 
@@ -684,12 +746,14 @@ function initControls() {
       dragstartY = clientY;
 
       //move canvases
-      canvas.style.marginLeft = '' + (canvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      canvas.style.marginTop  = '' + (canvas.style.marginTop.slice(0, -2) -diffY) + 'px';
+      canvas.style.marginLeft     = '' + (canvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      canvas.style.marginTop      = '' + (canvas.style.marginTop.slice(0, -2) -diffY) + 'px';
       pathCanvas.style.marginLeft = '' + (pathCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
       pathCanvas.style.marginTop  = '' + (pathCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uiLine.style.marginLeft = '' + (uiLine.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uiLine.style.marginTop  = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
+      uiLine.style.marginLeft     = '' + (uiLine.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      uiLine.style.marginTop      = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
+      uilinetemp.style.marginLeft = '' + (uilinetemp.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      uilinetemp.style.marginTop  = '' + (uilinetemp.style.marginTop.slice(0, -2) -diffY) + 'px';
 
       //move lines individually
       for (let i = 0; i < uiCanvas.children.length; i++) {
@@ -715,6 +779,7 @@ function initControls() {
       change: function( event ) {
         let value = $("#slider-range0").slider("value");
         verticalZoomFactor = (value) / 100;
+        sessionStorage.setItem('verticalZoomFactor', verticalZoomFactor);
         init();
       }
     });
@@ -731,12 +796,13 @@ function initControls() {
         setTimeout(function() {
           let value1 = $( "#slider-range1" ).slider( "values", 0 );
           let value2 = $( "#slider-range1" ).slider( "values", 1 );
-          if(event.eventPhase > 0 && (pastEventsDataset !== parseInt(value2) - parseInt(value1))) {
+          if (event.eventPhase > 0 && (pastEventsDataset !== parseInt(value2) - parseInt(value1))) {
             pastEventsDataset = parseInt(value2) - parseInt(value1);
             pastEventsOffsetDataset = totalLength - parseInt(value2);
+            sessionStorage.setItem('pastEventsDataset', pastEventsDataset);
+            sessionStorage.setItem('pastEventsOffsetDataset', pastEventsOffsetDataset);
             if (pastEventsDataset < pastEvents) { pastEvents = pastEventsDataset - 2; }
             initTextLines();
-            init();
             updateRangeSlider2();
             init();
           }
@@ -762,14 +828,19 @@ function updateRangeSlider2() {
       values: [0, totalLength - pastEventsOffset],
       change: function(event) {
         totalLength = cutTextLines.length - 2;
-        if (totalLength < pastEvents) { pastEvents = totalLength; }
-
+        if (totalLength < pastEvents) {
+          pastEvents = totalLength;
+        }
         let value1 = $( "#slider-range2" ).slider( "values", 0 );
         let value2 = $( "#slider-range2" ).slider( "values", 1 );
-        if((event.eventPhase > 0 || !event.eventPhase) && (pastEvents !== parseInt(value2) - parseInt(value1) || pastEventsOffset !== totalLength - parseInt(value2))) {
+        if ((event.eventPhase > 0 || !event.eventPhase) && (pastEvents !== parseInt(value2) - parseInt(value1) || pastEventsOffset !== totalLength - parseInt(value2))) {
           pastEvents = parseInt(value2) - parseInt(value1) - 2;
           pastEventsOffset = totalLength - parseInt(value2);
-          init();
+          sessionStorage.setItem('pastEvents', pastEvents);
+          sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
+          if (event.originalEvent) {
+            init();
+          }
         }
       }
     });
