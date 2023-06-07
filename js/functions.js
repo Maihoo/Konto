@@ -9,7 +9,9 @@ function differenceInDays(input1, input2) {
 
 Date.prototype.addDays = function(days) {
   let date = new Date(this.valueOf());
+  console.log(date)
   date.setDate(date.getDate() + days);
+  console.log(date)
   return date;
 }
 
@@ -19,25 +21,15 @@ function pxToValue(yPixel) {
 }
 
 function pxToDate(xPixel) {
-  let paddingLeft = 1000 + moveOffsetX;
-  let lastDay = allTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
-  let firstDay = allTextLines[pastEvents].split(';')[1].slice(1, -1);
-  let totalDays = differenceInDays(firstDay, lastDay) + 2;
-  let distance = 100000;
-  let daysDiff = -50;
-
-  for(let i = 0; i < 2*allTextLines.length; i++) {
-    if(distance > Math.abs(parseInt(xPixel) - paddingLeft - ((i-allTextLines.length) * (1000 / totalDays)))) {
-      distance  = Math.abs(parseInt(xPixel) - paddingLeft - ((i-allTextLines.length) * (1000 / totalDays)));
-    } else {
-      daysDiff = i;
-      break;
-    }
-  }
-
-  let temp = lastDay.split('.');
+  xPixel = xPixel.slice(0, -2);
+  let firstDayVisible = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
+  let lastDayVisible = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
+  let totalDaysVisible = differenceInDays(firstDayVisible, lastDayVisible) + 2;
+  let distancePerDay = 1000 / totalDaysVisible;
+  let daysDiff = parseInt(parseInt((xPixel) + moveOffsetX) / distancePerDay);
+  let temp = firstDayVisible.split('.');
   let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
-  date.addDays(daysDiff);
+  date = date.addDays(daysDiff);
   let dateParts = date.toISOString().split('T')[0].split('-');
   return dateParts[2] + '.' + dateParts[1] + '.' + dateParts[0];
 }
