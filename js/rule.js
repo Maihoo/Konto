@@ -13,7 +13,7 @@ $(document).ready(function () {
 });
 
 //Constants
-const STARTBUDGET = (8050.33 + 0.0);
+const STARTBUDGET = (5859.11 + 0.0);
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 500;
 
@@ -56,13 +56,14 @@ let cutTextLines = [];
 let dateLines = [];
 let path = [];
 let linepoint = [];
-let categories = ['monthly' , 'amazon', 'paypal', 'rewe', 'ospa', 'negative'];
+let categories = ['monthly' , 'amazon', 'paypal', 'rewe', 'ospa', 'negative', 'gas'];
 
 let amazonEntries = [];
 let paypalEntries = [];
 let reweEntries = [];
 let monthlyEntries = [];
 let ospaEntries = [];
+let gasEntries = [];
 let restEntries = [];
 
 function reset() {
@@ -74,6 +75,7 @@ function reset() {
   reweEntries = [];
   monthlyEntries = [];
   ospaEntries = [];
+  gasEntries = [];
   restEntries = [];
 
   let canvas = document.getElementById('canvas');
@@ -278,6 +280,7 @@ function drawCanvas() {
   reweEntries = [];
   monthlyEntries = [];
   ospaEntries = [];
+  gasEntries = [];
   restEntries = [];
 
   let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
@@ -420,6 +423,13 @@ function drawCanvas() {
       decided = true;
     }
 
+    if (entries[11].includes('Tankstelle') || entries[11].includes('SHELL')) {
+      square.classList.add('gas-background');
+      square.category = 'Tanken';
+      gasEntries.push(cutTextLines[i]);
+      decided = true;
+    }
+
     if (!decided) {
       restEntries.push(cutTextLines[i]);
     }
@@ -470,6 +480,7 @@ function drawLegends() {
   total += getTotal(paypalEntries);
   total += getTotal(reweEntries);
   total += getTotal(ospaEntries);
+  total += getTotal(gasEntries);
   total += getTotal(restEntries);
 
   drawLegend(monthlyEntries, 'monthly', total);
@@ -477,6 +488,7 @@ function drawLegends() {
   drawLegend(paypalEntries, 'paypal', total);
   drawLegend(reweEntries, 'rewe', total);
   drawLegend(ospaEntries, 'ospa', total);
+  drawLegend(gasEntries, 'gas', total);
   drawLegend(restEntries, 'negative', total);
 }
 
