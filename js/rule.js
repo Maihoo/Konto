@@ -13,7 +13,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = (7317.38 + 400.0);
+const STARTBUDGET = (6924.20 + 400.0);
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 500;
 const categories = ['monthly' , 'amazon', 'paypal', 'rewe', 'ospa', 'negative', 'gas'];
@@ -58,7 +58,7 @@ let ts2 = 0;
 let startDate = "";
 let endDate = "";
 
-let backgroundColor = '50, 50, 50';
+let backgroundColor = '35, 35, 35';
 let lineColor = '255, 0, 0';
 let gridColor = '255, 255, 255';
 
@@ -111,7 +111,7 @@ function resetSettings() {
   startDate = "";
   endDate = "";
 
-  backgroundColor = '50, 50, 50';
+  backgroundColor = '35, 35, 35';
   lineColor = '255, 0, 0';
   gridColor = '255, 255, 255';
 
@@ -276,17 +276,18 @@ function drawBlurPath() {
   for (let i = shadowLength/shadowDistance; i >= 0; i--) {
     for (let j = 0; j < path.length-1; j++) {
       const heightFactor = 1000/path[j][0];
+      console.log((shadowLength/shadowDistance - i) / 200 * heightFactor)
       drawLine(ctx,
         parseInt(path[j][1]),
         parseInt(path[j][0]-20+i*shadowDistance),
         parseInt(path[j+1][1]),
         parseInt(path[j+1][0]-20+i*shadowDistance),
-        `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 400 * heightFactor})`,
+        `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 200 * heightFactor})`,
         1);
     }
   }
 
-  blurCanvas.style.filter = 'blur(10px)';
+  blurCanvas.style.filter = 'blur(5px)';
 }
 
 function hidePathBlurTop() {
@@ -306,8 +307,8 @@ function hidePathBlurTop() {
     ctx.lineTo(parseInt(path[i][1]), parseInt(path[i][0]));
   }
 
-  ctx.lineTo(parseInt(path[path.length - 1][1]) +100, -100);
-  ctx.lineTo(parseInt(path[0][1])-100, -100);
+  ctx.lineTo(1200, -100);
+  ctx.lineTo(-500, -100);
   ctx.closePath();
   ctx.fill();
 }
@@ -530,6 +531,7 @@ function drawCanvas() {
     // legend filling - Kategorien
     if (entries[11].includes('ADAC') ||
         entries[11].includes('klarmobil') ||
+        entries[11].includes('Mecklenburgische') ||
         entries[4].includes('Miete')) {
       square.classList.add('monthly-background');
       square.category = 'Monthly';
@@ -717,11 +719,24 @@ function drawTable() {
 
     // Kategorien
     if (entries[11] !== null) {
-      if (entries[11].includes('ADAC') || entries[11].includes('klarmobil') || entries[4].includes('Miete')) { row.classList.add('monthly-background-dark'); }
-      if (entries[11].includes('AMAZON')) { row.classList.add('amazon-background-dark'); }
-      if (entries[11].includes('PayPal')) { row.classList.add('paypal-background-dark'); }
-      if (entries[11].includes('REWE')) { row.classList.add('rewe-background-dark'); }
-      if (entries[11].includes('OstseeSparkasse')) { row.classList.add('ospa-background-dark'); }
+      if (entries[11].includes('ADAC') || entries[11].includes('klarmobil') || entries[11].includes('Mecklenburgische') || entries[4].includes('Miete')) {
+        row.classList.add('monthly-background-dark');
+      }
+      if (entries[11].includes('AMAZON')) {
+        row.classList.add('amazon-background-dark');
+      }
+      if (entries[11].includes('PayPal')) {
+        row.classList.add('paypal-background-dark');
+    }
+      if (entries[11].includes('REWE')) {
+        row.classList.add('rewe-background-dark');
+    }
+      if (entries[11].includes('Tankstelle') || entries[11].includes('SHELL')) {
+        row.classList.add('gas-background-dark');
+    }
+      if (entries[11].includes('OstseeSparkasse')) {
+        row.classList.add('ospa-background-dark');
+    }
     }
 
     let rowHolder = document.createElement('div');
@@ -752,8 +767,8 @@ function handlePrediction(event) {
             parseInt(linepoint[1] - $("#uiline").offset().top ),
             parseInt(event.clientX - $("#uiline").offset().left),
             parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
-            lineColor,
-            2);
+            'rgba(255, 0, 0, 0.5)',
+            1);
 }
 
 function initControls() {
@@ -874,7 +889,7 @@ function initControls() {
                 parseInt(linepoint[1] - $("#uiline").offset().top ),
                 parseInt(event.clientX - $("#uiline").offset().left),
                 parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
-                lineColor,
+                'rgba(255, 0, 0, 0.5)',
                 2);
       linepoint = [];
 
