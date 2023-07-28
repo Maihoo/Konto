@@ -12,22 +12,28 @@ $(document).ready(function () {
   });
 });
 
-//Constants
-const STARTBUDGET = (5859.11 + 0.0);
+// Constants
+const STARTBUDGET = (7317.38 + 400.0);
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 500;
+const categories = ['monthly' , 'amazon', 'paypal', 'rewe', 'ospa', 'negative', 'gas'];
 
-//Variables
-let dragging = false;
+//    path drawing
+const pathThickness = 2;
+const shadowLength = 100;
+const shadowDistance = 4;
+
+// Variables
 let zoomInPressed = false;
 let zoomOutPressed = false;
 let pathMode = false;
 let gridMode = false;
+let showShadow = true;
 
 let dataset;
 
 let verticalZoomFactor = 1.0;
-let pastEventsDataset = 70;
+let pastEventsDataset = 250;
 let pastEventsOffsetDataset = 0;
 
 let pastEvents = pastEventsDataset - 1;
@@ -47,16 +53,20 @@ let dragstartXstorage = 0.0;
 let dragstartY = 0.0;
 let dragstartYstorage = 0.0;
 let ts1 = 0;
+let ts2 = 0;
 
 let startDate = "";
 let endDate = "";
+
+let backgroundColor = '50, 50, 50';
+let lineColor = '255, 0, 0';
+let gridColor = '255, 255, 255';
 
 let allTextLines = [];
 let cutTextLines = [];
 let dateLines = [];
 let path = [];
 let linepoint = [];
-let categories = ['monthly' , 'amazon', 'paypal', 'rewe', 'ospa', 'negative', 'gas'];
 
 let amazonEntries = [];
 let paypalEntries = [];
@@ -65,6 +75,50 @@ let monthlyEntries = [];
 let ospaEntries = [];
 let gasEntries = [];
 let restEntries = [];
+
+
+function resetSettings() {
+  initTextLines();
+  zoomInPressed = false;
+  zoomOutPressed = false;
+  pathMode = false;
+  gridMode = false;
+  showShadow = true;
+
+  verticalZoomFactor = 1.0;
+  pastEventsDataset = 70;
+  pastEventsOffsetDataset = 0;
+
+  pastEvents = pastEventsDataset - 1;
+  pastEventsOffset = 0;
+
+  legendMultiplier = 0.2;
+  maxHight = 500;
+  starthight = 0.0;
+  endbudget = 0.0;
+  budget = 0.0;
+  lowest = 0.0;
+  highest = 0.0;
+  moveOffsetX = 0.0;
+  moveOffsetY = 0.0;
+  dragstartX = 0.0;
+  dragstartXstorage = 0.0;
+  dragstartY = 0.0;
+  dragstartYstorage = 0.0;
+  ts1 = 0;
+  ts2 = 0;
+
+  startDate = "";
+  endDate = "";
+
+  backgroundColor = '50, 50, 50';
+  lineColor = '255, 0, 0';
+  gridColor = '255, 255, 255';
+
+  reset();
+  clearSessionStorage();
+
+}
 
 function reset() {
   dateLines = [];
@@ -80,6 +134,7 @@ function reset() {
 
   let canvas = document.getElementById('canvas');
   let pathCanvas = document.getElementById('pathCanvas');
+  let pathBlurCanvas = document.getElementById('pathBlurCanvas');
   let uiline = document.getElementById('uiline');
   let uicanvas = document.getElementById('uicanvas');
   let uipopup = document.getElementById('uipopup');
@@ -87,19 +142,23 @@ function reset() {
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
   pathCanvas.innerHTML = '';
+  pathBlurCanvas.style.opacity = '0%';
+  pathBlurCanvas.innerHTML = '';
   uiline.innerHTML = '';
   uicanvas.innerHTML = '';
   uipopup.innerHTML = '';
   canvas.innerHTML = '';
 
-  canvas.style.marginLeft     = '';
-  canvas.style.marginTop      = '';
+  canvas.style.marginLeft = '';
+  canvas.style.marginTop = '';
   pathCanvas.style.marginLeft = '';
-  pathCanvas.style.marginTop  = '';
-  uiline.style.marginLeft     = '';
-  uiline.style.marginTop      = '-600px';
+  pathCanvas.style.marginTop = '';
+  pathBlurCanvas.style.marginLeft = '';
+  pathBlurCanvas.style.marginTop = '';
+  uiline.style.marginLeft = '';
+  uiline.style.marginTop = '-600px';
   uilinetemp.style.marginLeft = '';
-  uilinetemp.style.marginTop  = '-600px';
+  uilinetemp.style.marginTop = '-600px';
 
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend' + categories[i]).innerHTML = '';
@@ -118,6 +177,16 @@ function initTextLines() {
       cutTextLines[i] += ';' + tempBudget;
     }
   }
+}
+
+function clearSessionStorage() {
+  sessionStorage.setItem('pastEventsDataset', '');
+  sessionStorage.setItem('pastEventsOffsetDataset', '');
+  sessionStorage.setItem('pastEvents', '');
+  sessionStorage.setItem('pastEventsOffset', '');
+  sessionStorage.setItem('backgroundColor', '');
+  sessionStorage.setItem('lineColor', '');
+  sessionStorage.setItem('gridColor', '');
 }
 
 function getFromSessionStorage() {
@@ -140,6 +209,25 @@ function getFromSessionStorage() {
   if (sessionValue && parseInt(sessionValue) >= 0) {
     pastEventsOffset = parseInt(sessionValue);
   }
+
+  sessionValue = sessionStorage.getItem("backgroundColor");
+  if (sessionValue && sessionValue.length > 0) {
+    backgroundColor = sessionValue;
+    document.getElementById('staticwrapper').style.backgroundColor = sessionValue;
+    document.getElementById('background-color-picker').value = rgbToHex(sessionValue);
+  }
+
+  sessionValue = sessionStorage.getItem("lineColor");
+  if (sessionValue && sessionValue.length > 0) {
+    lineColor = sessionValue;
+    document.getElementById('line-color-picker').value = rgbToHex(sessionValue);
+  }
+
+  sessionValue = sessionStorage.getItem("gridColor");
+  if (sessionValue && sessionValue.length > 0) {
+    gridColor = sessionValue;
+    document.getElementById('grid-color-picker').value = rgbToHex(sessionValue);
+  }
 }
 
 function init() {
@@ -150,31 +238,78 @@ function init() {
 
   setAmounts();
   drawCanvas();
-  drawPath();
+  drawPath();         //draws 2px solid line
+  drawBlurPath();     //draws opaque background below path
+  hidePathBlurTop();  //caps blurred paths above path
+
   setDates();
 
   drawLegends();
   drawTable();
 
   pathMode = !pathMode;
-  togglePath()
+  togglePath();
 }
 
 function drawPath() {
   let canvas = document.getElementById('pathCanvas'),
   ctx = canvas.getContext('2d');
-
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   for (let i = 0; i < path.length-1; i++) {
-    drawLine(
-      ctx,
+    drawLine(ctx,
       parseInt(path[i][1]),
       parseInt(path[i][0]),
       parseInt(path[i+1][1]),
       parseInt(path[i+1][0]),
-      'red', 1);
+      `rgb(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]})`,
+      2);
   }
+}
+
+function drawBlurPath() {
+  let blurCanvas = document.getElementById('pathBlurCanvas'),
+  ctx = blurCanvas.getContext('2d');
+  ctx.clearRect(0, 0, blurCanvas.width, blurCanvas.height);
+  const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+  for (let i = shadowLength/shadowDistance; i >= 0; i--) {
+    for (let j = 0; j < path.length-1; j++) {
+      const heightFactor = 1000/path[j][0];
+      drawLine(ctx,
+        parseInt(path[j][1]),
+        parseInt(path[j][0]-20+i*shadowDistance),
+        parseInt(path[j+1][1]),
+        parseInt(path[j+1][0]-20+i*shadowDistance),
+        `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 400 * heightFactor})`,
+        1);
+    }
+  }
+
+  blurCanvas.style.filter = 'blur(10px)';
+}
+
+function hidePathBlurTop() {
+  const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+  console.log(backgroundColorParts)
+  let canvas = document.getElementById('pathBlurCanvas'),
+  ctx = canvas.getContext('2d');
+
+  // Fill the area below the graph with a fade effect
+  ctx.beginPath();
+  ctx.moveTo(parseInt(path[0][1]), parseInt(path[0][0]));
+
+  ctx.fillStyle = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
+
+  // Draw the shape
+  for (let i = 1; i < path.length; i++) {
+    ctx.lineTo(parseInt(path[i][1]), parseInt(path[i][0]));
+  }
+
+  ctx.lineTo(parseInt(path[path.length - 1][1]) +100, -100);
+  ctx.lineTo(parseInt(path[0][1])-100, -100);
+  ctx.closePath();
+  ctx.fill();
 }
 
 function setAmounts() {
@@ -206,11 +341,14 @@ function setAmounts() {
     valueLine.style.zIndex = '80';
     valueLine.style.height = '1px';
     valueLine.style.width = '2000px';
-    valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
-    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'; }
-    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.4)'; }
-    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(255, 255, 255, 0.7)'; }
-    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(255, 255, 255, 1.0)'; }
+    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
+
+    valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.02)';
+    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.1)'; }
+    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.4)'; }
+    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.7)'; }
+    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 1.0)'; valueLine.style.height = '2px'; }
 
     valueLine.style.opacity = '100%';
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
@@ -253,10 +391,14 @@ function setDates() {
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
     dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
-    dateLine.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+
+    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
+
+    dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.1)';;
     if (dateLines[i].charAt(0) === 'y') {
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
-      dateLine.style.backgroundColor = 'rgba(255, 255, 255, 1.0)';
+      dateLine.style.backgroundColor = 'rgb(' + gridColorClear + ')';
     }
 
     uiCanvas.appendChild(dateLine);
@@ -290,7 +432,7 @@ function drawCanvas() {
 
   let foregroundoffset = dayWidth/4;
 
-  //pushing date lines
+  // pushing date lines
   for (let year = 0; year < 20; year++) {
     for (let month = 1; month <= 12; month++) {
       dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
@@ -334,7 +476,7 @@ function drawCanvas() {
     if (entries[14].charAt(1) !== '-') { square.style.marginTop = diffHight + 'px'; }
     else                               { square.style.marginTop = (diffHight + value) + 'px'; }
 
-    //Fill empty days
+    // Fill empty days
     if (diffDays > 1) {
       let lueckenfueller = document.createElement('div');
       lueckenfueller.className = 'square';
@@ -349,13 +491,13 @@ function drawCanvas() {
     lastDayDiff = differenceInDays(entries[1].slice(1, -1), lastDay);
     square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth)) + 'px';
 
-    //Differenciate negative Events
+    // Differenciate negative Events
     if (entries[14].charAt(1) === '-') {
       square.classList.add('negative-background');
       square.category = 'Sonstige Abbuchung';
     }
 
-    //Make foreground squares smaller
+    // Make foreground squares smaller
     if (diffDays > 0) {
       fgOffset = 0;
       evenFgOffset = 0;
@@ -379,13 +521,13 @@ function drawCanvas() {
       square.style.opacity = '50%';
     }
 
-    //Push Path Points
+    // Push Path Points
     let temp = [];
     temp.push(diffHight);
     temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
     path.push(temp);
 
-    //legend filling - Kategorien
+    // legend filling - Kategorien
     if (entries[11].includes('ADAC') ||
         entries[11].includes('klarmobil') ||
         entries[4].includes('Miete')) {
@@ -418,7 +560,7 @@ function drawCanvas() {
 
     if (entries[11].includes('OstseeSparkasse')) {
       square.classList.add('ospa-background');
-      square.category = 'Bargeldauszahlung';
+      square.category = 'Bargeld';
       ospaEntries.push(cutTextLines[i]);
       decided = true;
     }
@@ -434,7 +576,7 @@ function drawCanvas() {
       restEntries.push(cutTextLines[i]);
     }
 
-    //Adding Popups
+    // Adding Popups
     square.index = i;
     square.hovered = '0';
     square.onmouseover = function(event) {
@@ -522,6 +664,7 @@ function drawLegend(input, groupname, total) {
 
 function drawTable() {
   let table = document.getElementById('table');
+  table.innerHTML = '';
 
   for (let i = 0; i < cutTextLines.length; i++) {
     let entries = cutTextLines[i].split(';');
@@ -531,7 +674,7 @@ function drawTable() {
     row.className = "row";
     row.style.display = "inline-flex";
 
-    //Header Row
+    // Header Row
     if (i === 0) {
       row.style.paddingTop = '0.8vh';
       row.style.fontSize = 'medium';
@@ -554,14 +697,14 @@ function drawTable() {
         row.appendChild(cell);
       }
 
-      if (j === 1) { cell.style.width = "8vw"; row.appendChild(cell); }    //Datum
-      //if (j === 3) { cell.style.width = "10vw"; row.appendChild(cell); } //Buchungstext
-      if (j === 4) { cell.style.width = "40vw"; row.appendChild(cell); }   //Verwendungszweck
-      if (j === 11) {                                                      //Begünstigter
+      if (j === 1) { cell.style.width = "8vw"; row.appendChild(cell); }    // Datum
+      // if (j === 3) { cell.style.width = "10vw"; row.appendChild(cell); } // Buchungstext
+      if (j === 4) { cell.style.width = "40vw"; row.appendChild(cell); }   // Verwendungszweck
+      if (j === 11) {                                                      // Begünstigter
         cell.style.width = "25vw";
         row.appendChild(cell);
       }
-      if (j === 14) {                                                      //Betrag
+      if (j === 14) {                                                      // Betrag
         cell.style.width = "5vw";
         cell.style.paddingRight = "0.5vw";
         row.appendChild(cell);
@@ -572,7 +715,7 @@ function drawTable() {
       if (i === 0) { cell.classList.remove('positive-background'); }
     }
 
-    //Kategorien
+    // Kategorien
     if (entries[11] !== null) {
       if (entries[11].includes('ADAC') || entries[11].includes('klarmobil') || entries[4].includes('Miete')) { row.classList.add('monthly-background-dark'); }
       if (entries[11].includes('AMAZON')) { row.classList.add('amazon-background-dark'); }
@@ -600,10 +743,24 @@ function resetControls() {
   range2.parentNode.replaceChild(range2Clone, range2);
 }
 
+function handlePrediction(event) {
+  let uilinetemp = document.getElementById('uilinetemp');
+  let uiltCtx = uilinetemp.getContext('2d');
+  uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+  drawLine( uiltCtx,
+            parseInt(linepoint[0] - $("#uiline").offset().left),
+            parseInt(linepoint[1] - $("#uiline").offset().top ),
+            parseInt(event.clientX - $("#uiline").offset().left),
+            parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+            lineColor,
+            2);
+}
+
 function initControls() {
   resetControls();
   let canvas = document.getElementById('canvas');
   let pathCanvas = document.getElementById('pathCanvas');
+  let pathBlurCanvas = document.getElementById('pathBlurCanvas');
   let staticwrapper = document.getElementById('staticwrapper');
   let uiCanvas = document.getElementById('uicanvas');
   let uiLine = document.getElementById('uiline');
@@ -655,32 +812,55 @@ function initControls() {
     }
   });
 
-  //drag move
-  staticwrapper.onmousedown = function(event) {
-    if (event.button !== 0) {
+  // Color Picker
+  const backgroundColorPicker = document.getElementById('background-color-picker');
+  backgroundColorPicker.addEventListener('change', function(event) {
+    backgroundColor = '' + hexToRgb(event.target.value);
+    sessionStorage.setItem('backgroundColor', backgroundColor);
+    document.getElementById('staticwrapper').style.backgroundColor = backgroundColor;
+    init();
+  });
+
+  const lineColorPicker = document.getElementById('line-color-picker');
+  lineColorPicker.addEventListener('change', function(event) {
+    lineColor = hexToRgb(event.target.value);
+    sessionStorage.setItem('lineColor', lineColor);
+    init();
+  });
+
+  const gridColorPicker = document.getElementById('grid-color-picker');
+  gridColorPicker.addEventListener('change', function(event) {
+    gridColor = hexToRgb(event.target.value);
+    sessionStorage.setItem('gridColor', gridColor);
+    init();
+  });
+
+  // drag move
+  staticwrapper.onclick = function(event) {
+    console.log('click')
+    if (event.button !== 0 || ((dragstartXstorage !== event.clientX || dragstartYstorage !== event.clientY) && ts1 - Date.now() < 50) ) {
       return;
     }
 
-    dragging = true;
-    dragstartX = event.clientX;
-    dragstartY = event.clientY;
-    dragstartXstorage = event.clientX
-    dragstartYstorage = event.clientY
-    ts1 = Date.now();
-  };
-  staticwrapper.onclick = function(event) {
-    if (event.button !== 0 || ((dragstartXstorage !== event.clientX || dragstartYstorage !== event.clientY) && ts1 - Date.now() < 50) ) {
-      dragging = false;
-      return;
-    }
-    dragging = false;
     if (linepoint.length === 0) {
       staticwrapper.style.cursor = 'crosshair';
       linepoint.push(event.clientX);
       linepoint.push(event.clientY + window.scrollY);
+      document.onmousemove = (event) => handlePrediction(event);
     } else {
-      staticwrapper.style.cursor = '';
+      // finish prediction line
       let uiltCtx = uilinetemp.getContext('2d');
+      uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+      console.log('drawLine1')
+      drawLine( uiltCtx,
+                parseInt(linepoint[0] - $("#uiline").offset().left),
+                parseInt(linepoint[1] - $("#uiline").offset().top ),
+                parseInt(event.clientX - $("#uiline").offset().left),
+                parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+                'rgba(255, 0, 0, 0.5)',
+                1);
+
+      staticwrapper.style.cursor = '';
       uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
       if (!uiLine.index) {
         uiLine.index = 0;
@@ -688,16 +868,19 @@ function initControls() {
 
       uiLine.index = parseInt(uiLine.index) + 1;
       ctx = uiLine.getContext('2d');
+      console.log('drawLine2')
       drawLine( ctx,
                 parseInt(linepoint[0] - $("#uiline").offset().left),
                 parseInt(linepoint[1] - $("#uiline").offset().top ),
                 parseInt(event.clientX - $("#uiline").offset().left),
                 parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
-                'red',
+                lineColor,
                 2);
       linepoint = [];
 
-      //Adding Popups
+      document.onmousemove = () => {};
+
+      // Adding Popups
       let circle = document.createElement('div');
       circle.hovered = '0';
       circle.className = 'circle'
@@ -734,53 +917,60 @@ function initControls() {
       document.getElementById('canvas').appendChild(circle);
     }
   }
-  staticwrapper.onmousemove = function(event) {
-    if (!dragging && linepoint.length !== 0) {
-      let uiltCtx = uilinetemp.getContext('2d');
-      uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
-      drawLine( uiltCtx,
-                parseInt(linepoint[0] - $("#uiline").offset().left),
-                parseInt(linepoint[1] - $("#uiline").offset().top ),
-                parseInt(event.clientX - $("#uiline").offset().left),
-                parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
-                'rgba(255, 0, 0, 0.5)',
-                1);
+  staticwrapper.onmousedown = function(event) {
+    if (event.button !== 0) {
+      return;
     }
-    if (dragging && dragstartX !== event.clientX && dragstartY !== event.clientY) {
-      let clientX = event.clientX;
-      let clientY = event.clientY;
 
-      let diffX = dragstartX - clientX;
-      let diffY = dragstartY - clientY;
-      moveOffsetX -= diffX;
-      moveOffsetY -= diffY;
-      dragstartX = clientX;
-      dragstartY = clientY;
+    dragstartX = event.clientX;
+    dragstartY = event.clientY;
+    dragstartXstorage = event.clientX
+    dragstartYstorage = event.clientY
+    ts1 = Date.now();
+    staticwrapper.onmouseup = function(event) {
+      staticwrapper.onmousemove = undefined;
+    }
 
-      //move canvases
-      canvas.style.marginLeft     = '' + (canvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      canvas.style.marginTop      = '' + (canvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      pathCanvas.style.marginLeft = '' + (pathCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      pathCanvas.style.marginTop  = '' + (pathCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uiLine.style.marginLeft     = '' + (uiLine.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uiLine.style.marginTop      = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uilinetemp.style.marginLeft = '' + (uilinetemp.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uilinetemp.style.marginTop  = '' + (uilinetemp.style.marginTop.slice(0, -2) -diffY) + 'px';
+    staticwrapper.onmousemove = function(event) {
+      console.log('move')
+      if (Date.now() - ts2 > 20 && dragstartX !== event.clientX && dragstartY !== event.clientY) {
+        ts2 = Date.now();
+        let clientX = event.clientX;
+        let clientY = event.clientY;
+        let diffX = dragstartX - clientX;
+        let diffY = dragstartY - clientY;
+        moveOffsetX -= diffX;
+        moveOffsetY -= diffY;
+        dragstartX = clientX;
+        dragstartY = clientY;
 
-      //move lines individually
-      for (let i = 0; i < uiCanvas.children.length; i++) {
-        let element = uiCanvas.children[i];
-        if (element.classList.contains(('horizontal'))) {
-          element.style.marginLeft = '' + (element.style.marginLeft.slice(0, -2) -diffX) + 'px';
-        }
-        if (element.classList.contains(('vertical'))) {
-          element.style.marginTop  = '' + (element.style.marginTop.slice(0, -2) -diffY) + 'px';
+        // move canvases
+        canvas.style.marginLeft = '' + (canvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
+        canvas.style.marginTop = '' + (canvas.style.marginTop.slice(0, -2) -diffY) + 'px';
+        pathCanvas.style.marginLeft = '' + (pathCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
+        pathCanvas.style.marginTop = '' + (pathCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
+        pathBlurCanvas.style.marginLeft = '' + (pathBlurCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
+        pathBlurCanvas.style.marginTop = '' + (pathBlurCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
+        uiLine.style.marginLeft = '' + (uiLine.style.marginLeft.slice(0, -2) -diffX) + 'px';
+        uiLine.style.marginTop = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
+        uilinetemp.style.marginLeft = '' + (uilinetemp.style.marginLeft.slice(0, -2) -diffX) + 'px';
+        uilinetemp.style.marginTop = '' + (uilinetemp.style.marginTop.slice(0, -2) -diffY) + 'px';
+
+        // move lines individually
+        for (let i = 0; i < uiCanvas.children.length; i++) {
+          let element = uiCanvas.children[i];
+          if (element.classList.contains(('horizontal'))) {
+            element.style.marginLeft = '' + (element.style.marginLeft.slice(0, -2) -diffX) + 'px';
+          }
+          if (element.classList.contains(('vertical'))) {
+            element.style.marginTop  = '' + (element.style.marginTop.slice(0, -2) -diffY) + 'px';
+          }
         }
       }
     }
   };
 
-  //Range Slider
+  // Range Slider
   $(function() {
     $("#slider-range0").slider({
       range: 'min',

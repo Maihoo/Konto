@@ -9,9 +9,7 @@ function differenceInDays(input1, input2) {
 
 Date.prototype.addDays = function(days) {
   let date = new Date(this.valueOf());
-  console.log(date)
   date.setDate(date.getDate() + days);
-  console.log(date)
   return date;
 }
 
@@ -52,14 +50,17 @@ function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
 }
 
 function togglePath() {
+  pathMode = !pathMode;
+
   if(pathMode) {
-    document.getElementById('canvas').style.opacity = '100%';
-    document.getElementById('pathCanvas').style.opacity = 0;
-  } else {
     document.getElementById('canvas').style.opacity = 0;
     document.getElementById('pathCanvas').style.opacity = '100%';
+    document.getElementById('pathBlurCanvas').style.opacity = '100%';
+  } else {
+    document.getElementById('canvas').style.opacity = '100%';
+    document.getElementById('pathCanvas').style.opacity = 0;
+    document.getElementById('pathBlurCanvas').style.opacity = 0;
   }
-  pathMode = !pathMode;
 }
 
 function toggleGrid() {
@@ -122,4 +123,40 @@ function getMaxHightAround() {
     startDate = entries[1].slice(1, -1);
     endbudget = current;
   }
+}
+
+function hexToRgb(hex) {
+  hex = hex.replace('#', '');
+
+  if (hex.length === 3) {
+    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+  }
+
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  return  `rgb(${r}, ${g}, ${b})`;
+}
+
+function rgbToHex(input) {
+  input = input.replace('rgb(', '');
+  input = input.replace(')', '');
+  input = input.replace(/\s/g, '');
+
+  const inputParts = input.split(',');
+  if (inputParts.length === 3) {
+    const componentToHex = (c) => {
+      const hex = parseInt(c).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+
+    const hexR = componentToHex(inputParts[0]);
+    const hexG = componentToHex(inputParts[1]);
+    const hexB = componentToHex(inputParts[2]);
+
+    return `#${hexR}${hexG}${hexB}`;
+  }
+
+  return '';
 }

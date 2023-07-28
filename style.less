@@ -11,6 +11,12 @@ body {
 @ospa-color:    rgb(236, 0, 0);
 @gas-color:     rgb(0, 236, 216);
 
+@button-color:        rgb(40, 40, 40);
+@button-border-top:   rgb(100, 100, 100);
+@button-border-right: rgb(30, 30, 30);
+@button-border-bottom:rgb(10, 10, 10);
+@button-border-left:  rgb(60, 60, 60);
+
 @positive-color-transparent:rgba(0, 128, 0, 0.2);
 @negative-color-transparent:rgba(120, 0, 0, 0.2);
 @amazon-color-transparent:  rgba(139, 126, 255, 0.2);
@@ -19,6 +25,25 @@ body {
 @monthly-color-transparent: rgba(168, 168, 168, 0.2);
 @ospa-color-transparent:    rgba(236, 0, 0, 0.2);
 @gas-color-transparent:     rgba(0, 236, 216, 0.2);
+
+.color-picker-wrapper {
+  display: flex ;
+  width: 15rem !important;
+  height: 2.0rem !important;
+  justify-content: center;
+  margin-top: 1rem !important;
+  padding: 0.5rem;
+  padding-left: 1rem;
+
+  .color-picker {
+    background-color: @button-color;
+    border: none;
+    height: auto;
+    width: 4rem;
+    margin-left: auto;
+    margin-top: -0.5rem;
+  }
+}
 
 p {
     padding: 0.5rem;
@@ -48,11 +73,9 @@ p {
 }
 
 .range-slider {
-  width: 1000px;
+  width: 105%;
   height: 12px;
-  margin-top: -0.5rem;
-  margin-bottom: 0.5rem;
-  margin-left: 1rem;
+  margin-top: -0.3rem;
   border: solid black 1px;
   background-color:rgb(30, 30, 30);
 }
@@ -120,23 +143,31 @@ h1 {
 
 .button {
   height: 3rem;
-  width: 10rem;
+  width: 7.5rem;
   margin: auto;
+  margin-left: 1rem;
   border-radius: 0.6rem;
   font-size: medium;
   font-weight: bold;
-  background-color: rgb(40, 40, 40);
+  background-color: @button-color;
   color: white;
-  border-top: 4px solid rgb(100, 100, 100);
-  border-right: 4px solid rgb(30, 30, 30);
-  border-bottom: 4px solid rgb(10, 10, 10);
-  border-left: 4px solid rgb(60, 60, 60);
+  border-top: 4px solid @button-border-top;
+  border-right: 4px solid @button-border-right;
+  border-bottom: 4px solid @button-border-bottom;
+  border-left: 4px solid @button-border-left;
 }
 
 .buttonwrapper {
   display: flex;
   width: 200px;
   padding-top: 1rem;
+}
+
+.rangewrapper {
+  padding-left: 1.5rem;
+  display: block;
+  margin-top: 0rem !important;
+  margin-bottom: 1.5rem;
 }
 
 .legend-square-holder {
