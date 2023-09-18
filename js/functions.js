@@ -7,6 +7,16 @@ function differenceInDays(input1, input2) {
   return (Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)));
 }
 
+function addZeroToSingleDigit(number) {
+  let numberString = number.toString();
+  if (numberString.length === 1) {
+    numberString = '0' + numberString;
+  }
+
+  return numberString;
+}
+
+
 Date.prototype.addDays = function(days) {
   let date = new Date(this.valueOf());
   date.setDate(date.getDate() + days);
@@ -52,7 +62,7 @@ function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
 function togglePath() {
   pathMode = !pathMode;
 
-  if(pathMode) {
+  if (pathMode) {
     document.getElementById('canvas').style.opacity = 0;
     document.getElementById('pathCanvas').style.opacity = '100%';
     document.getElementById('pathBlurCanvas').style.opacity = '100%';
@@ -64,12 +74,16 @@ function togglePath() {
 }
 
 function toggleGrid() {
-  if(gridMode) {
+  if (gridMode) {
     document.getElementById('uicanvas').style.opacity = "100%";
   } else {
     document.getElementById('uicanvas').style.opacity = 0;
   }
   gridMode = !gridMode;
+}
+
+function toggleOptions() {
+  document.getElementById('settings').classList.toggle('settings-hidden');
 }
 
 function clearLines() {
@@ -85,39 +99,39 @@ function clearLines() {
 }
 
 function getMaxHight() {
-  let current = STARTBUDGET;
-  let tempLowest = 100000.0;
+  let current = totalBudget;
+  let tempLowest = 1000000.0;
   let tempHighest = 0.0;
   let limiter = pastEvents;
-  if(allTextLines.length < limiter) { limiter = allTextLines.length; }
+  if (cutTextLines.length < limiter) { limiter = cutTextLines.length; }
 
   for (let i = limiter; i > 0; i--) {
-    let entries = allTextLines[i].split(';');
+    let entries = cutTextLines[i].split(';');
     current += parseFloat(entries[14].slice(1, -1));
-    if(current < tempLowest)  { tempLowest  = current; }
-    if(current > tempHighest) { tempHighest = current; }
+    if (current < tempLowest)  { tempLowest  = current; }
+    if (current > tempHighest) { tempHighest = current; }
   }
 
   return tempHighest - tempLowest;
 }
 
 function getMaxHightAround() {
-  let current = STARTBUDGET;
-  lowest = 100000.0;
-  highest = 0.0;
+  let current = totalBudget;
+  lowest = 1000000.0;
+  highest = totalBudget;
 
   let limiter = pastEvents;
-  if(allTextLines.length < limiter) {
-    limiter = allTextLines.length;
+  if (cutTextLines.length < limiter) {
+    limiter = cutTextLines.length;
   }
 
   for (let i = 1; i < limiter + 1; i++) {
-    let entries = allTextLines[i].split(';');
+    let entries = cutTextLines[i].split(';');
     current -= parseFloat(entries[14].slice(1, -1));
-    if(i > pastEventsOffset + 1) {
-      if(current < lowest)  { lowest  = current; }
-      if(current > highest) { highest = current; }
-      if(i === 1) { endDate = entries[1].slice(1, -1); }
+    if (i > pastEventsOffset + 1) {
+      if (current < lowest)  { lowest  = current; }
+      if (current > highest) { highest = current; }
+      if (i === 1) { endDate = entries[1].slice(1, -1); }
     }
 
     startDate = entries[1].slice(1, -1);
