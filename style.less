@@ -10,7 +10,7 @@ body {
 @monthly-color: rgb(30, 121, 45);
 @ospa-color:    rgb(236, 0, 0);
 @gas-color:     rgb(0, 236, 216);
-@debt-color:    rgb(100, 200, 100);
+@debt-color:    rgba(100, 200, 100, 0.1);
 
 @button-color:        rgb(30, 30, 30);
 @button-hover-color:  rgb(50, 50, 50);
@@ -86,7 +86,10 @@ p {
   height: 12px;
   margin-top: 0.0rem;
   border: solid black 1px;
-  background-color:rgb(30, 30, 30);
+
+  &.ui-widget-content {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
 }
 
 .vertical-range-slider {
@@ -95,7 +98,22 @@ p {
   margin-top: 25px;
   margin-left: 12px;
   border: solid black 1px;
-  background-color:rgb(30, 30, 30);
+
+  &.ui-widget-content {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+.vertical-range-slider-smaller {
+  min-height: 500px;
+
+  .ui-widget-header {
+    background-color: rgb(57, 57, 57) !important;
+  }
+
+  &.ui-widget-content {
+    background-color: rgb(100, 100, 255) !important;
+  }
 }
 
 .ui-widget-header  {
@@ -105,10 +123,6 @@ p {
 .ui-slider-handle {
   border: solid black 1px !important;
   background-color:rgb(200, 200, 255) !important;
-}
-
-.ui-widget-content {
-  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .uiElement {
@@ -124,7 +138,7 @@ p {
 }
 
 .uiElementBot {
-  padding: 0;
+  padding: 0.1rem;
   margin: 0;
   font-weight: bold;
 }
@@ -194,19 +208,31 @@ h2 {
   border-right: 1px solid black;
   box-shadow: 0px -4px 8px rgba(0, 0, 0, 0.5);
   transition: top 0.5s, margin-top 0.5s;
+
+  #button-expand-icon {
+    margin-left: -1px;
+    transform: rotate(-90deg) !important;
+  }
 }
 
 .settings-hidden {
-  margin-top: -9rem;
+  margin-top: -7.5rem;
+  
+  h1 {
+    padding-top: 0.35rem;
+  }
 
   #button-expand-icon {
     transform: rotate(90deg) !important;
   }
+
+  #expand-button {
+    background-color: transparent;
+    border: none;
+  }
 }
 
-#button-expand-icon {
-  transform: rotate(-90deg) !important;
-}
+
 
 #expand-button {
   margin: -2.4rem 0 0 15.9rem !important;
@@ -222,7 +248,7 @@ h2 {
   margin: auto;
   margin-left: 1rem;
   border-radius: 0.6rem;
-  font-size: medium;
+  font-size: small;
   font-weight: bold;
   background-color: @button-color;
   color: white;

@@ -1,29 +1,42 @@
 $(document).ready(function () {
+  // Set the worker source for pdf.js
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+  // Read the first file (umsatz.csv)
   $.ajax({
     type: "GET",
     url: "umsatz.csv",
     dataType: "text",
-  error: function (xhr, status, error) {
+    error: function (xhr, status, error) {
       console.error("AJAX Error:", error);
     },
-  success: function (data) {
-    dataset = data;
-    getFromSessionStorage();
-    initTextLines();
-    initControls();
-    init(); }
+    success: function (data) {
+      dataset = data;
+      getFromSessionStorage();
+      initTextLines();
+      initControls();
+      init();
+    }
   });
 });
 
 // Constants
-const STARTBUDGET = 9084.34;
+const STARTBUDGET = 10814.10;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly' , 'amazon', 'paypal', 'food', 'ospa', 'negative', 'gas'];
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"SCHULDEN";"SCHULDEN";"";"";"";"";"";"";"ROBERT";"";"";"500";"EUR";""',
-  '"DE45150505001101110771";"";"";"SCHULDEN";"SCHULDEN";"";"";"";"";"";"";"TILL";"";"";"361";"EUR";""',
-  '"DE45150505001101110771";"";"";"SCHULDEN";"SCHULDEN";"";"";"";"";"";"";"Sarah";"";"";"40";"EUR";""'];
+//  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Sarah";"";"";"40";"EUR";""'
+];
+
+const selectors= {
+  'date': 1,
+  'content': 3,
+  'purpose': 4,
+  'beneficiary': 11,
+  'amount': 14,
+  'total': 17
+};
 
 // path drawing
 const pathThickness = 2;
@@ -38,6 +51,7 @@ let zoomOutPressed = false;
 let pathMode = false;
 let gridMode = false;
 let showShadow = true;
+let optionsExtended = false;
 
 let dataset;
 
@@ -48,7 +62,7 @@ let pastEventsOffsetDataset = 0;
 let pastEvents = pastEventsDataset - 1;
 let pastEventsOffset = 0;
 
-let legendMultiplier = 300;
+let legendMultiplier = 100;
 let maxHight = 500;
 let starthight = 0.0;
 let endbudget = 0.0;
@@ -66,11 +80,13 @@ let ts2 = 0;
 
 let startDate = "";
 let endDate = "";
+let sortType = "date";
 
 let backgroundColor = '35, 35, 35';
 let lineColor = '255, 0, 0';
 let gridColor = '255, 255, 255';
 
+let pdfImportedLines = [];
 let allTextLines = [];
 let cutTextLines = [];
 let dateLines = [];
@@ -95,13 +111,13 @@ function resetSettings() {
   showShadow = true;
 
   verticalZoomFactor = 1.0;
-  pastEventsDataset = 70;
+  pastEventsDataset = 250;
   pastEventsOffsetDataset = 0;
 
   pastEvents = pastEventsDataset - 1;
   pastEventsOffset = 0;
 
-  legendMultiplier = 300;
+  legendMultiplier = 100;
   maxHight = 500;
   starthight = 0.0;
   endbudget = 0.0;
@@ -128,8 +144,12 @@ function resetSettings() {
   document.getElementById('settings').style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
 
+  clearLines();
   reset();
   clearSessionStorage();
+  initTextLines();
+  initControls();
+  init();
 }
 
 function reset() {
@@ -180,6 +200,10 @@ function reset() {
 
 function initTextLines() {
   allTextLines = dataset.split(/\r\n|\n/);
+  allTextLines = allTextLines.filter(function(item) {
+    return item !== '' && item !== '.';
+  });
+
   cutTextLines = allTextLines.slice(pastEventsOffsetDataset, pastEventsOffsetDataset + pastEventsDataset);
 
   //insert date into constant positions
@@ -201,7 +225,7 @@ function initTextLines() {
 
   //pushing constant positions
   for (let i = 0; i < constantPositions.length; i++) {
-    const value = constantPositions[i].split(';')[14].slice(1, -1);
+    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
     totalBudget += parseInt(value);
     cutTextLines.splice(1, 0, constantPositions[i]);
   }
@@ -210,10 +234,39 @@ function initTextLines() {
   for (let i = 0; i < cutTextLines.length; i++) {
     let entries = cutTextLines[i].split(';');
     if (i > 0 && entries.length > 13) {
-      tempBudget -= parseFloat(entries[14].slice(1, -1));
+      tempBudget -= parseFloat(entries[selectors.amount].slice(1, -1));
       cutTextLines[i] += ';' + tempBudget;
     }
   }
+
+  if (sortType === 'amount') {
+    fixSortedArray(cutTextLines, 14);
+  }
+}
+
+function fixSortedArray(arr, fieldIndex) {
+  if (arr.length <= 1) {
+    return;
+  }
+
+  const firstElement = arr[0];
+
+  sortArrayByField(arr, fieldIndex);
+
+  arr.unshift(firstElement);
+  arr.pop();
+}
+
+function sortArrayByField(arr, fieldIndex) {
+  arr.sort(function (a, b) {
+    const aValue = parseInt(a.split(';')[fieldIndex].slice(1, -1));
+    const bValue = parseInt(b.split(';')[fieldIndex].slice(1, -1));
+
+    if (isNaN(aValue)) return 1; // Treat non-integer values as greater
+    if (isNaN(bValue)) return -1; // Treat non-integer values as greater
+
+    return aValue - bValue;
+  });
 }
 
 function clearSessionStorage() {
@@ -224,6 +277,10 @@ function clearSessionStorage() {
   sessionStorage.setItem('backgroundColor', '');
   sessionStorage.setItem('lineColor', '');
   sessionStorage.setItem('gridColor', '');
+  sessionStorage.setItem('optionsExtended', '');
+  sessionStorage.setItem('sortType', '');
+  sessionStorage.setItem('verticalZoomFactor', '');
+  sessionStorage.setItem('legendMultiplyer', '');
 }
 
 function getFromSessionStorage() {
@@ -265,11 +322,37 @@ function getFromSessionStorage() {
     gridColor = sessionValue;
     document.getElementById('grid-color-picker').value = rgbToHex(sessionValue);
   }
+
+  sessionValue = sessionStorage.getItem("sortType");
+  if (sessionValue && sessionValue.length > 0) {
+    sortType = sessionValue;
+  }
+
+  sessionValue = sessionStorage.getItem("verticalZoomFactor");
+  if (sessionValue && sessionValue.length > 0) {
+    verticalZoomFactor = sessionValue;
+  }
+
+  sessionValue = sessionStorage.getItem("legendMultiplyer");
+  if (sessionValue && sessionValue.length > 0) {
+    legendMultiplier = sessionValue;
+  }
+
+  sessionValue = sessionStorage.getItem("optionsExtended");
+  if (sessionValue && sessionValue.length > 0) {
+    if (sessionValue === 'true') {
+      optionsExtended = true;
+      document.getElementById('settings').classList.add('settings-hidden');
+    } else {
+      optionsExtended = false;
+      document.getElementById('settings').classList.remove('settings-hidden');
+    }
+  }
 }
 
 function init() {
   reset();
-  legendMultiplier = 300000 / (pastEvents - pastEventsOffset);
+  legendMultiplier = (legendMultiplier * 1000) / (pastEvents - pastEventsOffset);
 
   maxHight = getMaxHight();
   getMaxHightAround();
@@ -316,9 +399,9 @@ function drawBlurPath() {
       const heightFactor = (1000)/path[j][0];
       drawLine(ctx,
         parseInt(path[j][1]),
-        parseInt(path[j][0]-20+i*shadowDistance*verticalZoomFactor),
+        parseInt(path[j][0] - 20 + i * shadowDistance * verticalZoomFactor),
         parseInt(path[j+1][1]),
-        parseInt(path[j+1][0]-20+i*shadowDistance*verticalZoomFactor),
+        parseInt(path[j+1][0] - 20 + i * shadowDistance*verticalZoomFactor),
         `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 200 * heightFactor})`,
         1);
     }
@@ -354,7 +437,7 @@ function setAmounts() {
   uiCanvas.style.marginTop  = -EXTRAAREA + 'px';
   uiCanvas.style.marginLeft = -EXTRAAREA + 'px';
   let valueTop = document.createElement('p');
-  valueTop.innerHTML = '<p class="uiElementTop">Höchststand:</p> <p class="uiElementBot">~' + parseInt(highest) + ',00€</p>';
+  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">~' + parseInt(highest) + ',00€</p>';
   valueTop.className = 'uiElement';
   valueTop.classList.add('vertical');
   valueTop.style.position = 'absolute';
@@ -363,7 +446,7 @@ function setAmounts() {
   uiCanvas.appendChild(valueTop);
 
   let valueBottom = document.createElement('p');
-  valueBottom.innerHTML = '<p class="uiElementTop">Tiefststand:</p> <p class="uiElementBot">~' + parseInt(lowest) + ',00€</p>';
+  valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">~' + parseInt(lowest) + ',00€</p>';
   valueBottom.className = 'uiElement';
   valueBottom.classList.add('vertical');
   valueBottom.style.position = 'absolute';
@@ -433,10 +516,15 @@ function setDates() {
     const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
     const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
 
-    dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.1)';;
+    dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.2)';;
     if (dateLines[i].charAt(0) === 'y') {
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
       dateLine.style.backgroundColor = 'rgb(' + gridColorClear + ')';
+    }
+
+    if (dateLines[i].charAt(0) === 'w') {
+      dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
+      dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.05)';;
     }
 
     uiCanvas.appendChild(dateLine);
@@ -463,19 +551,37 @@ function drawCanvas() {
   gasEntries = [];
   restEntries = [];
 
+  if (pastEvents > cutTextLines.length - 2) {
+    pastEvents = cutTextLines.length - 5;
+  }
+
   let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
   let firstDay = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
+
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
-  let dayWidth = 1000 / totalDays;
+  if (sortType === 'amount') {
+    totalDays = cutTextLines.length;
+  }
+
+  totalDays = Math.abs(totalDays);
+
+  let dayWidth = 1000 / Math.abs(totalDays);
 
   let foregroundoffset = dayWidth/4;
 
   // pushing date lines
-  for (let year = 0; year < 20; year++) {
+  for (let year = 0; year < 30; year++) {
     for (let month = 1; month <= 12; month++) {
       dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
       if (month === 1) {
-        dateLines[dateLines.length - 1] = 'y' + dateLines[dateLines.length - 1]
+        dateLines[dateLines.length - 1] = 'y' + dateLines[dateLines.length - 1];
+      }
+
+      for (let day = 1; day <= 31; day++) {
+        if (getDayOfWeek(day, month, year) === 'Wednesday') {
+          dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, day + '.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
+          dateLines[dateLines.length - 1] = 'w' + dateLines[dateLines.length - 1];
+        }
       }
     }
   }
@@ -483,20 +589,20 @@ function drawCanvas() {
   for (let i = pastEvents; i >= pastEventsOffset + 1; i--) {
     let entries = cutTextLines[i].split(';');
     let decided = false;
-    let value = valueToPx(entries[14].slice(1, -1));
+    let value = valueToPx(entries[selectors.amount].slice(1, -1));
     let diffBefore = diffHight;
-    let diffDays = lastDayDiff - differenceInDays(entries[1].slice(1, -1), lastDay);
+    let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     let sharedDates = 0;
     for (let j = i - 1; j > 0 + 1; j--) {
       let comparison = cutTextLines[j].split(';');
-      if (comparison[1] === entries[1]) {
+      if (comparison[1] === entries[selectors.date]) {
         sharedDates++;
       }
     }
 
     for (let l = i + 1; l < cutTextLines.length - 1; l++) {
       let comparison = cutTextLines[l].split(';');
-      if (comparison[1] === entries[1]) {
+      if (comparison[1] === entries[selectors.date]) {
         sharedDates++;
       }
     }
@@ -511,12 +617,13 @@ function drawCanvas() {
 
     diffHight -= value;
     if (diffDays > 0) { square.id = "linePoint" + diffHightIndex; diffHightIndex += 2; }
-    if (entries[14].charAt(1) !== '-') { square.style.marginTop = diffHight + 'px'; }
+    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHight + 'px'; }
     else                               { square.style.marginTop = (diffHight + value) + 'px'; }
 
     // Fill empty days
-    if (diffDays > 1) {
+    if (diffDays > 1 && sortType !== 'amount') {
       let lueckenfueller = document.createElement('div');
+
       lueckenfueller.className = 'square';
       lueckenfueller.classList.add('negative-background');
       lueckenfueller.style.height = '1px';
@@ -526,11 +633,15 @@ function drawCanvas() {
       canvas.appendChild(lueckenfueller);
     }
 
-    lastDayDiff = differenceInDays(entries[1].slice(1, -1), lastDay);
+    lastDayDiff = differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
+    if (sortType === 'amount') {
+      lastDayDiff = i;
+    }
+
     square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth)) + 'px';
 
     // Differenciate negative Events
-    if (entries[14].charAt(1) === '-') {
+    if (entries[selectors.amount].charAt(1) === '-') {
       square.classList.add('negative-background');
       square.category = 'Sonstige Abbuchung';
     }
@@ -544,11 +655,11 @@ function drawCanvas() {
     }
 
     let pastNegative = false;
-    if (cutTextLines[i+1] !== null && cutTextLines[i+1].split(';')[14] !== null) {
-      pastNegative = cutTextLines[i+1].split(';')[14].charAt(1) === '-';
+    if (cutTextLines[i+1] !== null && cutTextLines[i+1].split(';')[selectors.amount] !== null) {
+      pastNegative = cutTextLines[i+1].split(';')[selectors.amount].charAt(1) === '-';
     }
 
-    if (diffDays === 0 && ((entries[14].charAt(1) === '-' && !pastNegative) || (entries[14].charAt(1) !== '-' && pastNegative))) {
+    if (diffDays === 0 && ((entries[selectors.amount].charAt(1) === '-' && !pastNegative) || (entries[selectors.amount].charAt(1) !== '-' && pastNegative))) {
       fgOffset += foregroundoffset;
     }
 
@@ -566,52 +677,52 @@ function drawCanvas() {
     path.push(temp);
 
     // legend filling - Kategorien
-    if (entries[11].includes('ADAC') ||
-        entries[11].includes('klarmobil') ||
-        entries[11].includes('Mecklenburgische') ||
-        entries[4].includes('Miete')) {
+    if (entries[selectors.beneficiary].includes('ADAC') ||
+        entries[selectors.beneficiary].includes('klarmobil') ||
+        entries[selectors.beneficiary].includes('Mecklenburgische') ||
+        entries[selectors.purpose].includes('Miete')) {
       square.classList.add('monthly-background');
       square.category = 'Monthly';
       monthlyEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[11].includes('AMAZON')) {
+    if (entries[selectors.beneficiary].includes('AMAZON')) {
       square.classList.add('amazon-background');
       square.category = 'Amazon';
       amazonEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[11].includes('PayPal')) {
+    if (entries[selectors.beneficiary].includes('PayPal')) {
       square.classList.add('paypal-background');
       square.category = 'PayPal';
       paypalEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[11].includes('REWE') || entries[11].includes('EDEKA') || entries[11].includes('NETTO')) {
+    if (entries[selectors.beneficiary].includes('REWE') || entries[selectors.beneficiary].includes('EDEKA') || entries[selectors.beneficiary].includes('NETTO')) {
       square.classList.add('food-background');
       square.category = 'food';
       foodEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[11].includes('OstseeSparkasse')) {
+    if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
       square.classList.add('ospa-background');
       square.category = 'Bargeld';
       ospaEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[11].includes('Tankstelle') || entries[11].includes('SHELL') || entries[11].includes('ARAL')) {
+    if (entries[selectors.beneficiary].includes('Tankstelle') || entries[selectors.beneficiary].includes('SHELL') || entries[selectors.beneficiary].includes('ARAL')) {
       square.classList.add('gas-background');
       square.category = 'Tanken';
       gasEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[4].includes('SCHULDEN')) {
+    if (entries[selectors.purpose].includes('SCHULDEN')) {
       square.classList.add('debt-background');
       square.category = 'Schulden';
       decided = true;
@@ -631,6 +742,7 @@ function drawCanvas() {
       pop.style.top = (event.clientY + window.scrollY - 100) + 'px';
       pop.style.left = (event.clientX + 5) + 'px';
     };
+
     square.onmousemove = function(event) {
       let pop = document.getElementById('popup' + this.index);
       if (this.hovered === '1') {
@@ -638,16 +750,19 @@ function drawCanvas() {
         pop.style.left = (event.clientX + 5) + 'px';
       }
     };
+
     square.onmouseout = function(event) {
       let pop = document.getElementById('popup' + this.index);
       pop.classList.remove('fade');
       this.hovered = '0';
     };
     let popup = document.createElement('div');
+    const dateParts = entries[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = '<p class="popupText">Index: ' + i + '</p>'
-                    + '<p class="popupText">Date: ' + entries[1].slice(1, -1) + '</p>'
-                    + '<p class="popupText">Value: ' + entries[14].slice(1, -1) + '€</p>'
-                    + '<p class="popupText">Total: '  + (parseInt(entries[17]) + parseInt(entries[14].slice(1, -1))) + ',00€</p>'
+                    + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
+                    + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
+                    + '<p class="popupText">Value: ' + entries[selectors.amount].slice(1, -1) + '€</p>'
+                    + '<p class="popupText">Total: '  + (parseInt(entries[selectors.total]) + parseInt(entries[selectors.amount].slice(1, -1))) + ',00€</p>'
                     + '<p class="popupText">Category: ' + square.category + '</p>';
     popup.id = 'popup' + i;
     popup.className = 'popup';
@@ -716,8 +831,8 @@ function getTotal(input, positive) {
   let total = 0;
   for (let i = 0; i < input.length; i++) {
     let entries = input[i].split(';');
-    if ((positive && entries[14].charAt(1) !== '-') || (!positive && entries[14].charAt(1) === '-')) {
-      total += Math.abs(parseFloat(entries[14].slice(1, -1)));
+    if ((positive && entries[selectors.amount].charAt(1) !== '-') || (!positive && entries[selectors.amount].charAt(1) === '-')) {
+      total += Math.abs(parseFloat(entries[selectors.amount].slice(1, -1)));
     }
   }
 
@@ -751,11 +866,11 @@ function drawNegativeLegend(total, input, groupname) {
   let legend = document.getElementById('legend-' + groupname + '-negative');
   for (let i = 0; i < input.length; i++) {
     let entries = input[i].split(';');
-    if (entries[14].charAt(1) === '-') {
+    if (entries[selectors.amount].charAt(1) === '-') {
       let legendSquare = document.createElement('div');
       legendSquare.className = 'legendsquare';
       legendSquare.classList.add(groupname + '-background');
-      let value = Math.abs(legendMultiplier * parseFloat(entries[14].slice(1, -1)) / (total));
+      let value = Math.abs(legendMultiplier * parseFloat(entries[selectors.amount].slice(1, -1)) / (total));
       legendSquare.style.height = '' + (value) + 'px';
       legend.appendChild(legendSquare);
     }
@@ -766,11 +881,11 @@ function drawPositiveLegend(total, input, groupname) {
   let legend = document.getElementById('legend-' + groupname + '-positive');
   for (let i = 0; i < input.length; i++) {
     let entries = input[i].split(';');
-    if (entries[14].charAt(1) !== '-') {
+    if (entries[selectors.amount].charAt(1) !== '-') {
       let legendSquare = document.createElement('div');
       legendSquare.className = 'legendsquare';
       legendSquare.classList.add(groupname + '-background');
-      let value = Math.abs(legendMultiplier * parseFloat(entries[14].slice(1, -1)) / (total));
+      let value = Math.abs(legendMultiplier * parseFloat(entries[selectors.amount].slice(1, -1)) / (total));
       legendSquare.style.height = '' + (value) + 'px';
       legend.appendChild(legendSquare);
     }
@@ -805,54 +920,54 @@ function drawTable() {
 
       if (j === 0) {
         let cell = document.createElement('p');
-        if (i === 0) { cell.innerHTML = 'index'; }
+        if (i === 0) { cell.innerHTML = 'Index'; }
         else       { cell.innerHTML = ''  + i; }
         cell.className = "cell";
         cell.style.width = "3vw";
         row.appendChild(cell);
       }
 
-      if (j === 1) { cell.style.width = "8vw"; row.appendChild(cell); }    // Datum
-      // if (j === 3) { cell.style.width = "10vw"; row.appendChild(cell); } // Buchungstext
-      if (j === 4) { cell.style.width = "40vw"; row.appendChild(cell); }   // Verwendungszweck
-      if (j === 11) {                                                      // Begünstigter
+      if (j === 1) { cell.style.width = "8vw"; row.appendChild(cell); }     // Date
+      if (j === 3) { cell.style.width = "10vw"; row.appendChild(cell); }    // Buchungstext
+      if (j === 4) { cell.style.width = "40vw"; row.appendChild(cell); }    // Purpose
+      if (j === 11) {                                                       // Beneficiary
         cell.style.width = "25vw";
         row.appendChild(cell);
       }
-      if (j === 14) {                                                      // Betrag
+      if (j === 14) {                                                       // Amount
         cell.style.width = "5vw";
         cell.style.paddingRight = "0.5vw";
         row.appendChild(cell);
-        if (entries[14].charAt(1) !==  '-') { cell.classList.add('positive-background'); }
-        if (entries[14].charAt(1) === '-') { cell.classList.add('negative-background'); }
+        if (entries[selectors.amount].charAt(1) !==  '-') { cell.classList.add('positive-background'); }
+        if (entries[selectors.amount].charAt(1) === '-') { cell.classList.add('negative-background'); }
       }
 
       if (i === 0) { cell.classList.remove('positive-background'); }
     }
 
     // Kategorien
-    if (entries[11] !== null) {
-      if (entries[11].includes('ADAC') || entries[11].includes('klarmobil') || entries[11].includes('Mecklenburgische') || entries[4].includes('Miete')) {
+    if (entries[selectors.beneficiary] !== null) {
+      if (entries[selectors.beneficiary].includes('ADAC') || entries[selectors.beneficiary].includes('klarmobil') || entries[selectors.beneficiary].includes('Mecklenburgische') || entries[selectors.purpose].includes('Miete')) {
         row.classList.add('monthly-background-transparent');
       }
 
-      if (entries[11].includes('AMAZON')) {
+      if (entries[selectors.beneficiary].includes('AMAZON')) {
         row.classList.add('amazon-background-transparent');
       }
 
-      if (entries[11].includes('PayPal')) {
+      if (entries[selectors.beneficiary].includes('PayPal') || entries[selectors.purpose].includes('PAYPAL')) {
         row.classList.add('paypal-background-transparent');
       }
 
-      if (entries[11].includes('REWE') || entries[11].includes('EDEKA') || entries[11].includes('NETTO')) {
+      if (entries[selectors.beneficiary].includes('REWE') || entries[selectors.beneficiary].includes('EDEKA') || entries[selectors.beneficiary].includes('NETTO')) {
         row.classList.add('food-background-transparent');
       }
 
-      if (entries[11].includes('Tankstelle') || entries[11].includes('SHELL') || entries[11].includes('ARAL')) {
+      if (entries[selectors.beneficiary].includes('Tankstelle') || entries[selectors.beneficiary].includes('SHELL') || entries[selectors.beneficiary].includes('ARAL')) {
         row.classList.add('gas-background-transparent');
       }
 
-      if (entries[11].includes('OstseeSparkasse')) {
+      if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
         row.classList.add('ospa-background-transparent');
       }
 

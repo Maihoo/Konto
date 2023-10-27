@@ -15,7 +15,7 @@
 </head>
 
 <body style="background-color: rgb(35, 35, 35); overflow-x: hidden;">
-  <h1 style="color: white; margin-top: 1vh;">Vertical Zoom</h1>
+  <h2 style="color: white; margin-top: 1rem; margin-bottom: 0.5rem;">Vertical Zoom</h2>
   <div class="graph-area-wrapper">
     <div style="width: 40px; position: relative; border-right: solid 1px black; ">
       <div id="slider-range0" class="vertical-range-slider"></div>
@@ -33,6 +33,9 @@
 
     <div id="ui-wrapper">
       <div id="legend">
+        <div style="width: 40px; position: relative; border-right: solid 1px black; ">
+          <div id="slider-range3" class="vertical-range-slider vertical-range-slider-smaller"></div>
+        </div>
         <div style="display: block; width: 55%; padding-bottom: 15rem;">
           <div class="legend-text-holder">
             <h1 class="legend-headline">Category</h1>
@@ -118,10 +121,15 @@
           </div>
           <div style="display: flex; justify-content: top; flex-direction: column; width: 50%;">
             <div class="buttonwrapper">
-              <button onclick="togglePath()" type="button" class="button"></button>
+              <button id="amount-button" onclick="toggleSort()" type="button" class="button"> Toggle sort </button>
             </div>
             <div class="buttonwrapper">
-              <button onclick="toggleGrid()" type="button" class="button"></button>
+              <button id="translatePDF" onclick="processAllPDFs()" type="button" class="button">
+                translate PDF
+                <span style="font-size: smaller;">
+                  Work in Progress
+                </span>
+              </button>
             </div>
             <div class="buttonwrapper">
               <button onclick="resetSettings()" type="button" class="button">Reset</button>
@@ -156,8 +164,12 @@
 
   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<!-- Include pdf.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<!-- Include pdf.worker.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
 
-    
+
   <div id="table"></div>
 </body>
 

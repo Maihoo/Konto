@@ -16,7 +16,6 @@ function addZeroToSingleDigit(number) {
   return numberString;
 }
 
-
 Date.prototype.addDays = function(days) {
   let date = new Date(this.valueOf());
   date.setDate(date.getDate() + days);
@@ -59,6 +58,14 @@ function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
   ctx.stroke();
 }
 
+function getDayOfWeek(day, month, year) {
+  const date = new Date('20' + year + '-' + month + '-' + day);
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayIndex = date.getDay();
+  
+  return daysOfWeek[dayIndex];
+}
+
 function togglePath() {
   pathMode = !pathMode;
 
@@ -83,7 +90,37 @@ function toggleGrid() {
 }
 
 function toggleOptions() {
-  document.getElementById('settings').classList.toggle('settings-hidden');
+  optionsExtended = !optionsExtended;
+  sessionStorage.setItem('optionsExtended', optionsExtended);
+
+  if (optionsExtended) {
+    document.getElementById('settings').classList.add('settings-hidden');
+  } else {
+    document.getElementById('settings').classList.remove('settings-hidden');
+  }
+}
+
+function toggleSort() {
+  switch (sortType) {
+    case 'amount':
+      sortType = 'date';
+      sessionStorage.setItem('sortType', sortType);
+
+      break;
+    
+    case 'date':
+      sortType = 'amount';
+      sessionStorage.setItem('sortType', sortType);
+
+      break;
+
+    default:
+      break;
+  }
+
+  initTextLines();
+  initRangeSlider2();
+  init();
 }
 
 function clearLines() {
@@ -102,14 +139,19 @@ function getMaxHight() {
   let current = totalBudget;
   let tempLowest = 1000000.0;
   let tempHighest = 0.0;
+  if (pastEvents < cutTextLines.length) {
+    pastEvents = cutTextLines.length - 1;
+  }
+
   let limiter = pastEvents;
-  if (cutTextLines.length < limiter) { limiter = cutTextLines.length; }
 
   for (let i = limiter; i > 0; i--) {
-    let entries = cutTextLines[i].split(';');
-    current += parseFloat(entries[14].slice(1, -1));
-    if (current < tempLowest)  { tempLowest  = current; }
-    if (current > tempHighest) { tempHighest = current; }
+    if (cutTextLines[i]) {
+      let entries = cutTextLines[i].split(';');
+      current += parseFloat(entries[14].slice(1, -1));
+      if (current < tempLowest)  { tempLowest  = current; }
+      if (current > tempHighest) { tempHighest = current; }
+    }
   }
 
   return tempHighest - tempLowest;
@@ -122,7 +164,7 @@ function getMaxHightAround() {
 
   let limiter = pastEvents;
   if (cutTextLines.length < limiter) {
-    limiter = cutTextLines.length;
+    limiter = cutTextLines.length - 1;
   }
 
   for (let i = 1; i < limiter + 1; i++) {

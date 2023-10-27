@@ -30,6 +30,7 @@ function initControls() {
   initRangeSlider0();
   initRangeSlider1();
   initRangeSlider2();
+  initRangeSlider3();
 }
 
 function handleKeyUp(event) {
@@ -270,6 +271,7 @@ function initRangeSlider0() {
 
 function initRangeSlider1() {
   let totalLength = allTextLines.length - 2;
+
   $(function() {
     $("#slider-range1").slider({
       range: true,
@@ -329,6 +331,25 @@ function initRangeSlider2() {
   });
 }
 
+function initRangeSlider3() {
+  $(function() {
+    $("#slider-range3").slider({
+      range: 'min',
+      orientation: "vertical",
+      min: 0,
+      max: 400,
+      value: 300,
+      change: function( event ) {
+        let value = $("#slider-range3").slider("value");
+        value = 400 - value;
+        legendMultiplier = value;
+        sessionStorage.setItem('legendMultiplyer', value);
+        init();
+      }
+    });
+  });
+}
+
 function handlePrediction(event) {
   let uilinetemp = document.getElementById('uilinetemp');
   let uiltCtx = uilinetemp.getContext('2d');
@@ -340,4 +361,136 @@ function handlePrediction(event) {
             parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
             'rgba(255, 0, 0, 0.5)',
             1);
+}
+
+function processAllPDFs() {
+  pdfNames = [
+    'statements/Konto_1101110771-Auszug_2019_0004.pdf',
+    'statements/Konto_1101110771-Auszug_2019_0005.pdf',
+    'statements/Konto_1101110771-Auszug_2019_0006.pdf',
+    'statements/Konto_1101110771-Auszug_2019_0007.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0001.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0002.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0003.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0004.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0005.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0006.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0007.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0008.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0009.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0010.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0011.pdf',
+    'statements/Konto_1101110771-Auszug_2020_0012.pdf',
+    'statements/Konto_1101110771-Auszug_2021_0001.pdf',
+    'statements/Konto_1101110771-Auszug_2021_0002.pdf',
+    'statements/Konto_1101110771-Auszug_2021_0003.pdf',
+    'statements/Konto_1101110771-Auszug_2021_0004.pdf',
+    'statements/Konto_1101110771-Auszug_2021_0005.pdf'
+  ];
+
+  for (let i = pdfNames.length - 1; i > 0; i--) {
+    setTimeout(() => {
+      console.log('processing pdf', pdfNames[i]);
+
+      processPDFContent(pdfNames[i]);
+    }, (pdfNames.length - i) * 200);
+  }
+
+  setTimeout(() => {
+    initTextLines();
+    initControls();
+    init();
+  }, (pdfNames.length + 1) * 200);
+}
+
+function processPDFContent(name) {
+  let totalTotal = 0;
+  fetch(name)
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      // Load PDF file using pdf.js
+      return pdfjsLib.getDocument(new Uint8Array(data)).promise;
+    })
+    .then(pdf => {
+      // clear past lines
+      pdfImportedLines = [];
+      // Read PDF content
+      const numPages = pdf.numPages;
+      for (let i = numPages; i >= 1; i--) {
+        console.log('Page', i);
+        pdf.getPage(i).then(page => {
+          return page.getTextContent();
+        }).then(content => {
+          setTimeout(() => {
+            // Extract text from the PDF page
+            let allLines = [];
+            for (let j = content.items.length - 1; j > 0; j--) {
+              let itemString = content.items[j].str;
+              itemString = itemString.replace(/\n/g, ''); // replace breaks
+              itemString = itemString.replace(/\t/g, ''); // replace tabs
+              itemString = itemString.replace(/ /g, '');  // replace spaces
+              console.log(itemString);
+
+              allLines.push(itemString);
+            }
+            // clear empty lines
+            allLines = allLines.filter(function(item) {
+              return item !== '' && item !== '.';
+            });
+
+            for (let j = 1; j < allLines.length - 1; j++) {
+              if (allLines[j].length === 10 && allLines[j - 1].length === 10) {
+                for (let k = 1; k < 12; k++) {
+                  let nextAmount = allLines[j + k];
+                  if (parseFloat(nextAmount.slice(0, -1)) != NaN && (nextAmount.charAt(nextAmount.length - 1) === '+' || nextAmount.charAt(nextAmount.length - 1) === '-')) {
+                    let dateParts = allLines[j].split('.');
+                    if (dateParts.length >= 3 && !allLines[j + k + 1].includes('Kontostand')) {
+                      const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
+                      let purpose = allLines[j + 2];
+                      if (j + 2 !== j + k - 1) {
+                        purpose += ' ' + allLines[j + k - 1];
+                      }
+
+                      let amount = allLines[j + k];
+                      amount.replace('.', '');
+                      amount.replace(',', '.');
+
+                      if (amount.charAt(amount.length - 1) === '-') {
+                        amount = '-' + amount.slice(0, -1);
+                      } else {
+                        amount = amount.slice(0, -1);
+                      }
+
+                      if (parseFloat(amount) === NaN) {
+                        amount = 0;
+                      }
+
+                      totalTotal += parseFloat(amount);
+                      console.log('totalTotal', totalTotal, amount);
+                        if (parseFloat(amount) > 0) {
+                      }
+                      if (!isNaN(parseFloat(amount))) {
+                        //                                        date              text                          purpose                             beneficiary                     amount
+                        dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
+                      }
+                    }
+
+                    k = 20;
+                  }
+                }
+              }
+            }
+          }, (numPages - i) * 20);
+        }).then();
+      }
+    })
+    .catch(error => {
+      console.error("Error reading PDF file:", error);
+    }
+  );
+
+  setTimeout(() => {
+    console.log('totalTotal', totalTotal);
+  }, 10000);
+
 }
