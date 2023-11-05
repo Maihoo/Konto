@@ -12,6 +12,7 @@ $(document).ready(function () {
     },
     success: function (data) {
       dataset = data;
+      resetHTML();
       getFromSessionStorage();
       initTextLines();
       initControls();
@@ -21,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 10814.10;
+const STARTBUDGET = 9807.20;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly' , 'amazon', 'paypal', 'food', 'ospa', 'negative', 'gas'];
@@ -37,6 +38,10 @@ const selectors= {
   'amount': 14,
   'total': 17
 };
+
+const replacements = [
+//  selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1300'
+]
 
 // path drawing
 const pathThickness = 2;
@@ -56,15 +61,12 @@ let optionsExtended = false;
 let dataset;
 
 let verticalZoomFactor = 1.0;
-let pastEventsDataset = 250;
-let pastEventsOffsetDataset = 0;
-
-let pastEvents = pastEventsDataset - 1;
 let pastEventsOffset = 0;
+let pastEvents = 250;
 
 let legendMultiplier = 100;
-let maxHight = 500;
-let starthight = 0.0;
+let maxHeight = 500;
+let startHeight = 0.0;
 let endbudget = 0.0;
 let budget = 0.0;
 let lowest = 0.0;
@@ -101,25 +103,20 @@ let ospaEntries = [];
 let gasEntries = [];
 let restEntries = [];
 
-
 function resetSettings() {
-  initTextLines();
   zoomInPressed = false;
   zoomOutPressed = false;
   pathMode = false;
   gridMode = false;
   showShadow = true;
 
+  totalBudget = STARTBUDGET;
   verticalZoomFactor = 1.0;
-  pastEventsDataset = 250;
-  pastEventsOffsetDataset = 0;
-
-  pastEvents = pastEventsDataset - 1;
   pastEventsOffset = 0;
-
+  pastEvents = 250;
   legendMultiplier = 100;
-  maxHight = 500;
-  starthight = 0.0;
+  maxHeight = 500;
+  startHeight = 0.0;
   endbudget = 0.0;
   budget = 0.0;
   lowest = 0.0;
@@ -135,7 +132,6 @@ function resetSettings() {
 
   startDate = "";
   endDate = "";
-
   backgroundColor = '35, 35, 35';
   lineColor = '255, 0, 0';
   gridColor = '255, 255, 255';
@@ -144,15 +140,15 @@ function resetSettings() {
   document.getElementById('settings').style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
 
-  clearLines();
-  reset();
   clearSessionStorage();
+  clearLines();
+  resetHTML();
   initTextLines();
   initControls();
   init();
 }
 
-function reset() {
+function resetHTML() {
   dateLines = [];
   path = [];
   linepoint = [];
@@ -204,7 +200,45 @@ function initTextLines() {
     return item !== '' && item !== '.';
   });
 
-  cutTextLines = allTextLines.slice(pastEventsOffsetDataset, pastEventsOffsetDataset + pastEventsDataset);
+  for (let i = 0; i < replacements.length; i++) {
+    const replacementParts = replacements[i].split(';');
+    if (replacementParts.length < 3) {
+      return;
+    }
+
+    const selectorIndex = parseInt(replacementParts[0]);
+    const selectorValue = replacementParts[1];
+    const toReplaceIndex = parseInt(replacementParts[2]);
+    const toReplaceValue = replacementParts[3];
+
+    for (let j = 0; j < allTextLines.length - 1; j++) {
+      let line = allTextLines[j];
+      let lineParts = line.split(';');
+      if (lineParts.length < selectorIndex || lineParts.length < toReplaceIndex) {
+        return;
+      }
+
+      if (lineParts[selectorIndex].includes(selectorValue)) {
+        lineParts[toReplaceIndex] = '"' + toReplaceValue + '"';
+
+        line = "";
+        for (let k = 0; k < lineParts.length; k++) {
+          line += lineParts[k];
+          if (k !== lineParts.length - 1) {
+            line += ';';
+          }
+        }
+
+        allTextLines[j] = line;
+      }
+    }
+  }
+
+  if (pastEvents > allTextLines.length - 1) {
+    pastEvents = allTextLines.length - 1;
+  }
+
+  cutTextLines = allTextLines.slice(pastEventsOffset, pastEventsOffset + pastEvents + 1);
 
   //insert date into constant positions
   const currentDate = new Date();
@@ -270,8 +304,6 @@ function sortArrayByField(arr, fieldIndex) {
 }
 
 function clearSessionStorage() {
-  sessionStorage.setItem('pastEventsDataset', '');
-  sessionStorage.setItem('pastEventsOffsetDataset', '');
   sessionStorage.setItem('pastEvents', '');
   sessionStorage.setItem('pastEventsOffset', '');
   sessionStorage.setItem('backgroundColor', '');
@@ -284,17 +316,7 @@ function clearSessionStorage() {
 }
 
 function getFromSessionStorage() {
-  let sessionValue = sessionStorage.getItem("pastEventsDataset");
-  if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEventsDataset = parseInt(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("pastEventsOffsetDataset");
-  if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEventsOffsetDataset = parseInt(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("pastEvents");
+  let sessionValue = sessionStorage.getItem("pastEvents");
   if (sessionValue && parseInt(sessionValue) >= 0) {
     pastEvents = parseInt(sessionValue);
   }
@@ -351,18 +373,15 @@ function getFromSessionStorage() {
 }
 
 function init() {
-  reset();
-  legendMultiplier = (legendMultiplier * 1000) / (pastEvents - pastEventsOffset);
+  maxHeight = getMaxHeight();
+  getMaxHeightAround();
 
-  maxHight = getMaxHight();
-  getMaxHightAround();
-
-  setAmounts();
   drawCanvas();
   drawPath();         //draws 2px solid line
   drawBlurPath();     //draws opaque background below path
   hidePathBlurTop();  //caps blurred paths above path
 
+  setAmounts();
   setDates();
 
   drawLegends();
@@ -378,7 +397,7 @@ function drawPath() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  for (let i = 0; i < path.length-1; i++) {
+  for (let i = 0; i < path.length - 1; i++) {
     drawLine(ctx,
       parseInt(path[i][1]),
       parseInt(path[i][0]),
@@ -395,8 +414,8 @@ function drawBlurPath() {
   ctx.clearRect(0, 0, blurCanvas.width, blurCanvas.height);
   const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   for (let i = shadowLength/shadowDistance; i >= 0; i--) {
-    for (let j = 0; j < path.length-1; j++) {
-      const heightFactor = (1000)/path[j][0];
+    for (let j = 0; j < path.length - 1; j++) {
+      const heightFactor = 1000 / path[j][0];
       drawLine(ctx,
         parseInt(path[j][1]),
         parseInt(path[j][0] - 20 + i * shadowDistance * verticalZoomFactor),
@@ -434,33 +453,34 @@ function hidePathBlurTop() {
 
 function setAmounts() {
   const uiCanvas = document.getElementById('uicanvas');
+  const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   uiCanvas.style.marginTop  = -EXTRAAREA + 'px';
   uiCanvas.style.marginLeft = -EXTRAAREA + 'px';
   let valueTop = document.createElement('p');
-  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">~' + parseInt(highest) + ',00€</p>';
+  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + parseInt(highest) + ',00€</p>';
   valueTop.className = 'uiElement';
   valueTop.classList.add('vertical');
-  valueTop.style.position = 'absolute';
+  valueTop.classList.add('amount-texts');
+  valueTop.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
   valueTop.style.marginTop = '' + parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA) + 'px';
   valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvas.appendChild(valueTop);
 
   let valueBottom = document.createElement('p');
-  valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">~' + parseInt(lowest) + ',00€</p>';
+  valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + parseInt(lowest) + ',00€</p>';
   valueBottom.className = 'uiElement';
   valueBottom.classList.add('vertical');
-  valueBottom.style.position = 'absolute';
+  valueBottom.classList.add('amount-texts');
+  valueBottom.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
   valueBottom.style.marginTop = '' + (525 + EXTRAAREA) + 'px'
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvas.appendChild(valueBottom);
 
+  //draw Lines
   for (let i = 0; i < 100; i++) {
     let valueLine = document.createElement('div');
     valueLine.classList.add('vertical');
-    valueLine.style.position = 'absolute';
-    valueLine.style.zIndex = '80';
-    valueLine.style.height = '1px';
-    valueLine.style.width = '2000px';
+    valueLine.classList.add('value-line');
     const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
     const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
 
@@ -474,6 +494,31 @@ function setAmounts() {
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
     uiCanvas.appendChild(valueLine);
   }
+
+  //draw Amounts
+  let amountHolder = document.createElement('div');
+  amountHolder.classList.add('amount-holder');
+  amountHolder.classList.add('vertical');
+  amountHolder.style.backgroundColor = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
+  for (let i = 20; i >= -10; i--) {
+    let valueText = document.createElement('div');
+    valueText.classList.add('value-text');
+    valueText.innerHTML = i + 'k';
+
+    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
+    valueText.style.color = 'rgba(' + gridColorClear + ', 0.1)';
+    if (i % 2 === 0)  { valueText.style.color = 'rgba(' + gridColorClear + ', 0.3)'; }
+    if (i % 10 === 0) { valueText.style.color = 'rgba(' + gridColorClear + ', 0.6)'; }
+    if (i % 20 === 0) { valueText.style.color = 'rgba(' + gridColorClear + ', 0.8)'; }
+    if (i === 0)      { valueText.style.color = 'rgba(' + gridColorClear + ', 1.0)'; }
+
+    valueText.style.opacity = '100%';
+    valueText.style.marginTop = '' + parseInt(550 - valueToPx(i * 1000) + valueToPx(lowest) + EXTRAAREA) + 'px';
+    amountHolder.appendChild(valueText);
+  }
+
+  uiCanvas.appendChild(amountHolder);
 }
 
 function setDates() {
@@ -536,9 +581,8 @@ function drawCanvas() {
   dateLines = [];
   let canvas = document.getElementById('canvas');
   let paddingLeft = 1000 + moveOffsetX;
-
-  let diffHight = 550 - valueToPx(endbudget - lowest);
-  let diffHightIndex = 0;
+  let diffHeight = 550 - valueToPx(endbudget - lowest);
+  let diffHeightIndex = 0;
   let lastDayDiff = 0;
   let fgOffset = 0;
   let evenFgOffset = 0;
@@ -590,7 +634,7 @@ function drawCanvas() {
     let entries = cutTextLines[i].split(';');
     let decided = false;
     let value = valueToPx(entries[selectors.amount].slice(1, -1));
-    let diffBefore = diffHight;
+    let diffBefore = diffHeight;
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     let sharedDates = 0;
     for (let j = i - 1; j > 0 + 1; j--) {
@@ -615,10 +659,10 @@ function drawCanvas() {
     square.style.height = '' + Math.abs(value) + 'px';
     square.style.width = '' + (dayWidth - 2) + 'px';
 
-    diffHight -= value;
-    if (diffDays > 0) { square.id = "linePoint" + diffHightIndex; diffHightIndex += 2; }
-    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHight + 'px'; }
-    else                               { square.style.marginTop = (diffHight + value) + 'px'; }
+    diffHeight -= value;
+    if (diffDays > 0) { square.id = "linePoint" + diffHeightIndex; diffHeightIndex += 2; }
+    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHeight + 'px'; }
+    else                               { square.style.marginTop = (diffHeight + value) + 'px'; }
 
     // Fill empty days
     if (diffDays > 1 && sortType !== 'amount') {
@@ -632,6 +676,7 @@ function drawCanvas() {
       lueckenfueller.style.marginLeft = (paddingLeft - ((lastDayDiff - 1) * dayWidth)) + 'px';
       canvas.appendChild(lueckenfueller);
     }
+
 
     lastDayDiff = differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     if (sortType === 'amount') {
@@ -672,7 +717,7 @@ function drawCanvas() {
 
     // Push Path Points
     let temp = [];
-    temp.push(diffHight);
+    temp.push(diffHeight);
     temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
     path.push(temp);
 
@@ -776,8 +821,10 @@ function drawCanvas() {
 }
 
 function drawLegends() {
-  document.getElementById('legend-total-positive').innerHTML = '';
-  document.getElementById('legend-total-negative').innerHTML = '';
+  var legendSquareHolders = document.getElementsByClassName('legend-square-holder');
+  for (var i = 0; i < legendSquareHolders.length; i++) {
+    legendSquareHolders[i].innerHTML = '';
+  }
 
   let positiveTotal = 0;
   positiveTotal += getTotal(monthlyEntries, true);

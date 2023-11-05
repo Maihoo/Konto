@@ -24,7 +24,7 @@ Date.prototype.addDays = function(days) {
 
 function pxToValue(yPixel) {
   let pixel = 550 - parseInt(yPixel.slice(0, -2));
-  return parseInt((pixel * (maxHight / 500) + lowest) / verticalZoomFactor);
+  return parseInt((pixel * (maxHeight / 500) + lowest) / verticalZoomFactor);
 }
 
 function pxToDate(xPixel) {
@@ -42,11 +42,7 @@ function pxToDate(xPixel) {
 }
 
 function valueToPx(value) {
-  return parseInt(value) * verticalZoomFactor * (500 / maxHight);
-}
-
-function dayDiffToPx(dayDiff) {
-
+  return parseInt(value) * verticalZoomFactor * (500 / maxHeight);
 }
 
 function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
@@ -62,7 +58,6 @@ function getDayOfWeek(day, month, year) {
   const date = new Date('20' + year + '-' + month + '-' + day);
   const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayIndex = date.getDay();
-  
   return daysOfWeek[dayIndex];
 }
 
@@ -105,13 +100,11 @@ function toggleSort() {
     case 'amount':
       sortType = 'date';
       sessionStorage.setItem('sortType', sortType);
-
       break;
-    
+
     case 'date':
       sortType = 'amount';
       sessionStorage.setItem('sortType', sortType);
-
       break;
 
     default:
@@ -135,17 +128,12 @@ function clearLines() {
   });
 }
 
-function getMaxHight() {
+function getMaxHeight() {
   let current = totalBudget;
   let tempLowest = 1000000.0;
   let tempHighest = 0.0;
-  if (pastEvents < cutTextLines.length) {
-    pastEvents = cutTextLines.length - 1;
-  }
 
-  let limiter = pastEvents;
-
-  for (let i = limiter; i > 0; i--) {
+  for (let i = pastEvents; i > 0; i--) {
     if (cutTextLines[i]) {
       let entries = cutTextLines[i].split(';');
       current += parseFloat(entries[14].slice(1, -1));
@@ -157,24 +145,21 @@ function getMaxHight() {
   return tempHighest - tempLowest;
 }
 
-function getMaxHightAround() {
+function getMaxHeightAround() {
   let current = totalBudget;
   lowest = 1000000.0;
   highest = totalBudget;
 
-  let limiter = pastEvents;
-  if (cutTextLines.length < limiter) {
-    limiter = cutTextLines.length - 1;
-  }
-
-  for (let i = 1; i < limiter + 1; i++) {
+  //starts at 1 to ignore first row
+  for (let i = 1; i <= pastEvents; i++) {
     let entries = cutTextLines[i].split(';');
     current -= parseFloat(entries[14].slice(1, -1));
-    if (i > pastEventsOffset + 1) {
+    if (i > pastEventsOffset) {
       if (current < lowest)  { lowest  = current; }
       if (current > highest) { highest = current; }
-      if (i === 1) { endDate = entries[1].slice(1, -1); }
     }
+
+    if (i === 1) { endDate = entries[1].slice(1, -1); }
 
     startDate = entries[1].slice(1, -1);
     endbudget = current;
@@ -183,7 +168,6 @@ function getMaxHightAround() {
 
 function hexToRgb(hex) {
   hex = hex.replace('#', '');
-
   if (hex.length === 3) {
     hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
   }

@@ -1,11 +1,7 @@
 function resetControls() {
-  let range1 = document.getElementById('slider-range1'),
+  let range1 = document.getElementById('range-slider-1'),
   range1Clone = range1.cloneNode(true);
   range1.parentNode.replaceChild(range1Clone, range1);
-
-  let range2 = document.getElementById('slider-range2'),
-  range2Clone = range2.cloneNode(true);
-  range2.parentNode.replaceChild(range2Clone, range2);
 }
 
 function initControls() {
@@ -30,7 +26,6 @@ function initControls() {
   initRangeSlider0();
   initRangeSlider1();
   initRangeSlider2();
-  initRangeSlider3();
 }
 
 function handleKeyUp(event) {
@@ -44,6 +39,7 @@ function handleKeyUp(event) {
   }
 }
 
+//TODO: fix maybe
 function handleKeyDown(event) {
   if (event.keyCode === 187 && !zoomInPressed) {
     zoomInPressed = true;
@@ -58,9 +54,7 @@ function handleKeyDown(event) {
     if (pastEvents + totalChange < cutTextLines.length) {
       pastEvents += totalChange;
     } else {
-      pastEventsDataset += totalChange;
-      pastEvents += totalChange;
-      initTextLines();
+      pastEvents = cutTextLines.length - 1;
     }
 
     init();
@@ -253,17 +247,20 @@ function handleDragMouseDown(event) {
 
 function initRangeSlider0() {
   $(function() {
-    $("#slider-range0").slider({
+    $("#range-slider-0").slider({
       range: 'min',
       orientation: "vertical",
       min: 0,
       max: 200,
-      value: 100,
+      value: verticalZoomFactor * 100,
       change: function( event ) {
-        let value = $("#slider-range0").slider("value");
-        verticalZoomFactor = (value) / 100;
-        sessionStorage.setItem('verticalZoomFactor', verticalZoomFactor);
-        init();
+        let value = $("#range-slider-0").slider("value");
+        if (verticalZoomFactor !== (value) / 100) {
+          verticalZoomFactor = (value) / 100;
+          sessionStorage.setItem('verticalZoomFactor', verticalZoomFactor);
+          resetHTML();
+          init();
+        }
       }
     });
   });
@@ -273,23 +270,22 @@ function initRangeSlider1() {
   let totalLength = allTextLines.length - 2;
 
   $(function() {
-    $("#slider-range1").slider({
+    $("#range-slider-1").slider({
       range: true,
       min: 0,
       max: totalLength,
-      values: [totalLength - pastEventsDataset, totalLength-pastEventsOffsetDataset],
+      values: [totalLength - pastEvents, totalLength - pastEventsOffset],
       change: function( event ) {
         setTimeout(function() {
-          let value1 = $( "#slider-range1" ).slider( "values", 0 );
-          let value2 = $( "#slider-range1" ).slider( "values", 1 );
-          if (event.eventPhase > 0 && (pastEventsDataset !== parseInt(value2) - parseInt(value1))) {
-            pastEventsDataset = parseInt(value2) - parseInt(value1);
-            pastEventsOffsetDataset = totalLength - parseInt(value2);
-            sessionStorage.setItem('pastEventsDataset', pastEventsDataset);
-            sessionStorage.setItem('pastEventsOffsetDataset', pastEventsOffsetDataset);
-            if (pastEventsDataset < pastEvents) { pastEvents = pastEventsDataset - 2; }
+          let value1 = $( "#range-slider-1" ).slider( "values", 0 );
+          let value2 = $( "#range-slider-1" ).slider( "values", 1 );
+          if (event.eventPhase > 0 && (pastEvents !== parseInt(value2) - parseInt(value1))) {
+            pastEvents = parseInt(value2) - parseInt(value1);
+            pastEventsOffset = totalLength - parseInt(value2);
+            sessionStorage.setItem('pastEvents', pastEvents);
+            sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
+            resetHTML();
             initTextLines();
-            initRangeSlider2();
             init();
           }
         }, 100);
@@ -299,52 +295,21 @@ function initRangeSlider1() {
 }
 
 function initRangeSlider2() {
-  let totalLength = cutTextLines.length - 2;
-  if (totalLength < pastEvents) {
-    pastEvents = totalLength;
-  }
-
-  $( function() {
-    $( "#slider-range2" ).slider({
-      range: true,
-      min: 0,
-      max: totalLength,
-      values: [0, totalLength - pastEventsOffset],
-      change: function(event) {
-        totalLength = cutTextLines.length - 2;
-        if (totalLength < pastEvents) {
-          pastEvents = totalLength;
-        }
-        let value1 = $( "#slider-range2" ).slider( "values", 0 );
-        let value2 = $( "#slider-range2" ).slider( "values", 1 );
-        if ((event.eventPhase > 0 || !event.eventPhase) && (pastEvents !== parseInt(value2) - parseInt(value1) || pastEventsOffset !== totalLength - parseInt(value2))) {
-          pastEvents = parseInt(value2) - parseInt(value1) - 2;
-          pastEventsOffset = totalLength - parseInt(value2);
-          sessionStorage.setItem('pastEvents', pastEvents);
-          sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
-          if (event.originalEvent) {
-            init();
-          }
-        }
-      }
-    });
-  });
-}
-
-function initRangeSlider3() {
   $(function() {
-    $("#slider-range3").slider({
+    $("#range-slider-2").slider({
       range: 'min',
       orientation: "vertical",
       min: 0,
       max: 400,
-      value: 300,
+      value: 400 - legendMultiplier,
       change: function( event ) {
-        let value = $("#slider-range3").slider("value");
+        let value = $("#range-slider-2").slider("value");
         value = 400 - value;
-        legendMultiplier = value;
-        sessionStorage.setItem('legendMultiplyer', value);
-        init();
+        if (legendMultiplier !== value) {
+          legendMultiplier = value;
+          sessionStorage.setItem('legendMultiplyer', value);
+          drawLegends();
+        }
       }
     });
   });

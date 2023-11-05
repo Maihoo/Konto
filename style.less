@@ -83,46 +83,56 @@ p {
 
 .range-slider {
   width: 105%;
-  height: 12px;
+  height: 8px;
+  max-height: 8px;
   margin-top: 0.0rem;
-  border: solid black 1px;
 
   &.ui-widget-content {
     background-color: rgba(255, 255, 255, 0.1) !important;
   }
-}
 
-.vertical-range-slider {
-  width: 12px;
-  min-height: 550px;
-  margin-top: 25px;
-  margin-left: 12px;
-  border: solid black 1px;
-
-  &.ui-widget-content {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-  }
-}
-
-.vertical-range-slider-smaller {
-  min-height: 500px;
-
-  .ui-widget-header {
-    background-color: rgb(57, 57, 57) !important;
+  .ui-slider-handle {
+    max-width: 8px;
+    max-height: 16px;
+    border: solid black 1px !important;
+    background-color:rgb(200, 200, 255) !important;
   }
 
-  &.ui-widget-content {
-    background-color: rgb(100, 100, 255) !important;
+  .ui-widget-header  {
+    background:rgb(100, 100, 255) !important;
   }
-}
 
-.ui-widget-header  {
-  background:rgb(100, 100, 255) !important;
-}
+  &.range-slider-inverted {
+    min-height: 500px;
 
-.ui-slider-handle {
-  border: solid black 1px !important;
-  background-color:rgb(200, 200, 255) !important;
+    .ui-widget-header {
+      background-color: rgb(57, 57, 57) !important;
+    }
+
+    &.ui-widget-content {
+      background-color: rgb(100, 100, 255) !important;
+    }
+  }
+
+  &.range-slider-vertical {
+    margin-top: 0.75rem;
+    margin-left: 12px;
+    max-width: 8px;
+    width: 8px;
+    min-height: 575px;
+
+  &.range-slider-vertical-smaller {
+    min-height: 535px;
+  }
+
+
+    .ui-slider-handle {
+      max-height: 8px;
+      max-width: 16px;
+      border: solid black 1px !important;
+      background-color:rgb(200, 200, 255) !important;
+    }
+  }
 }
 
 .uiElement {
@@ -217,7 +227,7 @@ h2 {
 
 .settings-hidden {
   margin-top: -7.5rem;
-  
+
   h1 {
     padding-top: 0.35rem;
   }
@@ -232,7 +242,31 @@ h2 {
   }
 }
 
+.value-line {
+  z-index: 80;
+  position: absolute;
+  height: 1px;
+  width: 2000px;
+}
 
+.value-text {
+  z-index: 80;
+  position: absolute;
+  width: 200px;
+}
+
+.amount-holder {
+  position: absolute;
+  width: 2rem;
+  height: 100%;
+  z-index: 2000;
+  padding-left: 0.5rem;
+}
+
+.amount-texts {
+  position: absolute;
+  z-index: 2001;
+}
 
 #expand-button {
   margin: -2.4rem 0 0 15.9rem !important;
@@ -276,7 +310,9 @@ h2 {
 }
 
 .range-headline {
-  margin-bottom: 0rem;
+  margin-bottom: 0.3rem;
+  font-size: small;
+  font-weight: bold;
 }
 
 .legend-headline {
