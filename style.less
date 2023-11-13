@@ -31,23 +31,6 @@ body {
 @gas-color-transparent:     rgba(0, 236, 216, 0.356);
 @debt-color-transparent:    rgba(100, 200, 100, 0.2);
 
-.color-picker-wrapper {
-  display: flex ;
-  width: 15rem !important;
-  height: 1.6rem !important;
-  justify-content: center;
-  margin-top: 1rem !important;
-  padding: 0.1rem 0.7rem 0.2rem 0.5rem;
-
-  .color-picker {
-    background-color: @button-color;
-    border: none;
-    height: auto;
-    width: 4rem;
-    margin: -0.5rem 0 0 auto;
-  }
-}
-
 .graph-area-wrapper {
   display: inline-flex;
   border: solid 1px black;
@@ -81,8 +64,103 @@ p {
   margin: 0;
 }
 
+.checkbox-container {
+  display: block;
+  position: relative;
+  padding-left: 15px;
+  cursor: pointer;
+  font-size: 22px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  /* Hide the browser's default checkbox */
+  input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+  }
+
+  h2 {
+    margin-top: 0;
+  }
+  
+  /* Create a custom checkbox */
+  .checkmark {
+    position: absolute;
+    top: 0;
+    left: 0.5rem;
+    right: 0.5rem;
+    height: 0.5rem;
+    width: 0.5rem;
+    background-color: transparent;
+    border-radius: 1rem;
+    border: 4px solid green
+  }
+  
+  &:hover input ~ .checkmark {
+    outline: 1px solid #fff;
+  }
+  
+  input:checked ~ .checkmark {
+    background-color: #fff;
+  }
+
+  &.others {
+    @my-color: @negative-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.amazon {
+    @my-color: @amazon-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.paypal {
+    @my-color: @paypal-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.food {
+    @my-color: @food-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.monthly {
+    @my-color: @monthly-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.ospa {
+    @my-color: @ospa-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+
+  &.gas {
+    @my-color: @gas-color;
+    color: @my-color;
+    .checkmark { border: 4px solid @my-color; }
+    input:checked ~ .checkmark { background-color: @my-color; }
+  }
+}
+
 .range-slider {
-  width: 105%;
+  width: 90%;
   height: 8px;
   max-height: 8px;
   margin-top: 0.0rem;
@@ -98,7 +176,7 @@ p {
     background-color:rgb(200, 200, 255) !important;
   }
 
-  .ui-widget-header  {
+  .ui-widget-header {
     background:rgb(100, 100, 255) !important;
   }
 
@@ -159,13 +237,13 @@ h1 {
   margin: 0;
   padding: 1.0rem 0.5rem 0.5rem 1rem;
 
-  &.others  { color: @negative-color; }
-  &.amazon  { color: @amazon-color; }
-  &.paypal  { color: @paypal-color; }
-  &.food    { color: @food-color; }
+  &.others { color: @negative-color; }
+  &.amazon { color: @amazon-color; }
+  &.paypal { color: @paypal-color; }
+  &.food { color: @food-color; }
   &.monthly { color: @monthly-color; }
-  &.ospa    { color: @ospa-color; }
-  &.gas     { color: @gas-color; }
+  &.ospa { color: @ospa-color; }
+  &.gas { color: @gas-color; }
 }
 
 h2 {
@@ -174,13 +252,13 @@ h2 {
   margin-left: 0;
   margin-top: 0;
 
-  &.others  { color: @negative-color; }
-  &.amazon  { color: @amazon-color; }
-  &.paypal  { color: @paypal-color; }
-  &.food    { color: @food-color; }
+  &.others { color: @negative-color; }
+  &.amazon { color: @amazon-color; }
+  &.paypal { color: @paypal-color; }
+  &.food { color: @food-color; }
   &.monthly { color: @monthly-color; }
-  &.ospa    { color: @ospa-color; }
-  &.gas     { color: @gas-color; }
+  &.ospa { color: @ospa-color; }
+  &.gas { color: @gas-color; }
 }
 
 #ui-wrapper {
@@ -300,6 +378,32 @@ h2 {
   display: flex;
   width: 200px;
   padding-top: 0.8rem;
+}
+
+.color-picker-holder {
+  p {
+    width: 14rem;
+    height: 2.5rem;
+    margin-top: -0.125rem;
+  }
+  
+  .color-picker-wrapper {
+    display: flex ;
+    width: 15rem !important;
+    height: 1.6rem !important;
+    justify-content: center;
+    margin-top: 1rem !important;
+    padding: 0.1rem 0.7rem 0.2rem 0.5rem;
+  
+    .color-picker {
+      background-color: @button-color;
+      border: none;
+      height: auto;
+      width: 3rem;
+      height: 1.8rem;
+      margin: -0.0625rem 0 0 auto;
+    }
+  }
 }
 
 .rangewrapper {

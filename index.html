@@ -43,43 +43,71 @@
             <h1 class="legend-headline">Out</h1>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item monthly">⬤ Monthly</h2>
+            <label class="checkbox-container monthly">
+              <h2 class="legend-item">Monthly</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label><!--⬤-->
             <div id="legend-monthly-positive" class="legend-square-holder"></div>
             <div id="legend-monthly-negative" class="legend-square-holder"></div>
             <div id="legend-monthly-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item amazon">⬤ Amazon</h2>
+            <label class="checkbox-container amazon">
+              <h2 class="legend-item">Amazon</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-amazon-positive" class="legend-square-holder"></div>
             <div id="legend-amazon-negative" class="legend-square-holder"></div>
             <div id="legend-amazon-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item paypal">⬤ PayPal</h2>
+            <label class="checkbox-container paypal">
+              <h2 class="legend-item">PayPal</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-paypal-positive" class="legend-square-holder"></div>
             <div id="legend-paypal-negative" class="legend-square-holder"></div>
             <div id="legend-paypal-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item food">⬤ Food</h2>
+            <label class="checkbox-container food">
+              <h2 class="legend-item">Food</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-food-positive" class="legend-square-holder"></div>
             <div id="legend-food-negative" class="legend-square-holder"></div>
             <div id="legend-food-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item ospa">⬤ Cash</h2>
+            <label class="checkbox-container ospa">
+              <h2 class="legend-item">Cash</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-ospa-positive" class="legend-square-holder"></div>
             <div id="legend-ospa-negative" class="legend-square-holder"></div>
             <div id="legend-ospa-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <h2 class="legend-item gas">⬤ Gas</h2>
+            <label class="checkbox-container gas">
+              <h2 class="legend-item">Gas</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-gas-positive" class="legend-square-holder"></div>
             <div id="legend-gas-negative" class="legend-square-holder"></div>
             <div id="legend-gas-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder" style="padding-bottom: 5rem;">
-            <h2 class="legend-item others">⬤ others </h2>
+            <label class="checkbox-container others">
+              <h2 class="legend-item">Others</h2>
+              <input type="checkbox" checked="checked">
+              <span class="checkmark"></span>
+            </label>
             <div id="legend-negative-positive" class="legend-square-holder"></div>
             <div id="legend-negative-negative" class="legend-square-holder"></div>
             <div id="legend-negative-subtract" class="legend-square-holder"></div>
@@ -127,7 +155,7 @@
               <button id="translatePDF" onclick="processAllPDFs()" type="button" class="button">
                 translate PDF
                 <span style="font-size: smaller;">
-                  Work in Progress
+                  (Work in Progress)
                 </span>
               </button>
             </div>
@@ -136,20 +164,20 @@
             </div>
           </div>
         </div>
-        <div style="display: flex; flex-direction: column;">
+        <div class="color-picker-holder">
           <div class="buttonwrapper button color-picker-wrapper">
-            Background Color
+            <p>Background Color</p>
             <input type="color" id="background-color-picker" class="color-picker" value="#323232">
           </div>
           <div class="buttonwrapper button color-picker-wrapper">
-            Line Color
+            <p>Line Color</p>
             <input type="color" id="line-color-picker" class="color-picker" value="#ff0000">
           </div>
           <div class="buttonwrapper button color-picker-wrapper">
-            Grid Color
+            <p>Grid Color</p>
             <input type="color" id="grid-color-picker" class="color-picker" value="#ffffff">
           </div>
-          <div class="color-picker-wrapper rangewrapper">
+          <div class="rangewrapper">
             <h2 class="range-headline" style="color: white; margin-top: 1vh;">Dataset Range</h2>
             <div id="range-slider-1" class="range-slider"></div>
           </div>

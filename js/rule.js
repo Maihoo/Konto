@@ -22,12 +22,12 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 9807.20;
+const STARTBUDGET = 11891.23;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
-const categories = ['monthly' , 'amazon', 'paypal', 'food', 'ospa', 'negative', 'gas'];
+const categories = ['monthly', 'amazon', 'paypal', 'food', 'ospa', 'negative', 'gas'];
 const constantPositions = [
-//  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Sarah";"";"";"40";"EUR";""'
+  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"600";"EUR";""'
 ];
 
 const selectors= {
@@ -457,7 +457,7 @@ function setAmounts() {
   uiCanvas.style.marginTop  = -EXTRAAREA + 'px';
   uiCanvas.style.marginLeft = -EXTRAAREA + 'px';
   let valueTop = document.createElement('p');
-  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + parseInt(highest) + ',00€</p>';
+  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
   valueTop.className = 'uiElement';
   valueTop.classList.add('vertical');
   valueTop.classList.add('amount-texts');
@@ -467,7 +467,7 @@ function setAmounts() {
   uiCanvas.appendChild(valueTop);
 
   let valueBottom = document.createElement('p');
-  valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + parseInt(lowest) + ',00€</p>';
+  valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';
   valueBottom.className = 'uiElement';
   valueBottom.classList.add('vertical');
   valueBottom.classList.add('amount-texts');
@@ -872,18 +872,6 @@ function drawLegends() {
   drawTotalLegend(maxTotal, ospaEntries, 'ospa');
   drawTotalLegend(maxTotal, gasEntries, 'gas');
   drawTotalLegend(maxTotal, restEntries, 'negative');
-}
-
-function getTotal(input, positive) {
-  let total = 0;
-  for (let i = 0; i < input.length; i++) {
-    let entries = input[i].split(';');
-    if ((positive && entries[selectors.amount].charAt(1) !== '-') || (!positive && entries[selectors.amount].charAt(1) === '-')) {
-      total += Math.abs(parseFloat(entries[selectors.amount].slice(1, -1)));
-    }
-  }
-
-  return total;
 }
 
 function drawTotalLegend(total, input, groupname) {

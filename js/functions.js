@@ -45,6 +45,27 @@ function valueToPx(value) {
   return parseInt(value) * verticalZoomFactor * (500 / maxHeight);
 }
 
+function getTotal(input, positive) {
+  let total = 0;
+  for (let i = 0; i < input.length; i++) {
+    let entries = input[i].split(';');
+    if ((positive && entries[selectors.amount].charAt(1) !== '-') || (!positive && entries[selectors.amount].charAt(1) === '-')) {
+      total += Math.abs(parseFloat(entries[selectors.amount].slice(1, -1)));
+    }
+  }
+
+  return total;
+}
+
+function formatNumber(number) {
+  let numberString = number.toString();
+  let [integerPart, decimalPart] = numberString.split('.');
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  decimalPart = decimalPart ? decimalPart.slice(0, 2) : '';
+  let formattedNumber = decimalPart ? `${integerPart},${decimalPart}` : integerPart;
+  return formattedNumber;
+}
+
 function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
   ctx.beginPath();
   ctx.moveTo(x1, y1);
