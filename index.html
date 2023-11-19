@@ -11,13 +11,14 @@
   <script src="js/rule.js" ></script>
   <script src="js/functions.js" ></script>
   <script src="js/controls.js" ></script>
+  <script src="js/session-storage.js" ></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
 </head>
 
-<body style="background-color: rgb(35, 35, 35); overflow-x: hidden;">
-  <h2 style="color: white; margin-top: 1rem; margin-bottom: 0.5rem;">Vertical Zoom</h2>
-  <div class="graph-area-wrapper">
-    <div style="width: 35px; position: relative; border-right: solid 1px black; ">
+<body style="overflow-x: hidden;">
+  <h2>Vertical Zoom</h2>
+  <div id="graph-area-wrapper">
+    <div style="width: 35px; position: relative; border-right: solid 1px black;">
       <div id="range-slider-0" class="range-slider range-slider-vertical"></div>
     </div>
 
@@ -26,7 +27,9 @@
       <canvas id="pathBlurCanvas" width="1100px" height="600px"  style="position: absolute; z-index: 45;"></canvas>
       <canvas id="uiline" width="2200px" height="1800px" style="position: absolute; width: 2200px; height: 1800px; margin-top: -600px; z-index: 400; pointer-events: none;"></canvas>
       <canvas id="uilinetemp" width="2200px" height="1800px" style="position: absolute; width: 2200px; height: 1800px; margin-top: -600px; z-index: 400; pointer-events: none;"></canvas>
-      <div id="uicanvas" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
+      <div id="uiCanvas" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
+      <div id="uiCanvasHorizontal" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
+      <div id="uiCanvasVertical" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
       <div id="uipopup" style="position: absolute; width: 100%; height: 100%; z-index: 400; pointer-events: none;"></div>
       <div id="canvas" style="position: absolute; width: 100%; height: 100%;"></div>
     </div>
@@ -36,16 +39,16 @@
         <div style="width: 35px; position: relative; border-right: solid 1px black; ">
           <div id="range-slider-2" class="range-slider range-slider-vertical range-slider-inverted range-slider-vertical-smaller"></div>
         </div>
-        <div style="display: block; width: 55%; padding-bottom: 15rem;">
+        <div id="toggle-holder" style="display: block; width: 55%; padding-bottom: 15rem;">
           <div class="legend-text-holder">
             <h1 class="legend-headline">Category</h1>
             <h1 class="legend-headline">In</h1>
             <h1 class="legend-headline">Out</h1>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container monthly">
+            <label id="toggle-monthly" class="checkbox-container monthly">
               <h2 class="legend-item">Monthly</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-monthly" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label><!--⬤-->
             <div id="legend-monthly-positive" class="legend-square-holder"></div>
@@ -53,9 +56,9 @@
             <div id="legend-monthly-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container amazon">
+            <label id="toggle-amazon" class="checkbox-container amazon">
               <h2 class="legend-item">Amazon</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-amazon" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
             <div id="legend-amazon-positive" class="legend-square-holder"></div>
@@ -63,9 +66,9 @@
             <div id="legend-amazon-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container paypal">
+            <label id="toggle-paypal" class="checkbox-container paypal">
               <h2 class="legend-item">PayPal</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-paypal" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
             <div id="legend-paypal-positive" class="legend-square-holder"></div>
@@ -73,9 +76,9 @@
             <div id="legend-paypal-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container food">
+            <label id="toggle-food" class="checkbox-container food">
               <h2 class="legend-item">Food</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-food" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
             <div id="legend-food-positive" class="legend-square-holder"></div>
@@ -83,9 +86,9 @@
             <div id="legend-food-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container ospa">
+            <label id="toggle-ospa" class="checkbox-container ospa">
               <h2 class="legend-item">Cash</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-ospa" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
             <div id="legend-ospa-positive" class="legend-square-holder"></div>
@@ -93,9 +96,9 @@
             <div id="legend-ospa-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label class="checkbox-container gas">
+            <label id="toggle-gas" class="checkbox-container gas">
               <h2 class="legend-item">Gas</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-gas" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
             <div id="legend-gas-positive" class="legend-square-holder"></div>
@@ -103,14 +106,14 @@
             <div id="legend-gas-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder" style="padding-bottom: 5rem;">
-            <label class="checkbox-container others">
+            <label id="toggle-others" class="checkbox-container others">
               <h2 class="legend-item">Others</h2>
-              <input type="checkbox" checked="checked">
+              <input id="toggle-box-others" type="checkbox" checked="checked">
               <span class="checkmark"></span>
             </label>
-            <div id="legend-negative-positive" class="legend-square-holder"></div>
-            <div id="legend-negative-negative" class="legend-square-holder"></div>
-            <div id="legend-negative-subtract" class="legend-square-holder"></div>
+            <div id="legend-others-positive" class="legend-square-holder"></div>
+            <div id="legend-others-negative" class="legend-square-holder"></div>
+            <div id="legend-others-subtract" class="legend-square-holder"></div>
           </div>
         </div>
 
@@ -126,59 +129,90 @@
         </div>
       </div>
 
+      <div id="spinner-element" class="spinner-container">
+        <div class="spinner"></div>
+      </div>
+
       <div id="settings" class="settings">
-        <h1 style="color: rgb(255, 255, 255);">Options</h1>
-        <div class="buttonwrapper" style="padding: 0;">
-          <button id="expand-button" onclick="toggleOptions()" type="button" class="button">
-            <div id="button-expand-icon" class="button-icon">
-              〱
-            </div>
-          </button>
-        </div>
-        <div style="display: flex;">
-          <div style="display: flex; justify-content: top; flex-direction: column; width: 50%;">
-            <div class="buttonwrapper">
-              <button onclick="togglePath()" type="button" class="button"> Toggle Path </button>
-            </div>
-            <div class="buttonwrapper">
-              <button onclick="toggleGrid()" type="button" class="button"> Toggle Grid </button>
-            </div>
-            <div class="buttonwrapper">
-              <button onclick="clearLines()" type="button" class="button"> Clear Lines </button>
-            </div>
+        <div id="settings-toolbar">
+          <h1>Options</h1>
+          <div class="buttonwrapper toolbar-button-wrapper">
+            <button id="button-move-settings" onclick="toggleSettingsOrientation()" type="button" class="button">
+              <div id="button-move-settings-icon" class="button-icon">
+                ⬇
+              </div>
+            </button>
           </div>
-          <div style="display: flex; justify-content: top; flex-direction: column; width: 50%;">
-            <div class="buttonwrapper">
-              <button id="amount-button" onclick="toggleSort()" type="button" class="button"> Toggle sort </button>
-            </div>
-            <div class="buttonwrapper">
-              <button id="translatePDF" onclick="processAllPDFs()" type="button" class="button">
-                translate PDF
-                <span style="font-size: smaller;">
-                  (Work in Progress)
-                </span>
-              </button>
-            </div>
-            <div class="buttonwrapper">
-              <button onclick="resetSettings()" type="button" class="button">Reset</button>
-            </div>
+          <div class="buttonwrapper toolbar-button-wrapper">
+            <button id="button-expand-settings" onclick="toggleOptions()" type="button" class="button">
+              <div id="button-expand-settings-icon" class="button-icon">
+                〱
+              </div>
+            </button>
           </div>
         </div>
-        <div class="color-picker-holder">
-          <div class="buttonwrapper button color-picker-wrapper">
-            <p>Background Color</p>
-            <input type="color" id="background-color-picker" class="color-picker" value="#323232">
+        <div id="settings-content">
+          <div class="settings-button-collection">
+            <div class="settings-button-group">
+              <div class="buttonwrapper">
+                <button onclick="togglePath()" type="button" class="button"> Toggle Path </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="toggleGrid()" type="button" class="button"> Toggle Grid </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="clearLines()" type="button" class="button"> Clear Lines </button>
+              </div>
+            </div>
+            <div class="settings-button-group">
+              <div class="buttonwrapper">
+                <button id="amount-button" onclick="toggleSort()" type="button" class="button"> Toggle sort </button>
+              </div>
+              <div class="buttonwrapper">
+                <button id="translatePDF" onclick="processAllPDFs()" type="button" class="button">
+                  translate PDF
+                  <span style="font-size: smaller;">
+                    (Work in Progress)
+                  </span>
+                </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="resetSettings()" type="button" class="button">Reset</button>
+              </div>
+            </div>
           </div>
-          <div class="buttonwrapper button color-picker-wrapper">
-            <p>Line Color</p>
-            <input type="color" id="line-color-picker" class="color-picker" value="#ff0000">
+          <div class="settings-button-collection color-picker-holder">
+            <div class="settings-button-group settings-button-group-large">
+              <h3>Color Settings</h3>
+              <div class="buttonwrapper button color-picker-wrapper">
+                <p>Background</p>
+                <input type="color" id="color-picker-background" class="color-picker" value="#323232">
+              </div>
+              <div class="buttonwrapper button color-picker-wrapper">
+                <p>Line</p>
+                <input type="color" id="color-picker-line" class="color-picker" value="#ff0000">
+              </div>
+              <div class="buttonwrapper button color-picker-wrapper">
+                <p>UI</p>
+                <input type="color" id="color-picker-ui" class="color-picker" value="#ffffff">
+              </div>
+            </div>
+            <div class="settings-button-group settings-button-group-small">
+              <h3>Presets</h3>
+              <div class="buttonwrapper">
+                <button onclick="setColorDefault()" type="button" class="button"> Default </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="setColorLight()" type="button" class="button"> Light </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="setColorUnset()" type="button" class="button"> unset </button>
+              </div>
+            </div>
           </div>
-          <div class="buttonwrapper button color-picker-wrapper">
-            <p>Grid Color</p>
-            <input type="color" id="grid-color-picker" class="color-picker" value="#ffffff">
-          </div>
+        </div>
           <div class="rangewrapper">
-            <h2 class="range-headline" style="color: white; margin-top: 1vh;">Dataset Range</h2>
+            <h2 class="range-headline range-headline-dataset">Dataset Range</h2>
             <div id="range-slider-1" class="range-slider"></div>
           </div>
         </div>

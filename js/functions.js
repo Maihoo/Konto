@@ -82,40 +82,6 @@ function getDayOfWeek(day, month, year) {
   return daysOfWeek[dayIndex];
 }
 
-function togglePath() {
-  pathMode = !pathMode;
-
-  if (pathMode) {
-    document.getElementById('canvas').style.opacity = 0;
-    document.getElementById('pathCanvas').style.opacity = '100%';
-    document.getElementById('pathBlurCanvas').style.opacity = '100%';
-  } else {
-    document.getElementById('canvas').style.opacity = '100%';
-    document.getElementById('pathCanvas').style.opacity = 0;
-    document.getElementById('pathBlurCanvas').style.opacity = 0;
-  }
-}
-
-function toggleGrid() {
-  if (gridMode) {
-    document.getElementById('uicanvas').style.opacity = "100%";
-  } else {
-    document.getElementById('uicanvas').style.opacity = 0;
-  }
-  gridMode = !gridMode;
-}
-
-function toggleOptions() {
-  optionsExtended = !optionsExtended;
-  sessionStorage.setItem('optionsExtended', optionsExtended);
-
-  if (optionsExtended) {
-    document.getElementById('settings').classList.add('settings-hidden');
-  } else {
-    document.getElementById('settings').classList.remove('settings-hidden');
-  }
-}
-
 function toggleSort() {
   switch (sortType) {
     case 'amount':

@@ -1,9 +1,30 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
+  background-color: @custom-background-color;
+
+  h1 {
+    color: @custom-ui-color;
+  }
+
+  h2 {
+    color: @custom-ui-color;
+    font-size: large;
+    white-space: nowrap;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+
+    &.others { color: @negative-color; }
+    &.amazon { color: @amazon-color; }
+    &.paypal { color: @paypal-color; }
+    &.food { color: @food-color; }
+    &.monthly { color: @monthly-color; }
+    &.ospa { color: @ospa-color; }
+    &.gas { color: @gas-color; }
+  }
 }
 
-@positive-color:green;
-@negative-color:rgb(120, 0, 0);
+@positive-color:rgba(0, 120, 0, 0.75);
+@negative-color:rgba(120, 0, 0, 0.75);
 @amazon-color:  rgb(108, 92, 255);
 @paypal-color:  rgb(32, 12, 211);
 @food-color:    rgb(218, 178, 0);
@@ -12,14 +33,16 @@ body {
 @gas-color:     rgb(0, 236, 216);
 @debt-color:    rgba(100, 200, 100, 0.1);
 
-@button-color:        rgb(30, 30, 30);
-@button-hover-color:  rgb(50, 50, 50);
-@button-border-top:   rgb(80, 80, 80);
-@button-border-right: rgb(20, 20, 20);
-@button-border-bottom:rgb(10, 10, 10);
-@button-border-left:  rgb(60, 60, 60);
+@custom-line-color:       rgb(255, 0, 0);
+@custom-background-color: rgb(35, 35, 35);
+@custom-ui-color:         rgb(255, 255, 255);
 
-@default-background-color: rgb(35, 35, 35);
+@button-color:        rgba(0, 0, 0, 0.25);
+@button-hover-color:  rgba(50, 50, 50, 0.25);
+@button-border-left:  rgba(255, 255, 255, 0.15);
+@button-border-top:   rgba(255, 255, 255, 0.25);
+@button-border-right: rgba(0, 0, 0, 0.15);
+@button-border-bottom:rgba(0, 0, 0, 0.25);
 
 @positive-color-transparent:rgba(0, 128, 0, 0.2);
 @negative-color-transparent:rgba(120, 0, 0, 0.2);
@@ -31,10 +54,239 @@ body {
 @gas-color-transparent:     rgba(0, 236, 216, 0.356);
 @debt-color-transparent:    rgba(100, 200, 100, 0.2);
 
-.graph-area-wrapper {
+.spinner-container {
+  position: absolute;
+  top: 25%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #3498db; /* You can change the color here */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#graph-area-wrapper {
   display: inline-flex;
   border: solid 1px black;
   border-radius: 0.5rem;
+
+  #ui-wrapper {
+    overflow: hidden;
+    display: block;
+    width: 26rem;
+    height: 37.5rem;
+    z-index: 1100;
+    border-top-right-radius: 0.6rem;
+    border-bottom-right-radius: 0.6rem;
+    border-left: 1px solid black;
+
+    .settings {
+      position: relative;
+      background-color: @custom-background-color;
+      z-index: 2000;
+      overflow: hidden;
+      width: 19rem;
+      margin-top: -40rem;
+      height: 40rem;
+      max-height: 40rem;
+      border-top-right-radius: 0.6rem;
+      border-top: 1px solid black;
+      border-right: 1px solid black;
+      box-shadow: 4px -4px 8px rgba(0, 0, 0, 0.5);
+      transition: top 0.5s, margin-top 0.5s;
+
+      #settings-toolbar {
+        .toolbar-button-wrapper {
+          padding: 0;
+
+          #button-move-settings {
+            margin: -2.4rem 0 0 13rem !important;
+            min-width: 2rem;
+            max-height: 2.0rem;
+            height: 3.5rem;
+            z-index: 2000;
+          }
+
+          #button-expand-settings {
+            margin: -2.4rem 0 0 16.0rem !important;
+            width: 2rem;
+            max-height: 2.0rem;
+            height: 3.5rem;
+            z-index: 2000;
+
+            #button-expand-settings-icon {
+              margin-left: -1px;
+              transform: rotate(-90deg) !important;
+            }
+          }
+        }
+      }
+
+      #settings-content {
+        .settings-button-collection {
+          display: flex !important;
+
+          .settings-button-group {
+            display: flex;
+            justify-content: top;
+            flex-direction: column;
+            width: 50%;
+
+            h3 {
+              color: @custom-ui-color;
+              padding-left: 1rem;
+              margin-bottom: -0.5rem;
+            }
+
+            &.settings-button-group-small {
+              width: 5rem;
+
+              .buttonwrapper {
+                height: 2.8rem;
+                margin-top: -0.15rem;
+
+                button {
+                  width: 4rem;
+                }
+              }
+            }
+
+            &.settings-button-group-large {
+              width: 12.5rem;
+            }
+          }
+        }
+
+        .color-picker-holder {
+          p {
+            width: 10rem;
+            height: 2.5rem;
+            margin-top: -0.125rem;
+          }
+
+          .color-picker-wrapper {
+            display: flex ;
+            width: 9.5rem;
+            height: 1.8rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+            padding: 0.1rem 0.7rem 0.25rem 0.5rem;
+
+            .color-picker {
+              background-color: @button-color;
+              border: none;
+              height: auto;
+              width: 3rem;
+              height: 1.8rem;
+              margin: -0.0625rem 0 0 auto;
+            }
+          }
+        }
+      }
+    }
+
+    .settings-hidden {
+      margin-top: -7.5rem;
+
+      h1 {
+        padding-top: 0.35rem;
+      }
+
+      #settings-toolbar {
+        .toolbar-button-wrapper {
+          #button-expand-settings {
+            #button-expand-settings-icon {
+              transform: rotate(90deg) !important;
+            }
+          }
+        }
+      }
+
+      #expand-button {
+        background-color: transparent;
+        border: none;
+      }
+    }
+  }
+
+  &.graph-area-wrapper-vertical {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 11rem;
+
+    #ui-wrapper {
+      overflow: visible;
+
+      .settings {
+        box-shadow: none;
+        position: absolute;
+        width: 1136px;
+        top: 80.35rem;
+        left: 0.5rem;
+        height: 11rem;
+        border-top-right-radius: 0;
+        border: 1px solid black;
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+
+        #settings-toolbar {
+          flex-direction: row;
+
+          .toolbar-button-wrapper {
+            margin-top: 0;
+            max-width: 2rem;
+            margin-left: auto;
+            margin-right: 17rem;
+
+            #button-move-settings-icon {
+              transform: rotate(180deg) !important;
+            }
+
+            #button-expand-settings {
+              opacity: 0.5;
+              pointer-events: none;
+            }
+          }
+        }
+
+        #settings-content {
+          display: flex;
+          justify-content: top;
+          flex-direction: row;
+          margin-top: -2rem;
+          margin-left: 7.5rem;
+
+          .settings-button-group {
+            flex-direction: column;
+            width: 10rem;
+
+            .buttonwrapper {
+              margin-top: -0.25rem;
+            }
+          }
+
+          .color-picker-wrapper {
+            margin-top: 0.45rem !important;
+          }
+
+          .rangewrapper {
+            margin-top: 0 !important;
+            width: 15rem;
+          }
+        }
+      }
+    }
+  }
 }
 
 p {
@@ -52,12 +304,11 @@ p {
 .row {
   font-size: small;
   line-height: 0.4rem;
-  background-color: rgb(36, 36, 36);
 }
 
 .cell {
   white-space: nowrap;
-  color: white;
+  color: @custom-ui-color;
   margin: none;
   padding-left: 0.5rem;
   overflow: hidden;
@@ -87,7 +338,7 @@ p {
   h2 {
     margin-top: 0;
   }
-  
+
   /* Create a custom checkbox */
   .checkmark {
     position: absolute;
@@ -100,11 +351,11 @@ p {
     border-radius: 1rem;
     border: 4px solid green
   }
-  
+
   &:hover input ~ .checkmark {
     outline: 1px solid #fff;
   }
-  
+
   input:checked ~ .checkmark {
     background-color: #fff;
   }
@@ -164,6 +415,7 @@ p {
   height: 8px;
   max-height: 8px;
   margin-top: 0.0rem;
+  border: 1px solid black !important;
 
   &.ui-widget-content {
     background-color: rgba(255, 255, 255, 0.1) !important;
@@ -199,10 +451,9 @@ p {
     width: 8px;
     min-height: 575px;
 
-  &.range-slider-vertical-smaller {
-    min-height: 535px;
-  }
-
+    &.range-slider-vertical-smaller {
+      min-height: 535px;
+    }
 
     .ui-slider-handle {
       max-height: 8px;
@@ -215,7 +466,7 @@ p {
 
 .uiElement {
   line-height: 1.3rem;
-  color: white;
+  color: @custom-ui-color;
 }
 
 .uiElementTop {
@@ -246,33 +497,6 @@ h1 {
   &.gas { color: @gas-color; }
 }
 
-h2 {
-  font-size: large;
-  white-space: nowrap;
-  margin-left: 0;
-  margin-top: 0;
-
-  &.others { color: @negative-color; }
-  &.amazon { color: @amazon-color; }
-  &.paypal { color: @paypal-color; }
-  &.food { color: @food-color; }
-  &.monthly { color: @monthly-color; }
-  &.ospa { color: @ospa-color; }
-  &.gas { color: @gas-color; }
-}
-
-#ui-wrapper {
-  position: relative;
-  overflow: hidden;
-  display: block;
-  width: 25rem;
-  height: 37.5rem;
-  z-index: 1100;
-  border-top-right-radius: 0.6rem;
-  border-bottom-right-radius: 0.6rem;
-  border-left: 1px solid black;
-}
-
 #legend {
   display: flex;
   width: 100%;
@@ -280,44 +504,6 @@ h2 {
   overflow-x: hidden;
   overflow-y: scroll;
   margin-bottom: 5rem;
-}
-
-.settings {
-  position: relative;
-  background-color: @default-background-color;
-  z-index: 2000;
-  overflow: hidden;
-  width: 19rem;
-  margin-top: -40rem;
-  height: 40rem;
-  max-height: 40rem;
-  border-top-right-radius: 0.6rem;
-  border-top: 1px solid black;
-  border-right: 1px solid black;
-  box-shadow: 0px -4px 8px rgba(0, 0, 0, 0.5);
-  transition: top 0.5s, margin-top 0.5s;
-
-  #button-expand-icon {
-    margin-left: -1px;
-    transform: rotate(-90deg) !important;
-  }
-}
-
-.settings-hidden {
-  margin-top: -7.5rem;
-
-  h1 {
-    padding-top: 0.35rem;
-  }
-
-  #button-expand-icon {
-    transform: rotate(90deg) !important;
-  }
-
-  #expand-button {
-    background-color: transparent;
-    border: none;
-  }
 }
 
 .value-line {
@@ -336,22 +522,36 @@ h2 {
 .amount-holder {
   position: absolute;
   width: 2rem;
-  height: 100%;
+  height: 2000%;
+  margin-top: -500%;
+  padding-top: 500%;
   z-index: 2000;
+  border-right: 1px solid @custom-ui-color;
   padding-left: 0.5rem;
 }
 
-.amount-texts {
+.amount-text-min {
   position: absolute;
+  border: 1px solid @custom-ui-color;
+  color: @custom-ui-color;
+  left: 2.2rem;
+  border-left: none;
+  border-start-end-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+  height: 1.6rem;
   z-index: 2001;
 }
 
-#expand-button {
-  margin: -2.4rem 0 0 15.9rem !important;
-  min-width: 2.0rem;
-  max-height: 2.0rem;
-  height: 3.5rem;
-  z-index: 2000;
+.amount-text-max {
+  position: absolute;
+  border: 1px solid @custom-ui-color;
+  color: @custom-ui-color;
+  right: 1100px;
+  border-right: none;
+  border-end-start-radius: 0.5rem;
+  border-start-start-radius: 0.5rem;
+  height: 1.6rem;
+  z-index: 2001;
 }
 
 .button {
@@ -363,7 +563,7 @@ h2 {
   font-size: small;
   font-weight: bold;
   background-color: @button-color;
-  color: white;
+  color: @custom-ui-color;
   border-top: 4px solid @button-border-top;
   border-right: 4px solid @button-border-right;
   border-bottom: 4px solid @button-border-bottom;
@@ -380,32 +580,6 @@ h2 {
   padding-top: 0.8rem;
 }
 
-.color-picker-holder {
-  p {
-    width: 14rem;
-    height: 2.5rem;
-    margin-top: -0.125rem;
-  }
-  
-  .color-picker-wrapper {
-    display: flex ;
-    width: 15rem !important;
-    height: 1.6rem !important;
-    justify-content: center;
-    margin-top: 1rem !important;
-    padding: 0.1rem 0.7rem 0.2rem 0.5rem;
-  
-    .color-picker {
-      background-color: @button-color;
-      border: none;
-      height: auto;
-      width: 3rem;
-      height: 1.8rem;
-      margin: -0.0625rem 0 0 auto;
-    }
-  }
-}
-
 .rangewrapper {
   padding-left: 1.5rem;
   display: block;
@@ -417,10 +591,15 @@ h2 {
   margin-bottom: 0.3rem;
   font-size: small;
   font-weight: bold;
+
+  &.range-headline-dataset{
+    color: @custom-ui-color;
+    margin-top: 1vh;
+  }
 }
 
 .legend-headline {
-  color: white;
+  color: @custom-ui-color;
   font-size: large;
   margin: auto;
   margin-top: -0.5rem;
@@ -459,6 +638,7 @@ h2 {
   position: absolute;
   z-index: 200;
   border: solid 1px rgba(0, 0, 0, 0.5);
+  border-style: ridge;
   background-color: @positive-color;
 }
 
@@ -502,7 +682,7 @@ h2 {
 
 .popup {
   background-color: rgba(0, 0, 0, 0.5);
-  color: white;
+  color: @custom-ui-color;
   border-radius: 0.5rem;
   padding: 0.5rem;
   opacity: 0;

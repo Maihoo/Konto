@@ -17,6 +17,7 @@ function initControls() {
   document.body.addEventListener('keydown', handleKeyDown);
 
   initColorPickers();
+  initCategoryToggles();
 
   // drag move
   staticwrapper.onclick = handleDragClick;
@@ -78,30 +79,159 @@ function handleKeyDown(event) {
   }
 }
 
+function initCategoryToggles() {
+  for (let i = 0; i < categories.length; i++) {
+    addEventListenerToToggles(categories[i]);
+  }
+
+  updateActiveCategories();
+}
+
+function addEventListenerToToggles(category) {
+  document.getElementById('toggle-' + category).addEventListener('mouseup', (event) => {
+    if (document.getElementById('toggle-' + category).getAttribute('checked') === 'checked') {
+      document.getElementById('toggle-' + category).setAttribute('checked', 'false');
+      sessionStorage.setItem('toggle-' + category, false);
+    } else {
+      document.getElementById('toggle-' + category).setAttribute('checked', 'checked');
+      sessionStorage.setItem('toggle-' + category, true);
+    }
+
+    updateActiveCategories();
+  });
+}
+
+function updateActiveCategories() {
+  let allValues = [];
+  for (let i = 0; i < categories.length; i++) {
+    allValues.push(sessionStorage.getItem('toggle-' + categories[i]));
+  }
+
+  activeCategories = {
+    'monthly':  allValues[0],
+    'amazon':   allValues[1],
+    'paypal':   allValues[2],
+    'food':     allValues[3],
+    'ospa':     allValues[4],
+    'gas':      allValues[5],
+    'others':   allValues[6]
+  };
+}
+
 function initColorPickers() {
-  const backgroundColorPicker = document.getElementById('background-color-picker');
+  less.modifyVars({'@custom-ui-color': 'white'});
+
+  const backgroundColorPicker = document.getElementById('color-picker-background');
   backgroundColorPicker.addEventListener('change', function(event) {
     backgroundColor = '' + hexToRgb(event.target.value);
-    sessionStorage.setItem('backgroundColor', backgroundColor);
-    document.getElementById('staticwrapper').style.backgroundColor = backgroundColor;
-    document.body.style.backgroundColor = backgroundColor;
-    document.getElementById('settings').style.backgroundColor = backgroundColor;
+    updateBackgroundColor(backgroundColor);
     init();
   });
 
-  const lineColorPicker = document.getElementById('line-color-picker');
+  const lineColorPicker = document.getElementById('color-picker-line');
   lineColorPicker.addEventListener('change', function(event) {
     lineColor = hexToRgb(event.target.value);
-    sessionStorage.setItem('lineColor', lineColor);
+    updateLineColor(lineColor);
     init();
   });
 
-  const gridColorPicker = document.getElementById('grid-color-picker');
-  gridColorPicker.addEventListener('change', function(event) {
-    gridColor = hexToRgb(event.target.value);
-    sessionStorage.setItem('gridColor', gridColor);
+  const uiColorPicker = document.getElementById('color-picker-ui');
+  uiColorPicker.addEventListener('change', function(event) {
+    uiColor = hexToRgb(event.target.value);
+    updateUiColor(uiColor);
     init();
   });
+
+  backgroundColor = '' + hexToRgb(backgroundColorPicker.value);
+  updateBackgroundColor(backgroundColor);
+  lineColor = hexToRgb(lineColorPicker.value);
+  updateLineColor(lineColor);
+  uiColor = hexToRgb(uiColorPicker.value);
+  updateUiColor(uiColor);
+}
+
+function updateBackgroundColor(color) {
+  sessionStorage.setItem('backgroundColor', color);
+  document.getElementById('staticwrapper').style.backgroundColor = color;
+  document.getElementById('settings').style.backgroundColor = color;
+  document.body.style.backgroundColor = color;
+  less.modifyVars({'@custom-background-color': color});
+}
+
+function updateLineColor(color) {
+  sessionStorage.setItem('lineColor', color);
+  less.modifyVars({'@custom-line-color': color});
+}
+
+function updateUiColor(color) {
+  sessionStorage.setItem('uiColor', color);
+  less.modifyVars({'@custom-ui-color': color});
+}
+
+function toggleOptions() {
+  settingsExtended = !settingsExtended;
+  sessionStorage.setItem('settingsExtended', settingsExtended);
+
+  if (settingsExtended) {
+    document.getElementById('settings').classList.add('settings-hidden');
+  } else {
+    document.getElementById('settings').classList.remove('settings-hidden');
+  }
+}
+
+function toggleSettingsOrientation() {
+  settingsVertical = !settingsVertical;
+  sessionStorage.setItem('settingsVertical', settingsVertical);
+
+  if (settingsVertical) {
+    document.getElementById('graph-area-wrapper').classList.add('graph-area-wrapper-vertical');
+  } else {
+    document.getElementById('graph-area-wrapper').classList.remove('graph-area-wrapper-vertical');
+  }
+}
+
+function togglePath() {
+  pathMode = !pathMode;
+
+  if (pathMode) {
+    document.getElementById('canvas').style.opacity = 0;
+    document.getElementById('pathCanvas').style.opacity = '100%';
+    document.getElementById('pathBlurCanvas').style.opacity = '100%';
+  } else {
+    document.getElementById('canvas').style.opacity = '100%';
+    document.getElementById('pathCanvas').style.opacity = 0;
+    document.getElementById('pathBlurCanvas').style.opacity = 0;
+  }
+}
+
+function toggleGrid() {
+  if (gridMode) {
+    document.getElementById('uiCanvas').style.opacity = "100%";
+    document.getElementById('uiCanvasVertical').style.opacity = "100%";
+    document.getElementById('uiCanvasHorizontal').style.opacity = "100%";
+  } else {
+    document.getElementById('uiCanvas').style.opacity = 0;
+    document.getElementById('uiCanvasVertical').style.opacity = 0;
+    document.getElementById('uiCanvasHorizontal').style.opacity = 0;
+  }
+
+  gridMode = !gridMode;
+}
+
+function handleEscape(event) {
+  if (event.key === 'Escape') {
+    linepoint = [];
+    staticwrapper.style.cursor = '';
+    let uiLine = document.getElementById('uiline');
+    let uilinetemp = document.getElementById('uilinetemp');
+    let uiltCtx = uilinetemp.getContext('2d');
+    uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+    if (!uiLine.index) {
+      uiLine.index = 0;
+    }
+
+    document.removeEventListener('keydown', handleEscape);
+  }
 }
 
 function handleDragClick(event) {
@@ -117,15 +247,16 @@ function handleDragClick(event) {
     linepoint.push(event.clientX);
     linepoint.push(event.clientY + window.scrollY);
     document.onmousemove = (event) => handlePrediction(event);
+    document.addEventListener('keydown', handleEscape);
   } else {
     // finish prediction line
     let uiltCtx = uilinetemp.getContext('2d');
     uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
     drawLine( uiltCtx,
-              parseInt(linepoint[0] - $("#uiline").offset().left),
-              parseInt(linepoint[1] - $("#uiline").offset().top ),
-              parseInt(event.clientX - $("#uiline").offset().left),
-              parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+              parseInt(linepoint[0] - $('#uiline').offset().left),
+              parseInt(linepoint[1] - $('#uiline').offset().top ),
+              parseInt(event.clientX - $('#uiline').offset().left),
+              parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
               'rgba(255, 0, 0, 0.5)',
               1);
 
@@ -138,10 +269,10 @@ function handleDragClick(event) {
     uiLine.index = parseInt(uiLine.index) + 1;
     ctx = uiLine.getContext('2d');
     drawLine( ctx,
-              parseInt(linepoint[0] - $("#uiline").offset().left),
-              parseInt(linepoint[1] - $("#uiline").offset().top ),
-              parseInt(event.clientX - $("#uiline").offset().left),
-              parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+              parseInt(linepoint[0] - $('#uiline').offset().left),
+              parseInt(linepoint[1] - $('#uiline').offset().top ),
+              parseInt(event.clientX - $('#uiline').offset().left),
+              parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
               'rgba(255, 0, 0, 0.5)',
               2);
     linepoint = [];
@@ -152,9 +283,9 @@ function handleDragClick(event) {
     let circle = document.createElement('div');
     circle.hovered = '0';
     circle.className = 'circle'
-    circle.id = "circle" + (uiLine.index + 0);
-    circle.style.top  = (parseInt(event.clientY - $("#uiline").offset().top  - 6 + window.scrollY) - 600) + 'px';
-    circle.style.left =  parseInt(event.clientX - $("#uiline").offset().left - 6) + 'px';
+    circle.id = 'circle' + (uiLine.index + 0);
+    circle.style.top  = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - 600) + 'px';
+    circle.style.left =  parseInt(event.clientX - $('#uiline').offset().left - 6) + 'px';
 
     circle.onmouseover = function(e) {
       let pop = document.getElementById('popupCircle' + uiLine.index);
@@ -196,7 +327,9 @@ function handleDragMouseDown(event) {
   let pathBlurCanvas = document.getElementById('pathBlurCanvas');
   let uiLine = document.getElementById('uiline');
   let uilinetemp = document.getElementById('uilinetemp');
-  let uiCanvas = document.getElementById('uicanvas');
+  let uiCanvas = document.getElementById('uiCanvas');
+  let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
+  let uiCanvasVertical = document.getElementById('uiCanvasVertical');
 
   dragstartX = event.clientX;
   dragstartY = event.clientY;
@@ -230,31 +363,24 @@ function handleDragMouseDown(event) {
       uiLine.style.marginTop = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
       uilinetemp.style.marginLeft = '' + (uilinetemp.style.marginLeft.slice(0, -2) -diffX) + 'px';
       uilinetemp.style.marginTop = '' + (uilinetemp.style.marginTop.slice(0, -2) -diffY) + 'px';
-
-      // move lines individually
-      for (let i = 0; i < uiCanvas.children.length; i++) {
-        let element = uiCanvas.children[i];
-        if (element.classList.contains(('horizontal'))) {
-          element.style.marginLeft = '' + (element.style.marginLeft.slice(0, -2) -diffX) + 'px';
-        }
-        if (element.classList.contains(('vertical'))) {
-          element.style.marginTop  = '' + (element.style.marginTop.slice(0, -2) -diffY) + 'px';
-        }
-      }
+      uiCanvas.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      uiCanvas.style.marginTop = '' + (uiCanvasVertical.style.marginTop.slice(0, -2) -diffY) + 'px';
+      uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      uiCanvasVertical.style.marginTop = '' + (uiCanvasVertical.style.marginTop.slice(0, -2) -diffY) + 'px';
     }
   }
 }
 
 function initRangeSlider0() {
   $(function() {
-    $("#range-slider-0").slider({
+    $('#range-slider-0').slider({
       range: 'min',
-      orientation: "vertical",
+      orientation: 'vertical',
       min: 0,
       max: 200,
       value: verticalZoomFactor * 100,
       change: function( event ) {
-        let value = $("#range-slider-0").slider("value");
+        let value = $('#range-slider-0').slider('value');
         if (verticalZoomFactor !== (value) / 100) {
           verticalZoomFactor = (value) / 100;
           sessionStorage.setItem('verticalZoomFactor', verticalZoomFactor);
@@ -270,15 +396,15 @@ function initRangeSlider1() {
   let totalLength = allTextLines.length - 2;
 
   $(function() {
-    $("#range-slider-1").slider({
+    $('#range-slider-1').slider({
       range: true,
       min: 0,
       max: totalLength,
       values: [totalLength - pastEvents, totalLength - pastEventsOffset],
       change: function( event ) {
         setTimeout(function() {
-          let value1 = $( "#range-slider-1" ).slider( "values", 0 );
-          let value2 = $( "#range-slider-1" ).slider( "values", 1 );
+          let value1 = $( '#range-slider-1' ).slider( 'values', 0 );
+          let value2 = $( '#range-slider-1' ).slider( 'values', 1 );
           if (event.eventPhase > 0 && (pastEvents !== parseInt(value2) - parseInt(value1))) {
             pastEvents = parseInt(value2) - parseInt(value1);
             pastEventsOffset = totalLength - parseInt(value2);
@@ -296,14 +422,14 @@ function initRangeSlider1() {
 
 function initRangeSlider2() {
   $(function() {
-    $("#range-slider-2").slider({
+    $('#range-slider-2').slider({
       range: 'min',
-      orientation: "vertical",
+      orientation: 'vertical',
       min: 0,
       max: 400,
       value: 400 - legendMultiplier,
       change: function( event ) {
-        let value = $("#range-slider-2").slider("value");
+        let value = $('#range-slider-2').slider('value');
         value = 400 - value;
         if (legendMultiplier !== value) {
           legendMultiplier = value;
@@ -315,20 +441,54 @@ function initRangeSlider2() {
   });
 }
 
+function setColorDefault() {
+  backgroundColor = '35, 35, 35';
+  lineColor = '255, 0, 0';
+  uiColor = '255, 255, 255';
+
+  document.getElementById('color-picker-background').value = rgbToHex(backgroundColor);
+  document.getElementById('color-picker-line').value = rgbToHex(lineColor);
+  document.getElementById('color-picker-ui').value = rgbToHex(uiColor);
+
+  document.getElementById('color-picker-background').dispatchEvent(new Event('change'));
+  document.getElementById('color-picker-line').dispatchEvent(new Event('change'));
+  document.getElementById('color-picker-ui').dispatchEvent(new Event('change'));
+}
+
+function setColorLight() {
+  backgroundColor = '200, 200, 200';
+  lineColor = '50, 50, 255';
+  uiColor = '0, 0, 0';
+
+  document.getElementById('color-picker-background').value = rgbToHex(backgroundColor);
+  document.getElementById('color-picker-line').value = rgbToHex(lineColor);
+  document.getElementById('color-picker-ui').value = rgbToHex(uiColor);
+
+  document.getElementById('color-picker-background').dispatchEvent(new Event('change'));
+  document.getElementById('color-picker-line').dispatchEvent(new Event('change'));
+  document.getElementById('color-picker-ui').dispatchEvent(new Event('change'));
+}
+
+function setColorUnset() {
+
+}
+
 function handlePrediction(event) {
   let uilinetemp = document.getElementById('uilinetemp');
   let uiltCtx = uilinetemp.getContext('2d');
   uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
   drawLine( uiltCtx,
-            parseInt(linepoint[0] - $("#uiline").offset().left),
-            parseInt(linepoint[1] - $("#uiline").offset().top ),
-            parseInt(event.clientX - $("#uiline").offset().left),
-            parseInt(event.clientY + window.scrollY - $("#uiline").offset().top ),
+            parseInt(linepoint[0] - $('#uiline').offset().left),
+            parseInt(linepoint[1] - $('#uiline').offset().top ),
+            parseInt(event.clientX - $('#uiline').offset().left),
+            parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
             'rgba(255, 0, 0, 0.5)',
             1);
 }
 
 function processAllPDFs() {
+  document.getElementById('spinner-element').style.display = 'block';
+
   pdfNames = [
     'statements/Konto_1101110771-Auszug_2019_0004.pdf',
     'statements/Konto_1101110771-Auszug_2019_0005.pdf',
@@ -353,109 +513,195 @@ function processAllPDFs() {
     'statements/Konto_1101110771-Auszug_2021_0005.pdf'
   ];
 
-  for (let i = pdfNames.length - 1; i > 0; i--) {
-    setTimeout(() => {
-      console.log('processing pdf', pdfNames[i]);
+  let totalDiff = allTextLines.length - 2 - pastEvents;
 
-      processPDFContent(pdfNames[i]);
-    }, (pdfNames.length - i) * 200);
-  }
+  // Start the processing chain
+  processSinglePDF(pdfNames.length - 1, totalDiff)
+    .catch(error => {
+      console.error('Error processing PDFs:', error);
+    });
+}
 
-  setTimeout(() => {
+function processSinglePDF(index, previousTotalMinusPastEvents) {
+  if (index >= 0) {
+    return processPDFContent(pdfNames[index])
+      .then(() => processSinglePDF(index - 1, previousTotalMinusPastEvents)); // Process the next PDF in the chain
+  } else {
+    // All PDFs processed, perform any final actions
+    initTextLines();
+    pastEvents = allTextLines.length - previousTotalMinusPastEvents - 2;
     initTextLines();
     initControls();
     init();
-  }, (pdfNames.length + 1) * 200);
+  }
 }
 
 function processPDFContent(name) {
-  let totalTotal = 0;
-  fetch(name)
-    .then(response => response.arrayBuffer())
-    .then(data => {
-      // Load PDF file using pdf.js
-      return pdfjsLib.getDocument(new Uint8Array(data)).promise;
-    })
-    .then(pdf => {
-      // clear past lines
-      pdfImportedLines = [];
-      // Read PDF content
-      const numPages = pdf.numPages;
-      for (let i = numPages; i >= 1; i--) {
-        console.log('Page', i);
-        pdf.getPage(i).then(page => {
-          return page.getTextContent();
-        }).then(content => {
-          setTimeout(() => {
-            // Extract text from the PDF page
-            let allLines = [];
-            for (let j = content.items.length - 1; j > 0; j--) {
-              let itemString = content.items[j].str;
-              itemString = itemString.replace(/\n/g, ''); // replace breaks
-              itemString = itemString.replace(/\t/g, ''); // replace tabs
-              itemString = itemString.replace(/ /g, '');  // replace spaces
-              console.log(itemString);
+  return new Promise((resolve, reject) => {
+    let totalAmount = 0;
+    fetch(name)
+      .then(response => response.arrayBuffer())
+      .then(data => pdfjsLib.getDocument(new Uint8Array(data)).promise)
+      .then(pdf => {
+        const numPages = pdf.numPages;
 
-              allLines.push(itemString);
-            }
-            // clear empty lines
-            allLines = allLines.filter(function(item) {
-              return item !== '' && item !== '.';
-            });
+        // Helper function to process a single page
+        function processSinglePage(pageIndex) {
+          if (pageIndex >= 1) {
+            return pdf.getPage(pageIndex)
+              .then(page => page.getTextContent())
+              .then(content => {
+                totalAmount += processPage(content, (numPages - pageIndex) * 20);
+              })
+              .then(() => processSinglePage(pageIndex - 1)); // Process the next page in the chain
+          } else {
+            // All pages processed for this PDF
+            resolve();
+          }
+        }
 
-            for (let j = 1; j < allLines.length - 1; j++) {
-              if (allLines[j].length === 10 && allLines[j - 1].length === 10) {
-                for (let k = 1; k < 12; k++) {
-                  let nextAmount = allLines[j + k];
-                  if (parseFloat(nextAmount.slice(0, -1)) != NaN && (nextAmount.charAt(nextAmount.length - 1) === '+' || nextAmount.charAt(nextAmount.length - 1) === '-')) {
-                    let dateParts = allLines[j].split('.');
-                    if (dateParts.length >= 3 && !allLines[j + k + 1].includes('Kontostand')) {
-                      const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
-                      let purpose = allLines[j + 2];
-                      if (j + 2 !== j + k - 1) {
-                        purpose += ' ' + allLines[j + k - 1];
-                      }
+        // Start processing pages for this PDF
+        processSinglePage(numPages)
+          .then(() => resolve(totalAmount));
+      })
+      .catch(error => {
+        console.error('Error reading PDF file:', error);
+        reject(error);
+      });
+  });
+}
 
-                      let amount = allLines[j + k];
-                      amount.replace('.', '');
-                      amount.replace(',', '.');
+function processPage(content) {
+  let totalAmount = 0;
+  return new Promise(resolve => {
+      // Extract text from the PDF page
+      let allLines = [];
+      for (let j = content.items.length - 1; j > 0; j--) {
+        let itemString = content.items[j].str;
+        itemString = itemString.replace(/\n/g, ''); // replace breaks
+        itemString = itemString.replace(/\t/g, ''); // replace tabs
+        itemString = itemString.replace(/ /g, '');  // replace spaces
+        allLines.push(itemString);
+      }
+      // clear empty lines
+      allLines = allLines.filter(function(item) {
+        return item !== '' && item !== '.';
+      });
 
-                      if (amount.charAt(amount.length - 1) === '-') {
-                        amount = '-' + amount.slice(0, -1);
-                      } else {
-                        amount = amount.slice(0, -1);
-                      }
-
-                      if (parseFloat(amount) === NaN) {
-                        amount = 0;
-                      }
-
-                      totalTotal += parseFloat(amount);
-                      console.log('totalTotal', totalTotal, amount);
-                        if (parseFloat(amount) > 0) {
-                      }
-                      if (!isNaN(parseFloat(amount))) {
-                        //                                        date              text                          purpose                             beneficiary                     amount
-                        dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
-                      }
-                    }
-
-                    k = 20;
-                  }
+      for (let j = 1; j < allLines.length - 1; j++) {
+        if (allLines[j].charAt(2) === '.' && allLines[j].charAt(5) === '.' && allLines[j].length > (15)) {
+          const temp = allLines[j];
+          allLines[j] = temp.slice(10, 20);
+          allLines.splice(j, 0, temp.slice(0, 10));
+        }
+  
+        if (allLines[j].length === 10 && allLines[j - 1].length === 10) {
+          for (let k = 1; k < 12; k++) {
+            let nextAmount = allLines[j + k];
+            if (parseFloat(nextAmount.slice(0, -1)) != NaN && (nextAmount.charAt(nextAmount.length - 1) === '+' || nextAmount.charAt(nextAmount.length - 1) === '-')) {
+              let dateParts = allLines[j].split('.');
+              if (dateParts.length >= 3 && !allLines[j + k + 1].includes('Kontostand')) {
+                const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
+                let purpose = allLines[j + 2];
+                if (j + 2 !== j + k - 1) {
+                  purpose += ' ' + allLines[j + k - 1];
+                }
+  
+                let amount = allLines[j + k];
+                amount.replace('.', '');
+                amount.replace(',', '.');
+  
+                if (amount.charAt(amount.length - 1) === '-') {
+                  amount = '-' + amount.slice(0, -1);
+                } else {
+                  amount = amount.slice(0, -1);
+                }
+  
+                if (parseFloat(amount) === NaN) {
+                  amount = 0;
+                }
+  
+                totalAmount += parseFloat(amount);
+                if (!isNaN(parseFloat(amount))) {
+                  //                                        date              text                          purpose                             beneficiary                     amount
+                  dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
                 }
               }
+  
+              k = 20;
             }
-          }, (numPages - i) * 20);
-        }).then();
+          }
+        }
       }
-    })
-    .catch(error => {
-      console.error("Error reading PDF file:", error);
-    }
-  );
 
+      resolve();
+  });
+}
+
+function processPage22(content, timeout) {
+  let totalAmount = 0;
   setTimeout(() => {
-    console.log('totalTotal', totalTotal);
-  }, 10000);
+    // Extract text from the PDF page
+    let allLines = [];
+    for (let j = content.items.length - 1; j > 0; j--) {
+      let itemString = content.items[j].str;
+      itemString = itemString.replace(/\n/g, ''); // replace breaks
+      itemString = itemString.replace(/\t/g, ''); // replace tabs
+      itemString = itemString.replace(/ /g, '');  // replace spaces
 
+      allLines.push(itemString);
+    }
+    // clear empty lines
+    allLines = allLines.filter(function(item) {
+      return item !== '' && item !== '.';
+    });
+
+    for (let j = 1; j < allLines.length - 1; j++) {
+      if (allLines[j].charAt(2) === '.' && allLines[j].charAt(5) === '.' && allLines[j].length > (15)) {
+        const temp = allLines[j];
+        allLines[j] = temp.slice(10, 20);
+        allLines.splice(j, 0, temp.slice(0, 10));
+      }
+
+      if (allLines[j].length === 10 && allLines[j - 1].length === 10) {
+        for (let k = 1; k < 12; k++) {
+          let nextAmount = allLines[j + k];
+          if (parseFloat(nextAmount.slice(0, -1)) != NaN && (nextAmount.charAt(nextAmount.length - 1) === '+' || nextAmount.charAt(nextAmount.length - 1) === '-')) {
+            let dateParts = allLines[j].split('.');
+            if (dateParts.length >= 3 && !allLines[j + k + 1].includes('Kontostand')) {
+              const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
+              let purpose = allLines[j + 2];
+              if (j + 2 !== j + k - 1) {
+                purpose += ' ' + allLines[j + k - 1];
+              }
+
+              let amount = allLines[j + k];
+              amount.replace('.', '');
+              amount.replace(',', '.');
+
+              if (amount.charAt(amount.length - 1) === '-') {
+                amount = '-' + amount.slice(0, -1);
+              } else {
+                amount = amount.slice(0, -1);
+              }
+
+              if (parseFloat(amount) === NaN) {
+                amount = 0;
+              }
+
+              totalAmount += parseFloat(amount);
+              if (!isNaN(parseFloat(amount))) {
+                //                                        date              text                          purpose                             beneficiary                     amount
+                dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
+              }
+            }
+
+            k = 20;
+          }
+        }
+      }
+    }
+
+    return totalAmount;
+  }, timeout);
 }

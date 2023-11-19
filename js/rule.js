@@ -4,15 +4,14 @@ $(document).ready(function () {
 
   // Read the first file (umsatz.csv)
   $.ajax({
-    type: "GET",
-    url: "umsatz.csv",
-    dataType: "text",
+    type: 'GET',
+    url: 'umsatz.csv',
+    dataType: 'text',
     error: function (xhr, status, error) {
-      console.error("AJAX Error:", error);
+      console.error('AJAX Error:', error);
     },
     success: function (data) {
       dataset = data;
-      resetHTML();
       getFromSessionStorage();
       initTextLines();
       initControls();
@@ -22,10 +21,21 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 11891.23;
+const STARTBUDGET = 14448.40;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
-const categories = ['monthly', 'amazon', 'paypal', 'food', 'ospa', 'negative', 'gas'];
+const categories = ['monthly', 'amazon', 'paypal', 'food', 'ospa', 'gas', 'others'];
+
+let activeCategories = {
+  'monthly': true,
+  'amazon': true,
+  'paypal': true,
+  'food': true,
+  'ospa': true,
+  'gas': true,
+  'others': true
+};
+
 const constantPositions = [
   '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"600";"EUR";""'
 ];
@@ -56,7 +66,8 @@ let zoomOutPressed = false;
 let pathMode = false;
 let gridMode = false;
 let showShadow = true;
-let optionsExtended = false;
+let settingsExtended = false;
+let settingsVertical = false;
 
 let dataset;
 
@@ -80,13 +91,13 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = "";
-let endDate = "";
-let sortType = "date";
+let startDate = '';
+let endDate = '';
+let sortType = 'date';
 
 let backgroundColor = '35, 35, 35';
 let lineColor = '255, 0, 0';
-let gridColor = '255, 255, 255';
+let uiColor = '255, 255, 255';
 
 let pdfImportedLines = [];
 let allTextLines = [];
@@ -130,11 +141,11 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = "";
-  endDate = "";
+  startDate = '';
+  endDate = '';
   backgroundColor = '35, 35, 35';
   lineColor = '255, 0, 0';
-  gridColor = '255, 255, 255';
+  uiColor = '255, 255, 255';
 
   document.getElementById('staticwrapper').style.backgroundColor = backgroundColor;
   document.getElementById('settings').style.backgroundColor = backgroundColor;
@@ -142,8 +153,8 @@ function resetSettings() {
 
   clearSessionStorage();
   clearLines();
-  resetHTML();
   initTextLines();
+  setColorDefault();
   initControls();
   init();
 }
@@ -164,25 +175,37 @@ function resetHTML() {
   let pathCanvas = document.getElementById('pathCanvas');
   let pathBlurCanvas = document.getElementById('pathBlurCanvas');
   let uiline = document.getElementById('uiline');
-  let uicanvas = document.getElementById('uicanvas');
+  let uiCanvas = document.getElementById('uiCanvas');
+  let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
+  let uiCanvasVertical = document.getElementById('uiCanvasVertical');
   let uipopup = document.getElementById('uipopup');
 
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
-  pathCanvas.innerHTML = '';
   pathBlurCanvas.style.opacity = '0%';
-  pathBlurCanvas.innerHTML = '';
-  uiline.innerHTML = '';
-  uicanvas.innerHTML = '';
-  uipopup.innerHTML = '';
-  canvas.innerHTML = '';
 
-  canvas.style.marginLeft = '';
+  canvas.innerHTML = '';
+  uiline.innerHTML = '';
+  uipopup.innerHTML = '';
+  uiCanvas.innerHTML = '';
+  pathCanvas.innerHTML = '';
+  pathBlurCanvas.innerHTML = '';
+  uiCanvasVertical.innerHTML = '';
+  uiCanvasHorizontal.innerHTML = '';
+
   canvas.style.marginTop = '';
-  pathCanvas.style.marginLeft = '';
+  canvas.style.marginLeft = '';
+  uiCanvas.style.marginTop = '';
+  uiCanvas.style.marginLeft = '';
   pathCanvas.style.marginTop = '';
-  pathBlurCanvas.style.marginLeft = '';
+  pathCanvas.style.marginLeft = '';
   pathBlurCanvas.style.marginTop = '';
+  pathBlurCanvas.style.marginLeft = '';
+  uiCanvasVertical.style.marginTop = '';
+  uiCanvasVertical.style.marginLeft = '';
+  uiCanvasHorizontal.style.marginTop = '';
+  uiCanvasHorizontal.style.marginLeft = '';
+
   uiline.style.marginLeft = '';
   uiline.style.marginTop = '-600px';
   uilinetemp.style.marginLeft = '';
@@ -221,7 +244,7 @@ function initTextLines() {
       if (lineParts[selectorIndex].includes(selectorValue)) {
         lineParts[toReplaceIndex] = '"' + toReplaceValue + '"';
 
-        line = "";
+        line = '';
         for (let k = 0; k < lineParts.length; k++) {
           line += lineParts[k];
           if (k !== lineParts.length - 1) {
@@ -242,6 +265,7 @@ function initTextLines() {
 
   //insert date into constant positions
   const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() + 3);
   const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
   for (let i = 0; i < constantPositions.length; i++) {
     let positionParts = constantPositions[i].split(';');
@@ -273,9 +297,15 @@ function initTextLines() {
     }
   }
 
+  if (categories.monthly) {
+    // cutTextLines TODO
+
+  }
+
   if (sortType === 'amount') {
     fixSortedArray(cutTextLines, 14);
   }
+
 }
 
 function fixSortedArray(arr, fieldIndex) {
@@ -303,92 +333,37 @@ function sortArrayByField(arr, fieldIndex) {
   });
 }
 
-function clearSessionStorage() {
-  sessionStorage.setItem('pastEvents', '');
-  sessionStorage.setItem('pastEventsOffset', '');
-  sessionStorage.setItem('backgroundColor', '');
-  sessionStorage.setItem('lineColor', '');
-  sessionStorage.setItem('gridColor', '');
-  sessionStorage.setItem('optionsExtended', '');
-  sessionStorage.setItem('sortType', '');
-  sessionStorage.setItem('verticalZoomFactor', '');
-  sessionStorage.setItem('legendMultiplyer', '');
-}
-
-function getFromSessionStorage() {
-  let sessionValue = sessionStorage.getItem("pastEvents");
-  if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEvents = parseInt(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("pastEventsOffset");
-  if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEventsOffset = parseInt(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("backgroundColor");
-  if (sessionValue && sessionValue.length > 0) {
-    backgroundColor = sessionValue;
-    document.getElementById('staticwrapper').style.backgroundColor = sessionValue;
-    document.getElementById('background-color-picker').value = rgbToHex(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("lineColor");
-  if (sessionValue && sessionValue.length > 0) {
-    lineColor = sessionValue;
-    document.getElementById('line-color-picker').value = rgbToHex(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("gridColor");
-  if (sessionValue && sessionValue.length > 0) {
-    gridColor = sessionValue;
-    document.getElementById('grid-color-picker').value = rgbToHex(sessionValue);
-  }
-
-  sessionValue = sessionStorage.getItem("sortType");
-  if (sessionValue && sessionValue.length > 0) {
-    sortType = sessionValue;
-  }
-
-  sessionValue = sessionStorage.getItem("verticalZoomFactor");
-  if (sessionValue && sessionValue.length > 0) {
-    verticalZoomFactor = sessionValue;
-  }
-
-  sessionValue = sessionStorage.getItem("legendMultiplyer");
-  if (sessionValue && sessionValue.length > 0) {
-    legendMultiplier = sessionValue;
-  }
-
-  sessionValue = sessionStorage.getItem("optionsExtended");
-  if (sessionValue && sessionValue.length > 0) {
-    if (sessionValue === 'true') {
-      optionsExtended = true;
-      document.getElementById('settings').classList.add('settings-hidden');
-    } else {
-      optionsExtended = false;
-      document.getElementById('settings').classList.remove('settings-hidden');
-    }
-  }
-}
-
 function init() {
-  maxHeight = getMaxHeight();
-  getMaxHeightAround();
+  document.getElementById('spinner-element').style.display = 'block';
 
-  drawCanvas();
-  drawPath();         //draws 2px solid line
-  drawBlurPath();     //draws opaque background below path
-  hidePathBlurTop();  //caps blurred paths above path
+  setTimeout(() => {
+    resetHTML();
 
-  setAmounts();
-  setDates();
+    maxHeight = getMaxHeight();
+    getMaxHeightAround();
 
-  drawLegends();
-  drawTable();
+    clearCanvases();
 
-  pathMode = !pathMode;
-  togglePath();
+    drawCanvas();
+    drawPath();         //draws 2px solid line
+    drawBlurPath();     //draws opaque background below path
+    hidePathBlurTop();  //caps blurred paths above path
+
+    setAmounts();
+    setDates();
+
+    drawLegends();
+    drawTable();
+
+    pathMode = !pathMode;
+    togglePath();
+
+    document.getElementById('spinner-element').style.display = 'none';
+  }, 2);
+}
+
+function clearCanvases() {
+
 }
 
 function drawPath() {
@@ -452,124 +427,119 @@ function hidePathBlurTop() {
 }
 
 function setAmounts() {
-  const uiCanvas = document.getElementById('uicanvas');
+  const uiCanvasVertical = document.getElementById('uiCanvasVertical');
   const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  uiCanvas.style.marginTop  = -EXTRAAREA + 'px';
-  uiCanvas.style.marginLeft = -EXTRAAREA + 'px';
+  uiCanvasVertical.style.marginTop  = -EXTRAAREA + 'px';
   let valueTop = document.createElement('p');
   valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
   valueTop.className = 'uiElement';
-  valueTop.classList.add('vertical');
-  valueTop.classList.add('amount-texts');
+  valueTop.classList.add('amount-text-max');
   valueTop.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
   valueTop.style.marginTop = '' + parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA) + 'px';
   valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
-  uiCanvas.appendChild(valueTop);
+  uiCanvasVertical.appendChild(valueTop);
 
   let valueBottom = document.createElement('p');
   valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';
   valueBottom.className = 'uiElement';
-  valueBottom.classList.add('vertical');
-  valueBottom.classList.add('amount-texts');
+  valueBottom.classList.add('amount-text-min');
   valueBottom.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
   valueBottom.style.marginTop = '' + (525 + EXTRAAREA) + 'px'
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
-  uiCanvas.appendChild(valueBottom);
+  uiCanvasVertical.appendChild(valueBottom);
 
   //draw Lines
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i <= 200; i++) {
     let valueLine = document.createElement('div');
-    valueLine.classList.add('vertical');
     valueLine.classList.add('value-line');
-    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
+    const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+    const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
 
-    valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.02)';
-    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.1)'; }
-    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.4)'; }
-    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.7)'; }
-    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 1.0)'; valueLine.style.height = '2px'; }
+    valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.02)';
+    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.1)'; }
+    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.4)'; }
+    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.7)'; }
+    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 1.0)'; valueLine.style.height = '3px'; }
 
     valueLine.style.opacity = '100%';
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
-    uiCanvas.appendChild(valueLine);
+    uiCanvasVertical.appendChild(valueLine);
   }
 
   //draw Amounts
   let amountHolder = document.createElement('div');
   amountHolder.classList.add('amount-holder');
-  amountHolder.classList.add('vertical');
   amountHolder.style.backgroundColor = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
-  for (let i = 20; i >= -10; i--) {
-    let valueText = document.createElement('div');
-    valueText.classList.add('value-text');
-    valueText.innerHTML = i + 'k';
+  for (let i = 100; i >= -10; i--) {
+    if (pxToValue('0px') < 30000 || (pxToValue('0px') < 150000 && i % 5 === 0) || i % 10 === 0) {
+      let valueText = document.createElement('div');
+      valueText.classList.add('value-text');
+      valueText.innerHTML = i + 'k';
 
-    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
-    valueText.style.color = 'rgba(' + gridColorClear + ', 0.1)';
-    if (i % 2 === 0)  { valueText.style.color = 'rgba(' + gridColorClear + ', 0.3)'; }
-    if (i % 10 === 0) { valueText.style.color = 'rgba(' + gridColorClear + ', 0.6)'; }
-    if (i % 20 === 0) { valueText.style.color = 'rgba(' + gridColorClear + ', 0.8)'; }
-    if (i === 0)      { valueText.style.color = 'rgba(' + gridColorClear + ', 1.0)'; }
+      const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+      const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
+      valueText.style.color = 'rgba(' + uiColorClear + ', 0.4)';
+      if (i % 5 === 0) { valueText.style.color = 'rgba(' + uiColorClear + ', 0.7)'; }
+      if (i % 10 === 0) { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
+      if (i === 0)      { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
 
-    valueText.style.opacity = '100%';
-    valueText.style.marginTop = '' + parseInt(550 - valueToPx(i * 1000) + valueToPx(lowest) + EXTRAAREA) + 'px';
-    amountHolder.appendChild(valueText);
+      valueText.style.opacity = '100%';
+      valueText.style.marginTop = '' + parseInt(550 - valueToPx(i * 1000) + valueToPx(lowest) + EXTRAAREA) + 'px';
+      amountHolder.appendChild(valueText);
+    }
   }
 
-  uiCanvas.appendChild(amountHolder);
+  uiCanvasVertical.appendChild(amountHolder);
 }
 
 function setDates() {
-  const uiCanvas = document.getElementById('uicanvas');
+  const uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
+  const uiCanvas = document.getElementById('uiCanvas');
+  uiCanvasHorizontal.style.marginLeft = -EXTRAAREA + 'px';
+
   let dateLeft = document.createElement('p');
   let tempLeft1 = cutTextLines[pastEvents].split(';');
   let tempLeft2 = tempLeft1[1].slice(1, -1).split('.');
   dateLeft.innerHTML = tempLeft2[0] + '.' + tempLeft2[1] + '.' + '20' + tempLeft2[2];
   dateLeft.className = 'uiElement';
-  dateLeft.classList.add('horizontal');
   dateLeft.style.position = 'absolute';
   dateLeft.style.marginTop = '' + (560 + EXTRAAREA) + 'px';
   dateLeft.style.marginLeft = '' + (10 + EXTRAAREA) + 'px';
   dateLeft.style.visibility = 'visible';
-  uiCanvas.appendChild(dateLeft);
+  uiCanvasHorizontal.appendChild(dateLeft);
 
   let dateRight = document.createElement('p');
   let tempRight1 = cutTextLines[pastEventsOffset + 1].split(';');
   let tempRight2 = tempRight1[1].slice(1, -1).split('.');
   dateRight.innerHTML = tempRight2[0] + '.' + tempRight2[1] + '.' + '20' + tempRight2[2];
   dateRight.className = 'uiElement';
-  dateRight.classList.add('horizontal');
   dateRight.style.position = 'absolute';
   dateRight.style.marginTop =  '' + (560 + EXTRAAREA) + 'px';
   dateRight.style.marginLeft = '' + (960 + EXTRAAREA) + 'px';
-  uiCanvas.appendChild(dateRight);
+  uiCanvasHorizontal.appendChild(dateRight);
 
   for (let i = 0; i < dateLines.length; i++) {
     let dateLine = document.createElement('div');
-    dateLine.classList.add('horizontal');
-    dateLine.classList.add('vertical');
     dateLine.style.position = 'absolute';
     dateLine.style.zIndex = '80';
-    dateLine.style.height = '3000px';
+    dateLine.style.height = 2000 + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
-    dateLine.style.marginTop =  '-1000px';
+    dateLine.style.marginTop =  '-2000px';
     dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
 
-    const gridColorParts = gridColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-    const gridColorClear = `${gridColorParts[0]}, ${gridColorParts[1]}, ${gridColorParts[0]}`;
+    const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+    const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
 
-    dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.2)';;
+    dateLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.2)';;
     if (dateLines[i].charAt(0) === 'y') {
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
-      dateLine.style.backgroundColor = 'rgb(' + gridColorClear + ')';
+      dateLine.style.backgroundColor = 'rgb(' + uiColorClear + ')';
     }
 
     if (dateLines[i].charAt(0) === 'w') {
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
-      dateLine.style.backgroundColor = 'rgba(' + gridColorClear + ', 0.05)';;
+      dateLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.05)';;
     }
 
     uiCanvas.appendChild(dateLine);
@@ -580,12 +550,12 @@ function drawCanvas() {
   path = [];
   dateLines = [];
   let canvas = document.getElementById('canvas');
-  let paddingLeft = 1000 + moveOffsetX;
+  let paddingLeft = 980 + moveOffsetX;
   let diffHeight = 550 - valueToPx(endbudget - lowest);
   let diffHeightIndex = 0;
   let lastDayDiff = 0;
   let fgOffset = 0;
-  let evenFgOffset = 0;
+  let evenFgOffset = 100;
 
   amazonEntries = [];
   paypalEntries = [];
@@ -609,7 +579,7 @@ function drawCanvas() {
 
   totalDays = Math.abs(totalDays);
 
-  let dayWidth = 1000 / Math.abs(totalDays);
+  let dayWidth = 875 / Math.abs(totalDays);
 
   let foregroundoffset = dayWidth/4;
 
@@ -660,7 +630,7 @@ function drawCanvas() {
     square.style.width = '' + (dayWidth - 2) + 'px';
 
     diffHeight -= value;
-    if (diffDays > 0) { square.id = "linePoint" + diffHeightIndex; diffHeightIndex += 2; }
+    if (diffDays > 0) { square.id = 'linePoint' + diffHeightIndex; diffHeightIndex += 2; }
     if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHeight + 'px'; }
     else                               { square.style.marginTop = (diffHeight + value) + 'px'; }
 
@@ -855,7 +825,7 @@ function drawLegends() {
   drawPositiveLegend(maxTotal, foodEntries, 'food');
   drawPositiveLegend(maxTotal, ospaEntries, 'ospa');
   drawPositiveLegend(maxTotal, gasEntries, 'gas');
-  drawPositiveLegend(maxTotal, restEntries, 'negative');
+  drawPositiveLegend(maxTotal, restEntries, 'others');
 
   drawNegativeLegend(maxTotal, monthlyEntries, 'monthly');
   drawNegativeLegend(maxTotal, amazonEntries, 'amazon');
@@ -863,7 +833,7 @@ function drawLegends() {
   drawNegativeLegend(maxTotal, foodEntries, 'food');
   drawNegativeLegend(maxTotal, ospaEntries, 'ospa');
   drawNegativeLegend(maxTotal, gasEntries, 'gas');
-  drawNegativeLegend(maxTotal, restEntries, 'negative');
+  drawNegativeLegend(maxTotal, restEntries, 'others');
 
   drawTotalLegend(maxTotal, monthlyEntries, 'monthly');
   drawTotalLegend(maxTotal, amazonEntries, 'amazon');
@@ -871,7 +841,7 @@ function drawLegends() {
   drawTotalLegend(maxTotal, foodEntries, 'food');
   drawTotalLegend(maxTotal, ospaEntries, 'ospa');
   drawTotalLegend(maxTotal, gasEntries, 'gas');
-  drawTotalLegend(maxTotal, restEntries, 'negative');
+  drawTotalLegend(maxTotal, restEntries, 'others');
 }
 
 function drawTotalLegend(total, input, groupname) {
@@ -935,43 +905,43 @@ function drawTable() {
     let entries = cutTextLines[i].split(';');
     let row = document.createElement('div');
 
-    row.id = "row" + i;
-    row.className = "row";
-    row.style.display = "inline-flex";
+    row.id = 'row' + i;
+    row.className = 'row';
+    row.style.display = 'inline-flex';
 
     // Header Row
     if (i === 0) {
       row.style.paddingTop = '0.8vh';
       row.style.fontSize = 'medium';
       row.style.fontWeight = 'bolder';
-      row.style.backgroundColor = 'black';
+      row.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     }
 
     for (let j = 0; j < entries.length; j++) {
       let entrie = entries[j];
       let cell = document.createElement('p');
       cell.innerHTML = entrie.slice(1, -1);
-      cell.className = "cell";
+      cell.className = 'cell';
 
       if (j === 0) {
         let cell = document.createElement('p');
         if (i === 0) { cell.innerHTML = 'Index'; }
         else       { cell.innerHTML = ''  + i; }
-        cell.className = "cell";
-        cell.style.width = "3vw";
+        cell.className = 'cell';
+        cell.style.width = '3vw';
         row.appendChild(cell);
       }
 
-      if (j === 1) { cell.style.width = "8vw"; row.appendChild(cell); }     // Date
-      if (j === 3) { cell.style.width = "10vw"; row.appendChild(cell); }    // Buchungstext
-      if (j === 4) { cell.style.width = "40vw"; row.appendChild(cell); }    // Purpose
+      if (j === 1) { cell.style.width = '8vw'; row.appendChild(cell); }     // Date
+      if (j === 3) { cell.style.width = '10vw'; row.appendChild(cell); }    // Buchungstext
+      if (j === 4) { cell.style.width = '40vw'; row.appendChild(cell); }    // Purpose
       if (j === 11) {                                                       // Beneficiary
-        cell.style.width = "25vw";
+        cell.style.width = '25vw';
         row.appendChild(cell);
       }
       if (j === 14) {                                                       // Amount
-        cell.style.width = "5vw";
-        cell.style.paddingRight = "0.5vw";
+        cell.style.width = '5vw';
+        cell.style.paddingRight = '0.5vw';
         row.appendChild(cell);
         if (entries[selectors.amount].charAt(1) !==  '-') { cell.classList.add('positive-background'); }
         if (entries[selectors.amount].charAt(1) === '-') { cell.classList.add('negative-background'); }
@@ -1012,8 +982,8 @@ function drawTable() {
     }
 
     let rowHolder = document.createElement('div');
-    rowHolder.style.display = "block";
-    rowHolder.style.paddingBottom = "1px";
+    rowHolder.style.display = 'block';
+    rowHolder.style.paddingBottom = '1px';
 
     rowHolder.appendChild(row)
     table.appendChild(rowHolder);
