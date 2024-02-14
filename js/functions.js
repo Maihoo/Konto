@@ -24,7 +24,7 @@ Date.prototype.addDays = function(days) {
 
 function pxToValue(yPixel) {
   let pixel = 550 - parseInt(yPixel.slice(0, -2));
-  return parseInt((pixel * (maxHeight / 500) + lowest) / verticalZoomFactor);
+  return parseInt((pixel * (maxHeight / 500) + lowest) / verticalScaleFactor);
 }
 
 function pxToDate(xPixel) {
@@ -42,7 +42,7 @@ function pxToDate(xPixel) {
 }
 
 function valueToPx(value) {
-  return parseInt(value) * verticalZoomFactor * (500 / maxHeight);
+  return parseInt(value) * verticalScaleFactor * (500 / maxHeight);
 }
 
 function getTotal(input, positive) {

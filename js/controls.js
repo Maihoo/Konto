@@ -2,11 +2,14 @@ function resetControls() {
   let range1 = document.getElementById('range-slider-1'),
   range1Clone = range1.cloneNode(true);
   range1.parentNode.replaceChild(range1Clone, range1);
+
+  handleZoomScroll(true);
+  handleZoomScroll(false);
 }
 
 function initControls() {
   resetControls();
-  let staticwrapper = document.getElementById('staticwrapper');
+  let overflowrapper = document.getElementById('overflowrapper');
 
   //disable scrolling while in legend window
   document.getElementById('legend').addEventListener('scroll', (event) => {
@@ -20,8 +23,11 @@ function initControls() {
   initCategoryToggles();
 
   // drag move
-  staticwrapper.onclick = handleDragClick;
-  staticwrapper.onmousedown = handleDragMouseDown;
+  overflowrapper.onclick = handleDragClick;
+  overflowrapper.onmousedown = handleDragMouseDown;
+
+  // zooming
+  overflowrapper.onwheel = (event) => { handleZoomScroll(event.deltaY < 0); event.preventDefault(); }
 
   // Range Slider
   initRangeSlider0();
@@ -42,6 +48,11 @@ function handleKeyUp(event) {
 
 //TODO: fix maybe
 function handleKeyDown(event) {
+  //reset
+  if (event.keyCode === 46) {
+    resetSettings();
+  }
+
   if (event.keyCode === 187 && !zoomInPressed) {
     zoomInPressed = true;
     let totalChange = -parseInt((pastEvents - pastEventsOffset) * ZOOMFACTOR - (pastEvents - pastEventsOffset));
@@ -152,7 +163,7 @@ function initColorPickers() {
 
 function updateBackgroundColor(color) {
   sessionStorage.setItem('backgroundColor', color);
-  document.getElementById('staticwrapper').style.backgroundColor = color;
+  document.getElementById('overflowrapper').style.backgroundColor = color;
   document.getElementById('settings').style.backgroundColor = color;
   document.body.style.backgroundColor = color;
   less.modifyVars({'@custom-background-color': color});
@@ -185,6 +196,7 @@ function toggleSettingsOrientation() {
 
   if (settingsVertical) {
     document.getElementById('graph-area-wrapper').classList.add('graph-area-wrapper-vertical');
+    document.getElementById('settings').classList.remove('settings-hidden');
   } else {
     document.getElementById('graph-area-wrapper').classList.remove('graph-area-wrapper-vertical');
   }
@@ -206,9 +218,9 @@ function togglePath() {
 
 function toggleGrid() {
   if (gridMode) {
-    document.getElementById('uiCanvas').style.opacity = "100%";
-    document.getElementById('uiCanvasVertical').style.opacity = "100%";
-    document.getElementById('uiCanvasHorizontal').style.opacity = "100%";
+    document.getElementById('uiCanvas').style.opacity = '100%';
+    document.getElementById('uiCanvasVertical').style.opacity = '100%';
+    document.getElementById('uiCanvasHorizontal').style.opacity = '100%';
   } else {
     document.getElementById('uiCanvas').style.opacity = 0;
     document.getElementById('uiCanvasVertical').style.opacity = 0;
@@ -221,7 +233,7 @@ function toggleGrid() {
 function handleEscape(event) {
   if (event.key === 'Escape') {
     linepoint = [];
-    staticwrapper.style.cursor = '';
+    overflowrapper.style.cursor = '';
     let uiLine = document.getElementById('uiline');
     let uilinetemp = document.getElementById('uilinetemp');
     let uiltCtx = uilinetemp.getContext('2d');
@@ -243,7 +255,7 @@ function handleDragClick(event) {
   let uilinetemp = document.getElementById('uilinetemp');
 
   if (linepoint.length === 0) {
-    staticwrapper.style.cursor = 'crosshair';
+    overflowrapper.style.cursor = 'crosshair';
     linepoint.push(event.clientX);
     linepoint.push(event.clientY + window.scrollY);
     document.onmousemove = (event) => handlePrediction(event);
@@ -260,7 +272,7 @@ function handleDragClick(event) {
               'rgba(255, 0, 0, 0.5)',
               1);
 
-    staticwrapper.style.cursor = '';
+    overflowrapper.style.cursor = '';
     uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
     if (!uiLine.index) {
       uiLine.index = 0;
@@ -317,6 +329,23 @@ function handleDragClick(event) {
   }
 }
 
+function handleZoomScroll(zoomIn) {
+  let zoomingwrapper = document.getElementById('zoomingwrapper');
+  if (zoomIn) {
+    zoomLevel *= 1.02;
+  } else {
+    zoomLevel /= 1.02;
+  }
+
+  zoomingwrapper.style.transform = 'scale(' + zoomLevel + ')';
+  zoomingwrapper.style.width = (originalWidth / zoomLevel) + 'px';
+  zoomingwrapper.style.height = (originalHeight / zoomLevel) + 'px';
+  zoomingwrapper.style.top = (originalTop - ((zoomingwrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
+  zoomingwrapper.style.left = (originalLeft - ((zoomingwrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+
+  sessionStorage.setItem('zoomLevel', zoomLevel);
+}
+
 function handleDragMouseDown(event) {
   if (event.button !== 0) {
     return;
@@ -333,20 +362,22 @@ function handleDragMouseDown(event) {
 
   dragstartX = event.clientX;
   dragstartY = event.clientY;
-  dragstartXstorage = event.clientX
-  dragstartYstorage = event.clientY
+  dragstartXstorage = event.clientX;
+  dragstartYstorage = event.clientY;
   ts1 = Date.now();
-  staticwrapper.onmouseup = function(event) {
-    staticwrapper.onmousemove = undefined;
+  overflowrapper.onmouseup = function() {
+    overflowrapper.onmousemove = undefined;
   }
 
-  staticwrapper.onmousemove = function(event) {
+  overflowrapper.onmousemove = function(event) {
     if (Date.now() - ts2 > 20 && dragstartX !== event.clientX && dragstartY !== event.clientY) {
       ts2 = Date.now();
       let clientX = event.clientX;
       let clientY = event.clientY;
       let diffX = dragstartX - clientX;
       let diffY = dragstartY - clientY;
+      diffX /= zoomLevel;
+      diffY /= zoomLevel;
       moveOffsetX -= diffX;
       moveOffsetY -= diffY;
       dragstartX = clientX;
@@ -378,12 +409,12 @@ function initRangeSlider0() {
       orientation: 'vertical',
       min: 0,
       max: 200,
-      value: verticalZoomFactor * 100,
+      value: verticalScaleFactor * 100,
       change: function( event ) {
         let value = $('#range-slider-0').slider('value');
-        if (verticalZoomFactor !== (value) / 100) {
-          verticalZoomFactor = (value) / 100;
-          sessionStorage.setItem('verticalZoomFactor', verticalZoomFactor);
+        if (verticalScaleFactor !== (value) / 100) {
+          verticalScaleFactor = (value) / 100;
+          sessionStorage.setItem('verticalScaleFactor', verticalScaleFactor);
           resetHTML();
           init();
         }
@@ -442,7 +473,7 @@ function initRangeSlider2() {
 }
 
 function setColorDefault() {
-  backgroundColor = '35, 35, 35';
+  backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
 
@@ -594,7 +625,7 @@ function processPage(content) {
           allLines[j] = temp.slice(10, 20);
           allLines.splice(j, 0, temp.slice(0, 10));
         }
-  
+
         if (allLines[j].length === 10 && allLines[j - 1].length === 10) {
           for (let k = 1; k < 12; k++) {
             let nextAmount = allLines[j + k];
@@ -606,28 +637,27 @@ function processPage(content) {
                 if (j + 2 !== j + k - 1) {
                   purpose += ' ' + allLines[j + k - 1];
                 }
-  
+
                 let amount = allLines[j + k];
                 amount.replace('.', '');
                 amount.replace(',', '.');
-  
+
                 if (amount.charAt(amount.length - 1) === '-') {
                   amount = '-' + amount.slice(0, -1);
                 } else {
                   amount = amount.slice(0, -1);
                 }
-  
+
                 if (parseFloat(amount) === NaN) {
                   amount = 0;
                 }
-  
+
                 totalAmount += parseFloat(amount);
                 if (!isNaN(parseFloat(amount))) {
                   //                                        date              text                          purpose                             beneficiary                     amount
                   dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
                 }
               }
-  
               k = 20;
             }
           }

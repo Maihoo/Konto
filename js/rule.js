@@ -21,7 +21,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 14448.40;
+const STARTBUDGET = 17147.88;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'food', 'ospa', 'gas', 'others'];
@@ -37,7 +37,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"600";"EUR";""'
+  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"230";"EUR";""'
 ];
 
 const selectors= {
@@ -50,7 +50,7 @@ const selectors= {
 };
 
 const replacements = [
-//  selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1300'
+// selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1200'
 ]
 
 // path drawing
@@ -71,7 +71,8 @@ let settingsVertical = false;
 
 let dataset;
 
-let verticalZoomFactor = 1.0;
+let verticalScaleFactor = 1.0;
+let zoomLevel = 1.0;
 let pastEventsOffset = 0;
 let pastEvents = 250;
 
@@ -95,7 +96,7 @@ let startDate = '';
 let endDate = '';
 let sortType = 'date';
 
-let backgroundColor = '35, 35, 35';
+let backgroundColor = '25, 25, 25';
 let lineColor = '255, 0, 0';
 let uiColor = '255, 255, 255';
 
@@ -114,6 +115,14 @@ let ospaEntries = [];
 let gasEntries = [];
 let restEntries = [];
 
+// zooming
+let originalWidth;
+let originalHeight;
+let originalMarginTop;
+let originalMarginLeft;
+let originalTop;
+let originalLeft;
+
 function resetSettings() {
   zoomInPressed = false;
   zoomOutPressed = false;
@@ -122,7 +131,8 @@ function resetSettings() {
   showShadow = true;
 
   totalBudget = STARTBUDGET;
-  verticalZoomFactor = 1.0;
+  verticalScaleFactor = 1.0;
+  zoomLevel = 1.0;
   pastEventsOffset = 0;
   pastEvents = 250;
   legendMultiplier = 100;
@@ -143,11 +153,11 @@ function resetSettings() {
 
   startDate = '';
   endDate = '';
-  backgroundColor = '35, 35, 35';
+  backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
 
-  document.getElementById('staticwrapper').style.backgroundColor = backgroundColor;
+  document.getElementById('zoomingwrapper').style.backgroundColor = backgroundColor;
   document.getElementById('settings').style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
 
@@ -339,6 +349,14 @@ function init() {
   setTimeout(() => {
     resetHTML();
 
+    let zoomingwrapper = document.getElementById('zoomingwrapper');
+    originalWidth = zoomingwrapper.offsetWidth;
+    originalHeight = zoomingwrapper.offsetHeight;
+    originalMarginTop = parseInt(zoomingwrapper.style.marginTop.slice('0, -2'));
+    originalMarginLeft = parseInt(zoomingwrapper.style.marginLeft.slice('0, -2'));
+    originalTop = zoomingwrapper.offsetTop;
+    originalLeft = zoomingwrapper.offsetLeft;
+
     maxHeight = getMaxHeight();
     getMaxHeightAround();
 
@@ -393,9 +411,9 @@ function drawBlurPath() {
       const heightFactor = 1000 / path[j][0];
       drawLine(ctx,
         parseInt(path[j][1]),
-        parseInt(path[j][0] - 20 + i * shadowDistance * verticalZoomFactor),
+        parseInt(path[j][0] - 20 + i * shadowDistance * verticalScaleFactor),
         parseInt(path[j+1][1]),
-        parseInt(path[j+1][0] - 20 + i * shadowDistance*verticalZoomFactor),
+        parseInt(path[j+1][0] - 20 + i * shadowDistance * verticalScaleFactor),
         `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 200 * heightFactor})`,
         1);
     }
@@ -506,7 +524,7 @@ function setDates() {
   dateLeft.style.marginTop = '' + (560 + EXTRAAREA) + 'px';
   dateLeft.style.marginLeft = '' + (10 + EXTRAAREA) + 'px';
   dateLeft.style.visibility = 'visible';
-  uiCanvasHorizontal.appendChild(dateLeft);
+  uiCanvas.appendChild(dateLeft);
 
   let dateRight = document.createElement('p');
   let tempRight1 = cutTextLines[pastEventsOffset + 1].split(';');
@@ -516,7 +534,7 @@ function setDates() {
   dateRight.style.position = 'absolute';
   dateRight.style.marginTop =  '' + (560 + EXTRAAREA) + 'px';
   dateRight.style.marginLeft = '' + (960 + EXTRAAREA) + 'px';
-  uiCanvasHorizontal.appendChild(dateRight);
+  uiCanvas.appendChild(dateRight);
 
   for (let i = 0; i < dateLines.length; i++) {
     let dateLine = document.createElement('div');
@@ -600,12 +618,16 @@ function drawCanvas() {
     }
   }
 
-  for (let i = pastEvents; i >= pastEventsOffset + 1; i--) {
+  for (let i = pastEvents; i > pastEventsOffset; i--) {
     let entries = cutTextLines[i].split(';');
     let decided = false;
     let value = valueToPx(entries[selectors.amount].slice(1, -1));
     let diffBefore = diffHeight;
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
+    if (i >= pastEvents) {
+      diffDays = 2;
+    }
+
     let sharedDates = 0;
     for (let j = i - 1; j > 0 + 1; j--) {
       let comparison = cutTextLines[j].split(';');
@@ -791,8 +813,8 @@ function drawCanvas() {
 }
 
 function drawLegends() {
-  var legendSquareHolders = document.getElementsByClassName('legend-square-holder');
-  for (var i = 0; i < legendSquareHolders.length; i++) {
+  let legendSquareHolders = document.getElementsByClassName('legend-square-holder');
+  for (let i = 0; i < legendSquareHolders.length; i++) {
     legendSquareHolders[i].innerHTML = '';
   }
 

@@ -1,13 +1,14 @@
 function clearSessionStorage() {
   sessionStorage.setItem('pastEvents', '');
   sessionStorage.setItem('pastEventsOffset', '');
-  sessionStorage.setItem('backgroundColor', 'rgb(35, 35, 35)');
+  sessionStorage.setItem('backgroundColor', 'rgb(25, 25, 25)');
   sessionStorage.setItem('lineColor', 'rgb(255, 0, 0)');
   sessionStorage.setItem('uiColor', 'rgb(255, 255, 255)');
   sessionStorage.setItem('settingsExtended', '');
   sessionStorage.setItem('settingsVertical', '');
   sessionStorage.setItem('sortType', '');
-  sessionStorage.setItem('verticalZoomFactor', '');
+  sessionStorage.setItem('verticalScaleFactor', '');
+  sessionStorage.setItem('zoomLevel', '');
   sessionStorage.setItem('legendMultiplyer', '');
 
   for (let i = 0; i < categories.length; i++) {
@@ -30,10 +31,10 @@ function getFromSessionStorage() {
   if (sessionValue && sessionValue.length > 0) {
     backgroundColor = sessionValue;
     less.modifyVars({'@custom-background-color': backgroundColor});
-    document.getElementById('staticwrapper').style.backgroundColor = sessionValue;
+    document.getElementById('overflowrapper').style.backgroundColor = sessionValue;
     document.getElementById('color-picker-background').value = rgbToHex(sessionValue);
 
-    document.getElementById('staticwrapper').style.backgroundColor = backgroundColor;
+    document.getElementById('overflowrapper').style.backgroundColor = backgroundColor;
     document.getElementById('settings').style.backgroundColor = backgroundColor;
     document.body.style.backgroundColor = backgroundColor;
   }
@@ -57,9 +58,14 @@ function getFromSessionStorage() {
     sortType = sessionValue;
   }
 
-  sessionValue = sessionStorage.getItem('verticalZoomFactor');
+  sessionValue = sessionStorage.getItem('verticalScaleFactor');
   if (sessionValue && sessionValue.length > 0) {
-    verticalZoomFactor = sessionValue;
+    verticalScaleFactor = sessionValue;
+  }
+
+  sessionValue = sessionStorage.getItem('zoomLevel');
+  if (sessionValue && sessionValue.length > 0) {
+    zoomLevel = sessionValue;
   }
 
   sessionValue = sessionStorage.getItem('legendMultiplyer');
