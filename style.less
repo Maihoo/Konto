@@ -18,7 +18,7 @@ body {
     &.paypal { color: @paypal-color; }
     &.food { color: @food-color; }
     &.monthly { color: @monthly-color; }
-    &.ospa { color: @ospa-color; }
+    &.cash { color: @cash-color; }
     &.gas { color: @gas-color; }
   }
 }
@@ -29,7 +29,7 @@ body {
 @paypal-color:  rgb(32, 12, 211);
 @food-color:    rgb(218, 178, 0);
 @monthly-color: rgb(30, 121, 45);
-@ospa-color:    rgb(236, 0, 0);
+@cash-color:    rgb(236, 0, 0);
 @gas-color:     rgb(0, 236, 216);
 @debt-color:    rgba(100, 200, 100, 0.1);
 
@@ -50,9 +50,13 @@ body {
 @paypal-color-transparent:  rgba(41, 27, 163, 0.2);
 @food-color-transparent:    rgba(255, 0, 179, 0.2);
 @monthly-color-transparent: rgba(30, 121, 45, 0.2);
-@ospa-color-transparent:    rgba(236, 0, 0, 0.2);
+@cash-color-transparent:    rgba(236, 0, 0, 0.2);
 @gas-color-transparent:     rgba(0, 236, 216, 0.356);
 @debt-color-transparent:    rgba(100, 200, 100, 0.2);
+
+.toggle-transparent {
+  opacity: 0.05;
+}
 
 .spinner-container {
   position: absolute;
@@ -350,7 +354,6 @@ p {
     margin-top: 0;
   }
 
-  /* Create a custom checkbox */
   .checkmark {
     position: absolute;
     top: 0;
@@ -367,7 +370,7 @@ p {
     outline: 1px solid #fff;
   }
 
-  input:checked ~ .checkmark {
+  &[checked="checked"] .checkmark {
     background-color: #fff;
   }
 
@@ -375,49 +378,49 @@ p {
     @my-color: @negative-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
   &.amazon {
     @my-color: @amazon-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
   &.paypal {
     @my-color: @paypal-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
   &.food {
     @my-color: @food-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
   &.monthly {
     @my-color: @monthly-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
-  &.ospa {
-    @my-color: @ospa-color;
+  &.cash {
+    @my-color: @cash-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 
   &.gas {
     @my-color: @gas-color;
     color: @my-color;
     .checkmark { border: 4px solid @my-color; }
-    input:checked ~ .checkmark { background-color: @my-color; }
+    &[checked="checked"] .checkmark { background-color: @my-color; }
   }
 }
 
@@ -504,7 +507,7 @@ h1 {
   &.paypal { color: @paypal-color; }
   &.food { color: @food-color; }
   &.monthly { color: @monthly-color; }
-  &.ospa { color: @ospa-color; }
+  &.cash { color: @cash-color; }
   &.gas { color: @gas-color; }
 }
 
@@ -677,7 +680,7 @@ h1 {
 .paypal-background { background-color: @paypal-color; }
 .food-background { background-color: @food-color; }
 .monthly-background { background-color: @monthly-color; }
-.ospa-background { background-color: @ospa-color; }
+.cash-background { background-color: @cash-color; }
 .gas-background { background-color: @gas-color; }
 .debt-background { background-color: @debt-color; }
 
@@ -687,7 +690,7 @@ h1 {
 .paypal-background-transparent { background-color: @paypal-color-transparent; }
 .food-background-transparent { background-color: @food-color-transparent; }
 .monthly-background-transparent { background-color: @monthly-color-transparent; }
-.ospa-background-transparent { background-color: @ospa-color-transparent; }
+.cash-background-transparent { background-color: @cash-color-transparent; }
 .gas-background-transparent { background-color: @gas-color-transparent; }
 .debt-background-transparent { background-color: @debt-color-transparent; }
 

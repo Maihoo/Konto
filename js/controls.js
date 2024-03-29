@@ -1,17 +1,34 @@
 function resetControls() {
-  let range1 = document.getElementById('range-slider-1'),
-  range1Clone = range1.cloneNode(true);
-  range1.parentNode.replaceChild(range1Clone, range1);
+  replace('range-slider-1'),
+
+  //toggles
+  replace('toggle-monthly'),
+  replace('toggle-amazon'),
+  replace('toggle-paypal'),
+  replace('toggle-food'),
+  replace('toggle-cash'),
+  replace('toggle-gas'),
+  replace('toggle-others'),
 
   handleZoomScroll(true);
   handleZoomScroll(false);
+}
+
+function replace(id) {
+  let originalElement = document.getElementById(id);
+  if (originalElement instanceof HTMLElement) {
+    clonedElement = originalElement.cloneNode(true);
+    originalElement.parentNode.replaceChild(clonedElement, originalElement);
+  } else {
+    console.log('couldnt find element with id', id);
+  }
 }
 
 function initControls() {
   resetControls();
   let overflowrapper = document.getElementById('overflowrapper');
 
-  //disable scrolling while in legend window
+  // disable scrolling while in legend window
   document.getElementById('legend').addEventListener('scroll', (event) => {
     event.stopPropagation();
   });
@@ -21,6 +38,23 @@ function initControls() {
 
   initColorPickers();
   initCategoryToggles();
+
+  // toggles
+  document.getElementById('toggle-monthly').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-amazon').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-paypal').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-food').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-cash').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-gas').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-others').addEventListener('mousedown', handleToggleClick);
+
+  document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
+  document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
+  document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
+  document.getElementById('toggle-food').setAttribute('checked', 'checked');
+  document.getElementById('toggle-cash').setAttribute('checked', 'checked');
+  document.getElementById('toggle-gas').setAttribute('checked', 'checked');
+  document.getElementById('toggle-others').setAttribute('checked', 'checked');
 
   // drag move
   overflowrapper.onclick = handleDragClick;
@@ -46,9 +80,31 @@ function handleKeyUp(event) {
   }
 }
 
-//TODO: fix maybe
+function handleToggleClick(event) {
+  let selector = '.square';
+
+  selector = this.id.split('-')[1] + '-background';
+  console.log(selector);
+
+  const targets = document.querySelectorAll('.' + selector);
+  if (this.getAttribute('checked') === 'checked') {
+    targets.forEach(target => {
+      if (target instanceof HTMLElement) {
+        target.classList.add('toggle-transparent');
+      }
+    });
+  } else {
+    targets.forEach(target => {
+      if (target instanceof HTMLElement) {
+        target.classList.remove('toggle-transparent');
+      }
+    });
+  }
+}
+
+// TODO: fix maybe
 function handleKeyDown(event) {
-  //reset
+  // reset
   if (event.keyCode === 46) {
     resetSettings();
   }
@@ -101,7 +157,7 @@ function initCategoryToggles() {
 function addEventListenerToToggles(category) {
   document.getElementById('toggle-' + category).addEventListener('mouseup', (event) => {
     if (document.getElementById('toggle-' + category).getAttribute('checked') === 'checked') {
-      document.getElementById('toggle-' + category).setAttribute('checked', 'false');
+      document.getElementById('toggle-' + category).removeAttribute('checked');
       sessionStorage.setItem('toggle-' + category, false);
     } else {
       document.getElementById('toggle-' + category).setAttribute('checked', 'checked');
@@ -123,7 +179,7 @@ function updateActiveCategories() {
     'amazon':   allValues[1],
     'paypal':   allValues[2],
     'food':     allValues[3],
-    'ospa':     allValues[4],
+    'cash':     allValues[4],
     'gas':      allValues[5],
     'others':   allValues[6]
   };
@@ -206,25 +262,25 @@ function togglePath() {
   pathMode = !pathMode;
 
   if (pathMode) {
-    document.getElementById('canvas').style.opacity = 0;
-    document.getElementById('pathCanvas').style.opacity = '100%';
-    document.getElementById('pathBlurCanvas').style.opacity = '100%';
+    canvas.style.opacity = 0;
+    pathCanvas.style.opacity = '100%';
+    pathBlurCanvas.style.opacity = '100%';
   } else {
-    document.getElementById('canvas').style.opacity = '100%';
-    document.getElementById('pathCanvas').style.opacity = 0;
-    document.getElementById('pathBlurCanvas').style.opacity = 0;
+    canvas.style.opacity = '100%';
+    pathCanvas.style.opacity = 0;
+    pathBlurCanvas.style.opacity = 0;
   }
 }
 
 function toggleGrid() {
   if (gridMode) {
-    document.getElementById('uiCanvas').style.opacity = '100%';
-    document.getElementById('uiCanvasVertical').style.opacity = '100%';
-    document.getElementById('uiCanvasHorizontal').style.opacity = '100%';
+    uiCanvas.style.opacity = '100%';
+    uiCanvasVertical.style.opacity = '100%';
+    uiCanvasHorizontal.style.opacity = '100%';
   } else {
-    document.getElementById('uiCanvas').style.opacity = 0;
-    document.getElementById('uiCanvasVertical').style.opacity = 0;
-    document.getElementById('uiCanvasHorizontal').style.opacity = 0;
+    uiCanvas.style.opacity = 0;
+    uiCanvasVertical.style.opacity = 0;
+    uiCanvasHorizontal.style.opacity = 0;
   }
 
   gridMode = !gridMode;
@@ -296,12 +352,12 @@ function handleDragClick(event) {
     circle.hovered = '0';
     circle.className = 'circle'
     circle.id = 'circle' + (uiLine.index + 0);
-    circle.style.top  = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - 600) + 'px';
-    circle.style.left =  parseInt(event.clientX - $('#uiline').offset().left - 6) + 'px';
+    circle.style.top = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - 600) + 'px';
+    circle.style.left = parseInt(event.clientX - $('#uiline').offset().left - 6) + 'px';
 
     circle.onmouseover = function(e) {
       let pop = document.getElementById('popupCircle' + uiLine.index);
-      pop.style.top  = (e.clientY + window.scrollY - 100) + 'px';
+      pop.style.top = (e.clientY + window.scrollY - 100) + 'px';
       pop.style.left = (e.clientX + 5) + 'px';
       pop.style.position = 'absolute';
       pop.style.opacity = '100%';
@@ -318,30 +374,30 @@ function handleDragClick(event) {
 
     let popup = document.createElement('div');
     popup.innerHTML = '<p class="popupText">Index: ' + uiLine.index + '</p>'
-                    + '<p class="popupText">Date: '  + pxToDate(circle.style.left) + '</p>'
+                    + '<p class="popupText">Date: ' + pxToDate(circle.style.left) + '</p>'
                     + '<p class="popupText">Total: ' + (pxToValue(circle.style.top)) + ',00€</p>';
     popup.id = 'popupCircle' + uiLine.index;
     popup.className = 'popup';
     popup.style.position = 'absolute';
 
-    document.getElementById('uipopup').appendChild(popup);
-    document.getElementById('canvas').appendChild(circle);
+    uipopup.appendChild(popup);
+    canvas.appendChild(circle);
   }
 }
 
 function handleZoomScroll(zoomIn) {
-  let zoomingwrapper = document.getElementById('zoomingwrapper');
   if (zoomIn) {
     zoomLevel *= 1.02;
   } else {
     zoomLevel /= 1.02;
   }
 
-  zoomingwrapper.style.transform = 'scale(' + zoomLevel + ')';
-  zoomingwrapper.style.width = (originalWidth / zoomLevel) + 'px';
-  zoomingwrapper.style.height = (originalHeight / zoomLevel) + 'px';
-  zoomingwrapper.style.top = (originalTop - ((zoomingwrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
-  zoomingwrapper.style.left = (originalLeft - ((zoomingwrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+  const zoomingWrapper = document.getElementById('zoomingWrapper');
+  zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
+  zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
+  zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
+  zoomingWrapper.style.top = (originalTop - ((zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
+  zoomingWrapper.style.left = (originalLeft - ((zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
 
   sessionStorage.setItem('zoomLevel', zoomLevel);
 }
@@ -350,15 +406,6 @@ function handleDragMouseDown(event) {
   if (event.button !== 0) {
     return;
   }
-
-  let canvas = document.getElementById('canvas');
-  let pathCanvas = document.getElementById('pathCanvas');
-  let pathBlurCanvas = document.getElementById('pathBlurCanvas');
-  let uiLine = document.getElementById('uiline');
-  let uilinetemp = document.getElementById('uilinetemp');
-  let uiCanvas = document.getElementById('uiCanvas');
-  let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
-  let uiCanvasVertical = document.getElementById('uiCanvasVertical');
 
   dragstartX = event.clientX;
   dragstartY = event.clientY;
@@ -383,21 +430,13 @@ function handleDragMouseDown(event) {
       dragstartX = clientX;
       dragstartY = clientY;
 
+      const uiLine = document.getElementById('uiline');
+
       // move canvases
-      canvas.style.marginLeft = '' + (canvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      canvas.style.marginTop = '' + (canvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      pathCanvas.style.marginLeft = '' + (pathCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      pathCanvas.style.marginTop = '' + (pathCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      pathBlurCanvas.style.marginLeft = '' + (pathBlurCanvas.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      pathBlurCanvas.style.marginTop = '' + (pathBlurCanvas.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uiLine.style.marginLeft = '' + (uiLine.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uiLine.style.marginTop = '' + (uiLine.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uilinetemp.style.marginLeft = '' + (uilinetemp.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uilinetemp.style.marginTop = '' + (uilinetemp.style.marginTop.slice(0, -2) -diffY) + 'px';
-      uiCanvas.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uiCanvas.style.marginTop = '' + (uiCanvasVertical.style.marginTop.slice(0, -2) -diffY) + 'px';
+      const movingWrapper = document.getElementById('movingWrapper');
+      movingWrapper.style.marginLeft = '' + (movingWrapper.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      movingWrapper.style.marginTop = '' + (movingWrapper.style.marginTop.slice(0, -2) -diffY) + 'px';
       uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      uiCanvasVertical.style.marginTop = '' + (uiCanvasVertical.style.marginTop.slice(0, -2) -diffY) + 'px';
     }
   }
 }

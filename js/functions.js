@@ -110,7 +110,7 @@ function clearLines() {
   let circles = document.getElementsByClassName('circle');
   Array.from(circles).forEach(circle => {
     try {
-      document.getElementById('canvas').removeChild(circle);
+      canvas.removeChild(circle);
     } catch (error) { }
   });
 }
@@ -163,7 +163,7 @@ function hexToRgb(hex) {
   const g = parseInt(hex.substring(2, 4), 16);
   const b = parseInt(hex.substring(4, 6), 16);
 
-  return  `rgb(${r}, ${g}, ${b})`;
+  return `rgb(${r}, ${g}, ${b})`;
 }
 
 function rgbToHex(input) {

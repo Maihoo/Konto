@@ -21,27 +21,27 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 17147.88;
+const STARTBUDGET = 16397.24;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
-const categories = ['monthly', 'amazon', 'paypal', 'food', 'ospa', 'gas', 'others'];
+const categories = ['monthly', 'amazon', 'paypal', 'food', 'cash', 'gas', 'others'];
 
 let activeCategories = {
   'monthly': true,
   'amazon': true,
   'paypal': true,
   'food': true,
-  'ospa': true,
+  'cash': true,
   'gas': true,
   'others': true
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"SCHULDEN";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"230";"EUR";""'
+  '"DE45150505001101110771";"";"";"PayPal";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"750";"EUR";""'
 ];
 
 const selectors= {
-  'date': 1,
+  'date': 2,
   'content': 3,
   'purpose': 4,
   'beneficiary': 11,
@@ -111,7 +111,7 @@ let amazonEntries = [];
 let paypalEntries = [];
 let foodEntries = [];
 let monthlyEntries = [];
-let ospaEntries = [];
+let cashEntries = [];
 let gasEntries = [];
 let restEntries = [];
 
@@ -122,6 +122,17 @@ let originalMarginTop;
 let originalMarginLeft;
 let originalTop;
 let originalLeft;
+
+let canvas = document.getElementById('canvas');
+let pathCanvas = document.getElementById('pathCanvas');
+let pathBlurCanvas = document.getElementById('pathBlurCanvas');
+let uiline = document.getElementById('uiline');
+let uiCanvas = document.getElementById('uiCanvas');
+let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
+let uiCanvasVertical = document.getElementById('uiCanvasVertical');
+let uipopup = document.getElementById('uipopup');
+let zoomingWrapper = document.getElementById('zoomingWrapper');
+let settingsElement = document.getElementById('settings');
 
 function resetSettings() {
   zoomInPressed = false;
@@ -157,8 +168,8 @@ function resetSettings() {
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
 
-  document.getElementById('zoomingwrapper').style.backgroundColor = backgroundColor;
-  document.getElementById('settings').style.backgroundColor = backgroundColor;
+  zoomingWrapper.style.backgroundColor = backgroundColor;
+  settingsElement.style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
 
   clearSessionStorage();
@@ -177,18 +188,21 @@ function resetHTML() {
   paypalEntries = [];
   foodEntries = [];
   monthlyEntries = [];
-  ospaEntries = [];
+  cashEntries = [];
   gasEntries = [];
   restEntries = [];
+  zoomLevel = 1.0;
 
-  let canvas = document.getElementById('canvas');
-  let pathCanvas = document.getElementById('pathCanvas');
-  let pathBlurCanvas = document.getElementById('pathBlurCanvas');
-  let uiline = document.getElementById('uiline');
-  let uiCanvas = document.getElementById('uiCanvas');
-  let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
-  let uiCanvasVertical = document.getElementById('uiCanvasVertical');
-  let uipopup = document.getElementById('uipopup');
+  canvas = document.getElementById('canvas');
+  pathCanvas = document.getElementById('pathCanvas');
+  pathBlurCanvas = document.getElementById('pathBlurCanvas');
+  uiline = document.getElementById('uiline');
+  uiCanvas = document.getElementById('uiCanvas');
+  uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
+  uiCanvasVertical = document.getElementById('uiCanvasVertical');
+  uipopup = document.getElementById('uipopup');
+  zoomingWrapper = document.getElementById('zoomingWrapper');
+  settingsElement = document.getElementById('settings');
 
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
@@ -220,6 +234,7 @@ function resetHTML() {
   uiline.style.marginTop = '-600px';
   uilinetemp.style.marginLeft = '';
   uilinetemp.style.marginTop = '-600px';
+  uiCanvasVertical.style.marginTop = '-600px';
 
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend-' + categories[i] + '-negative').innerHTML = '';
@@ -275,14 +290,14 @@ function initTextLines() {
 
   //insert date into constant positions
   const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate() + 3);
+  currentDate.setDate(currentDate.getDate() + 7);
   const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
   for (let i = 0; i < constantPositions.length; i++) {
     let positionParts = constantPositions[i].split(';');
     let temp = positionParts[0] + ';';
     temp += currentDateString + ';' + currentDateString + ';';
     for (let j = 3; j < positionParts.length; j++) {
-      temp  += positionParts[j] + ';';
+      temp += positionParts[j] + ';';
     }
 
     temp = temp.slice(0, -1);
@@ -349,13 +364,12 @@ function init() {
   setTimeout(() => {
     resetHTML();
 
-    let zoomingwrapper = document.getElementById('zoomingwrapper');
-    originalWidth = zoomingwrapper.offsetWidth;
-    originalHeight = zoomingwrapper.offsetHeight;
-    originalMarginTop = parseInt(zoomingwrapper.style.marginTop.slice('0, -2'));
-    originalMarginLeft = parseInt(zoomingwrapper.style.marginLeft.slice('0, -2'));
-    originalTop = zoomingwrapper.offsetTop;
-    originalLeft = zoomingwrapper.offsetLeft;
+    originalWidth = zoomingWrapper.offsetWidth;
+    originalHeight = zoomingWrapper.offsetHeight;
+    originalMarginTop = parseInt(zoomingWrapper.style.marginTop.slice('0, -2'));
+    originalMarginLeft = parseInt(zoomingWrapper.style.marginLeft.slice('0, -2'));
+    originalTop = zoomingWrapper.offsetTop;
+    originalLeft = zoomingWrapper.offsetLeft;
 
     maxHeight = getMaxHeight();
     getMaxHeightAround();
@@ -385,9 +399,8 @@ function clearCanvases() {
 }
 
 function drawPath() {
-  let canvas = document.getElementById('pathCanvas'),
-  ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx = pathCanvas.getContext('2d');
+  ctx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
 
   const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   for (let i = 0; i < path.length - 1; i++) {
@@ -402,9 +415,8 @@ function drawPath() {
 }
 
 function drawBlurPath() {
-  let blurCanvas = document.getElementById('pathBlurCanvas'),
-  ctx = blurCanvas.getContext('2d');
-  ctx.clearRect(0, 0, blurCanvas.width, blurCanvas.height);
+  ctx = pathBlurCanvas.getContext('2d');
+  ctx.clearRect(0, 0, pathBlurCanvas.width, pathBlurCanvas.height);
   const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   for (let i = shadowLength/shadowDistance; i >= 0; i--) {
     for (let j = 0; j < path.length - 1; j++) {
@@ -419,13 +431,12 @@ function drawBlurPath() {
     }
   }
 
-  blurCanvas.style.filter = 'blur(5px)';
+  pathBlurCanvas.style.filter = 'blur(5px)';
 }
 
 function hidePathBlurTop() {
   const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  let canvas = document.getElementById('pathBlurCanvas'),
-  ctx = canvas.getContext('2d');
+  ctx = pathBlurCanvas.getContext('2d');
 
   // Fill the area below the graph with a fade effect
   ctx.beginPath();
@@ -445,9 +456,8 @@ function hidePathBlurTop() {
 }
 
 function setAmounts() {
-  const uiCanvasVertical = document.getElementById('uiCanvasVertical');
   const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  uiCanvasVertical.style.marginTop  = -EXTRAAREA + 'px';
+  uiCanvasVertical.style.marginTop = -(EXTRAAREA + 600) + 'px';
   let valueTop = document.createElement('p');
   valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
   valueTop.className = 'uiElement';
@@ -477,7 +487,7 @@ function setAmounts() {
     if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.1)'; }
     if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.4)'; }
     if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.7)'; }
-    if (i === 0) {      valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 1.0)'; valueLine.style.height = '3px'; }
+    if (i === 0)      { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 1.0)'; valueLine.style.height = '3px'; }
 
     valueLine.style.opacity = '100%';
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
@@ -497,7 +507,7 @@ function setAmounts() {
       const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
       const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
       valueText.style.color = 'rgba(' + uiColorClear + ', 0.4)';
-      if (i % 5 === 0) { valueText.style.color = 'rgba(' + uiColorClear + ', 0.7)'; }
+      if (i % 5 === 0)  { valueText.style.color = 'rgba(' + uiColorClear + ', 0.7)'; }
       if (i % 10 === 0) { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
       if (i === 0)      { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
 
@@ -511,8 +521,6 @@ function setAmounts() {
 }
 
 function setDates() {
-  const uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
-  const uiCanvas = document.getElementById('uiCanvas');
   uiCanvasHorizontal.style.marginLeft = -EXTRAAREA + 'px';
 
   let dateLeft = document.createElement('p');
@@ -543,7 +551,7 @@ function setDates() {
     dateLine.style.height = 2000 + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
-    dateLine.style.marginTop =  '-2000px';
+    dateLine.style.marginTop = '-2000px';
     dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
 
     const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
@@ -567,7 +575,6 @@ function setDates() {
 function drawCanvas() {
   path = [];
   dateLines = [];
-  let canvas = document.getElementById('canvas');
   let paddingLeft = 980 + moveOffsetX;
   let diffHeight = 550 - valueToPx(endbudget - lowest);
   let diffHeightIndex = 0;
@@ -579,7 +586,7 @@ function drawCanvas() {
   paypalEntries = [];
   foodEntries = [];
   monthlyEntries = [];
-  ospaEntries = [];
+  cashEntries = [];
   gasEntries = [];
   restEntries = [];
 
@@ -589,29 +596,26 @@ function drawCanvas() {
 
   let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
   let firstDay = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
-
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
   if (sortType === 'amount') {
     totalDays = cutTextLines.length;
   }
 
   totalDays = Math.abs(totalDays);
-
   let dayWidth = 875 / Math.abs(totalDays);
-
   let foregroundoffset = dayWidth/4;
 
   // pushing date lines
   for (let year = 0; year < 30; year++) {
     for (let month = 1; month <= 12; month++) {
-      dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
+      dateLines.push('' + parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
       if (month === 1) {
         dateLines[dateLines.length - 1] = 'y' + dateLines[dateLines.length - 1];
       }
 
       for (let day = 1; day <= 31; day++) {
         if (getDayOfWeek(day, month, year) === 'Wednesday') {
-          dateLines.push(''  +  parseInt(paddingLeft + (differenceInDays(lastDay, day + '.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
+          dateLines.push('' + parseInt(paddingLeft + (differenceInDays(lastDay, day + '.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
           dateLines[dateLines.length - 1] = 'w' + dateLines[dateLines.length - 1];
         }
       }
@@ -654,21 +658,19 @@ function drawCanvas() {
     diffHeight -= value;
     if (diffDays > 0) { square.id = 'linePoint' + diffHeightIndex; diffHeightIndex += 2; }
     if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHeight + 'px'; }
-    else                               { square.style.marginTop = (diffHeight + value) + 'px'; }
+    else { square.style.marginTop = (diffHeight + value) + 'px'; }
 
     // Fill empty days
     if (diffDays > 1 && sortType !== 'amount') {
-      let lueckenfueller = document.createElement('div');
-
-      lueckenfueller.className = 'square';
-      lueckenfueller.classList.add('negative-background');
-      lueckenfueller.style.height = '1px';
-      lueckenfueller.style.width = '' + ((diffDays - 1) * dayWidth) + 'px';
-      lueckenfueller.style.marginTop = (diffBefore) + 'px'
-      lueckenfueller.style.marginLeft = (paddingLeft - ((lastDayDiff - 1) * dayWidth)) + 'px';
-      canvas.appendChild(lueckenfueller);
+      let placeholder = document.createElement('div');
+      placeholder.className = 'square';
+      placeholder.classList.add('negative-background');
+      placeholder.style.height = '1px';
+      placeholder.style.width = '' + ((diffDays - 1) * dayWidth) + 'px';
+      placeholder.style.marginTop = (diffBefore) + 'px'
+      placeholder.style.marginLeft = (paddingLeft - ((lastDayDiff - 1) * dayWidth)) + 'px';
+      canvas.appendChild(placeholder);
     }
-
 
     lastDayDiff = differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     if (sortType === 'amount') {
@@ -746,9 +748,9 @@ function drawCanvas() {
     }
 
     if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
-      square.classList.add('ospa-background');
+      square.classList.add('cash-background');
       square.category = 'Bargeld';
-      ospaEntries.push(cutTextLines[i]);
+      cashEntries.push(cutTextLines[i]);
       decided = true;
     }
 
@@ -799,15 +801,15 @@ function drawCanvas() {
                     + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
                     + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
                     + '<p class="popupText">Value: ' + entries[selectors.amount].slice(1, -1) + '€</p>'
-                    + '<p class="popupText">Total: '  + (parseInt(entries[selectors.total]) + parseInt(entries[selectors.amount].slice(1, -1))) + ',00€</p>'
+                    + '<p class="popupText">Total: ' + (parseInt(entries[selectors.total]) + parseInt(entries[selectors.amount].slice(1, -1))) + ',00€</p>'
                     + '<p class="popupText">Category: ' + square.category + '</p>';
     popup.id = 'popup' + i;
     popup.className = 'popup';
     popup.style.position = 'absolute';
     popup.style.marginTop = '0';
     popup.style.marginLeft = '0';
-    document.getElementById('uipopup').appendChild(popup);
 
+    uipopup.appendChild(popup);
     canvas.appendChild(square);
   }
 }
@@ -823,7 +825,7 @@ function drawLegends() {
   positiveTotal += getTotal(amazonEntries, true);
   positiveTotal += getTotal(paypalEntries, true);
   positiveTotal += getTotal(foodEntries, true);
-  positiveTotal += getTotal(ospaEntries, true);
+  positiveTotal += getTotal(cashEntries, true);
   positiveTotal += getTotal(gasEntries, true);
   positiveTotal += getTotal(restEntries, true);
 
@@ -832,7 +834,7 @@ function drawLegends() {
   negativeTotal += getTotal(amazonEntries, false);
   negativeTotal += getTotal(paypalEntries, false);
   negativeTotal += getTotal(foodEntries, false);
-  negativeTotal += getTotal(ospaEntries, false);
+  negativeTotal += getTotal(cashEntries, false);
   negativeTotal += getTotal(gasEntries, false);
   negativeTotal += getTotal(restEntries, false);
 
@@ -845,7 +847,7 @@ function drawLegends() {
   drawPositiveLegend(maxTotal, amazonEntries, 'amazon');
   drawPositiveLegend(maxTotal, paypalEntries, 'paypal');
   drawPositiveLegend(maxTotal, foodEntries, 'food');
-  drawPositiveLegend(maxTotal, ospaEntries, 'ospa');
+  drawPositiveLegend(maxTotal, cashEntries, 'cash');
   drawPositiveLegend(maxTotal, gasEntries, 'gas');
   drawPositiveLegend(maxTotal, restEntries, 'others');
 
@@ -853,7 +855,7 @@ function drawLegends() {
   drawNegativeLegend(maxTotal, amazonEntries, 'amazon');
   drawNegativeLegend(maxTotal, paypalEntries, 'paypal');
   drawNegativeLegend(maxTotal, foodEntries, 'food');
-  drawNegativeLegend(maxTotal, ospaEntries, 'ospa');
+  drawNegativeLegend(maxTotal, cashEntries, 'cash');
   drawNegativeLegend(maxTotal, gasEntries, 'gas');
   drawNegativeLegend(maxTotal, restEntries, 'others');
 
@@ -861,7 +863,7 @@ function drawLegends() {
   drawTotalLegend(maxTotal, amazonEntries, 'amazon');
   drawTotalLegend(maxTotal, paypalEntries, 'paypal');
   drawTotalLegend(maxTotal, foodEntries, 'food');
-  drawTotalLegend(maxTotal, ospaEntries, 'ospa');
+  drawTotalLegend(maxTotal, cashEntries, 'cash');
   drawTotalLegend(maxTotal, gasEntries, 'gas');
   drawTotalLegend(maxTotal, restEntries, 'others');
 }
@@ -943,12 +945,13 @@ function drawTable() {
       let entrie = entries[j];
       let cell = document.createElement('p');
       cell.innerHTML = entrie.slice(1, -1);
+      cell.title = cell.innerHTML;
       cell.className = 'cell';
 
       if (j === 0) {
         let cell = document.createElement('p');
         if (i === 0) { cell.innerHTML = 'Index'; }
-        else       { cell.innerHTML = ''  + i; }
+        else         { cell.innerHTML = '' + i; }
         cell.className = 'cell';
         cell.style.width = '3vw';
         row.appendChild(cell);
@@ -965,7 +968,7 @@ function drawTable() {
         cell.style.width = '5vw';
         cell.style.paddingRight = '0.5vw';
         row.appendChild(cell);
-        if (entries[selectors.amount].charAt(1) !==  '-') { cell.classList.add('positive-background'); }
+        if (entries[selectors.amount].charAt(1) !== '-') { cell.classList.add('positive-background'); }
         if (entries[selectors.amount].charAt(1) === '-') { cell.classList.add('negative-background'); }
       }
 
@@ -995,7 +998,7 @@ function drawTable() {
       }
 
       if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
-        row.classList.add('ospa-background-transparent');
+        row.classList.add('cash-background-transparent');
       }
 
       if (entries[4].includes('SCHULDEN')) {

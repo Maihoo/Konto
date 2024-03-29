@@ -77,10 +77,8 @@ function getFromSessionStorage() {
   for (let i = 0; i < categories.length; i++) {
     allValues.push(sessionStorage.getItem('toggle-' + categories[i]) === 'true');
     if (allValues[allValues.length - 1]) {
-      document.getElementById('toggle-box-' + categories[i]).setAttribute('checked', 'checked');
       document.getElementById('toggle-' + categories[i]).setAttribute('checked', 'checked');
     } else {
-      document.getElementById('toggle-box-' + categories[i]).removeAttribute('checked');
       document.getElementById('toggle-' + categories[i]).removeAttribute('checked');
     }
   }
@@ -90,7 +88,7 @@ function getFromSessionStorage() {
     'amazon':   allValues[1],
     'paypal':   allValues[2],
     'food':     allValues[3],
-    'ospa':     allValues[4],
+    'cash':     allValues[4],
     'gas':      allValues[5],
     'others':   allValues[6]
   };
