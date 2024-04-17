@@ -13,6 +13,7 @@
   <script src="js/controls.js" ></script>
   <script src="js/session-storage.js" ></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body style="overflow-x: hidden;">
@@ -22,9 +23,9 @@
       <div id="range-slider-0" class="range-slider range-slider-vertical"></div>
     </div>
 
-    <div id="overflowrapper" style="position: static; overflow: hidden; width: 1100px; height: 600px;">
-      <div id="zoomingWrapper" style="position: relative; overflow: hidden; width: 1100px; height: 600px;">
-        <div id="movingWrapper" style="position: relative; width: 1100px; height: 600px;">
+    <div id="overflowrapper" style="position: static; overflow: hidden; width: 1200px; height: 600px;">
+      <div id="zoomingWrapper" style="position: relative; overflow: hidden; width: 1200px; height: 600px;">
+        <div id="movingWrapper" style="position: relative; width: 1200px; height: 600px;">
           <canvas id="pathCanvas" width="1100px" height="600px" style="position: absolute; z-index: 50;"></canvas>
           <canvas id="pathBlurCanvas" width="1100px" height="600px" style="position: absolute; z-index: 45;"></canvas>
           <canvas id="uiline" width="2200px" height="1800px" style="position: absolute; width: 2200px; height: 1800px; margin-top: -600px; z-index: 400; pointer-events: none;"></canvas>
@@ -32,7 +33,7 @@
           <div id="uiCanvas" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
           <div id="canvas" style="position: absolute; width: 100%; height: 100%;"></div>
         </div>
-        <div id="uiCanvasHorizontal" style="position: absolute; margin-top: -600px; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
+        <div id="uiCanvasHorizontal" style="position: absolute; margin-top: -100%; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
         <div id="uiCanvasVertical" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
         <div id="uipopup" style="position: absolute; margin-top: -600px; width: 100%; height: 100%; z-index: 400; pointer-events: none;"></div>
       </div>
@@ -50,7 +51,7 @@
             <h1 class="legend-headline">Out</h1>
           </div>
           <div class="legend-holder">
-            <label id="toggle-monthly" class="checkbox-container monthly">
+            <label id="toggle-monthly" class="checkbox-container monthly" checked="checked">
               <h2 class="legend-item">Monthly</h2>
               <span class="checkmark"></span>
             </label><!--⬤-->
@@ -59,7 +60,7 @@
             <div id="legend-monthly-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-amazon" class="checkbox-container amazon">
+            <label id="toggle-amazon" class="checkbox-container amazon" checked="checked">
               <h2 class="legend-item">Amazon</h2>
               <span class="checkmark"></span>
             </label>
@@ -68,7 +69,7 @@
             <div id="legend-amazon-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-paypal" class="checkbox-container paypal">
+            <label id="toggle-paypal" class="checkbox-container paypal" checked="checked">
               <h2 class="legend-item">PayPal</h2>
               <span class="checkmark"></span>
             </label>
@@ -77,7 +78,7 @@
             <div id="legend-paypal-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-food" class="checkbox-container food">
+            <label id="toggle-food" class="checkbox-container food" checked="checked">
               <h2 class="legend-item">Food</h2>
               <span class="checkmark"></span>
             </label>
@@ -86,7 +87,7 @@
             <div id="legend-food-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-cash" class="checkbox-container cash">
+            <label id="toggle-cash" class="checkbox-container cash" checked="checked">
               <h2 class="legend-item">Cash</h2>
               <span class="checkmark"></span>
             </label>
@@ -95,7 +96,7 @@
             <div id="legend-cash-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-gas" class="checkbox-container gas">
+            <label id="toggle-gas" class="checkbox-container gas" checked="checked">
               <h2 class="legend-item">Gas</h2>
               <span class="checkmark"></span>
             </label>
@@ -104,13 +105,19 @@
             <div id="legend-gas-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder" style="padding-bottom: 5rem;">
-            <label id="toggle-others" class="checkbox-container others">
+            <label id="toggle-others" class="checkbox-container others" checked="checked">
               <h2 class="legend-item">Others</h2>
               <span class="checkmark"></span>
             </label>
             <div id="legend-others-positive" class="legend-square-holder"></div>
             <div id="legend-others-negative" class="legend-square-holder"></div>
             <div id="legend-others-subtract" class="legend-square-holder"></div>
+          </div>
+          <div class="legend-holder" style="padding-bottom: 5rem;">
+            <button onclick="handleRefreshButton()" id="refresh-button">
+              <i class="fas fa-sync-alt"></i>
+              <h4 class="legend-item">apply</h4>
+            </button>
           </div>
         </div>
 
@@ -152,19 +159,35 @@
           <div class="settings-button-collection">
             <div class="settings-button-group">
               <div class="buttonwrapper">
-                <button onclick="togglePath()" type="button" class="button"> Toggle Path </button>
+                <span>Path</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="togglePath()">
+                  <span class="switch-slider"></span>
+                </label>
               </div>
               <div class="buttonwrapper">
-                <button onclick="toggleGrid()" type="button" class="button"> Toggle Grid </button>
+                <span>Grid</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="toggleGrid()" checked="checked">
+                  <span class="switch-slider"></span>
+                </label>
               </div>
               <div class="buttonwrapper">
-                <button onclick="clearLines()" type="button" class="button"> Clear Lines </button>
+                <span>sort by value</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="toggleSort()" checked="checked">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="buttonwrapper">
+                <span>group category</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="toggleSort()" checked="checked">
+                  <span class="switch-slider"></span>
+                </label>
               </div>
             </div>
             <div class="settings-button-group">
-              <div class="buttonwrapper">
-                <button id="amount-button" onclick="toggleSort()" type="button" class="button"> Toggle sort </button>
-              </div>
               <div class="buttonwrapper">
                 <button id="translatePDF" onclick="processAllPDFs()" type="button" class="button">
                   translate PDF
@@ -172,6 +195,9 @@
                     (Work in Progress)
                   </span>
                 </button>
+              </div>
+              <div class="buttonwrapper">
+                <button onclick="clearLines()" type="button" class="button">Clear Lines</button>
               </div>
               <div class="buttonwrapper">
                 <button onclick="resetSettings()" type="button" class="button">Reset</button>
@@ -183,7 +209,7 @@
               <h3>Color Settings</h3>
               <div class="buttonwrapper button color-picker-wrapper">
                 <p>Background</p>
-                <input type="color" id="color-picker-background" class="color-picker" value="#323232">
+                <input type="color" id="color-picker-background" class="color-picker" value="#191919">
               </div>
               <div class="buttonwrapper button color-picker-wrapper">
                 <p>Line</p>

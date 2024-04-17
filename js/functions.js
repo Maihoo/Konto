@@ -7,6 +7,58 @@ function differenceInDays(input1, input2) {
   return (Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)));
 }
 
+function entrieHasCategorie(entries, category) {
+  const beneficiary = entries[selectors.beneficiary]
+  let isAny = false;
+  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || entries[selectors.purpose].includes('Miete')
+   || beneficiary.includes('AMAZON') || beneficiary.includes('PayPal') || beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')
+   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || entries[selectors.purpose].includes('SCHULDEN')) {
+    isAny = true;
+  }
+
+  switch (category) {
+    case 'monthly':
+      if (beneficiary.includes('ADAC') ||
+        beneficiary.includes('klarmobil') ||
+        beneficiary.includes('Mecklenburgische') ||
+        entries[selectors.purpose].includes('Miete')
+       ) { return true; } break;
+
+    case 'amazon':
+      if (beneficiary.includes('AMAZON')) {
+        return true; } break;
+
+    case 'paypal':
+      if (beneficiary.includes('PayPal')) {
+        return true; } break;
+
+    case 'food':
+      if (beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')) {
+        return true; } break;
+
+    case 'cash':
+      if (beneficiary.includes('OstseeSparkasse')) {
+        return true; } break;
+
+    case 'gas':
+      if (beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL')) {
+        return true; } break;
+
+    case 'debt':
+      if (entries[selectors.purpose].includes('SCHULDEN')) {
+        return true; } break;
+
+    case 'others':
+      if (!isAny) {
+        return true; } break;
+
+    default:
+      return false;
+  }
+
+  return false;
+}
+
 function addZeroToSingleDigit(number) {
   let numberString = number.toString();
   if (numberString.length === 1) {
@@ -25,6 +77,14 @@ Date.prototype.addDays = function(days) {
 function pxToValue(yPixel) {
   let pixel = 550 - parseInt(yPixel.slice(0, -2));
   return parseInt((pixel * (maxHeight / 500) + lowest) / verticalScaleFactor);
+}
+
+function numberToCurrency(number) {
+  if (number.replace !== undefined) {
+    number = parseInt(number.replace(',', '.'));
+  }
+
+  return number.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' }).replace(' ', '');
 }
 
 function pxToDate(xPixel) {
@@ -115,7 +175,7 @@ function clearLines() {
   });
 }
 
-function getMaxHeight() {
+function getMaxPriceDiff() {
   let current = totalBudget;
   let tempLowest = 1000000.0;
   let tempHighest = 0.0;
@@ -132,7 +192,7 @@ function getMaxHeight() {
   return tempHighest - tempLowest;
 }
 
-function getMaxHeightAround() {
+function updateMaxHeightAround() {
   let current = totalBudget;
   lowest = 1000000.0;
   highest = totalBudget;

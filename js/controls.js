@@ -69,6 +69,12 @@ function initControls() {
   initRangeSlider2();
 }
 
+function handleRefreshButton() {
+  initTextLines();
+  init();
+  initRangeSlider1();
+}
+
 function handleKeyUp(event) {
   // +
   if (event.keyCode === 187) {
@@ -80,11 +86,9 @@ function handleKeyUp(event) {
   }
 }
 
-function handleToggleClick(event) {
+function handleToggleClick() {
   let selector = '.square';
-
   selector = this.id.split('-')[1] + '-background';
-  console.log(selector);
 
   const targets = document.querySelectorAll('.' + selector);
   if (this.getAttribute('checked') === 'checked') {
@@ -375,7 +379,7 @@ function handleDragClick(event) {
     let popup = document.createElement('div');
     popup.innerHTML = '<p class="popupText">Index: ' + uiLine.index + '</p>'
                     + '<p class="popupText">Date: ' + pxToDate(circle.style.left) + '</p>'
-                    + '<p class="popupText">Total: ' + (pxToValue(circle.style.top)) + ',00€</p>';
+                    + '<p class="popupText">Total: ' + numberToCurrency(pxToValue(circle.style.top)) + '</p>';
     popup.id = 'popupCircle' + uiLine.index;
     popup.className = 'popup';
     popup.style.position = 'absolute';
@@ -392,12 +396,16 @@ function handleZoomScroll(zoomIn) {
     zoomLevel /= 1.02;
   }
 
-  const zoomingWrapper = document.getElementById('zoomingWrapper');
-  zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
-  zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
-  zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
-  zoomingWrapper.style.top = (originalTop - ((zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
-  zoomingWrapper.style.left = (originalLeft - ((zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+  this.zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
+  this.zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
+  this.zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
+  this.zoomingWrapper.style.top = (originalTop - ((this.zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
+  this.zoomingWrapper.style.left = (originalLeft - ((this.zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+
+  const top = document.getElementById('ui-element-value-top');
+  if (top instanceof HTMLElement) {
+    top.style.right = (originalWidth / zoomLevel) + 'px';
+  }
 
   sessionStorage.setItem('zoomLevel', zoomLevel);
 }
@@ -480,7 +488,6 @@ function initRangeSlider1() {
             pastEventsOffset = totalLength - parseInt(value2);
             sessionStorage.setItem('pastEvents', pastEvents);
             sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
-            resetHTML();
             initTextLines();
             init();
           }
@@ -512,6 +519,7 @@ function initRangeSlider2() {
 }
 
 function setColorDefault() {
+  // remember to set color-picker value (currently "#191919")
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
@@ -547,13 +555,13 @@ function handlePrediction(event) {
   let uilinetemp = document.getElementById('uilinetemp');
   let uiltCtx = uilinetemp.getContext('2d');
   uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
-  drawLine( uiltCtx,
-            parseInt(linepoint[0] - $('#uiline').offset().left),
-            parseInt(linepoint[1] - $('#uiline').offset().top ),
-            parseInt(event.clientX - $('#uiline').offset().left),
-            parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
-            'rgba(255, 0, 0, 0.5)',
-            1);
+  drawLine(uiltCtx,
+    parseInt(linepoint[0] - $('#uiline').offset().left),
+    parseInt(linepoint[1] - $('#uiline').offset().top ),
+    parseInt(event.clientX - $('#uiline').offset().left),
+    parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
+    'rgba(255, 0, 0, 0.5)',
+    1);
 }
 
 function processAllPDFs() {

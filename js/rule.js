@@ -21,7 +21,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 16397.24;
+const STARTBUDGET = 19094.31;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'food', 'cash', 'gas', 'others'];
@@ -37,7 +37,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"PayPal";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"750";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"900";"EUR";""'
 ];
 
 const selectors= {
@@ -248,6 +248,19 @@ function initTextLines() {
     return item !== '' && item !== '.';
   });
 
+  allTextLines = allTextLines.filter(function(item) {
+    const itemEntries = item.split(';');
+    if (entrieHasCategorie(itemEntries, 'monthly') && document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'amazon') && document.getElementById('toggle-amazon').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'paypal') && document.getElementById('toggle-paypal').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'food') && document.getElementById('toggle-food').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'cash') && document.getElementById('toggle-cash').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'gas') && document.getElementById('toggle-gas').getAttribute('checked') !== 'checked') { return false; }
+    if (entrieHasCategorie(itemEntries, 'others') && document.getElementById('toggle-others').getAttribute('checked') !== 'checked') { return false; }
+
+    return true;
+  });
+
   for (let i = 0; i < replacements.length; i++) {
     const replacementParts = replacements[i].split(';');
     if (replacementParts.length < 3) {
@@ -268,7 +281,6 @@ function initTextLines() {
 
       if (lineParts[selectorIndex].includes(selectorValue)) {
         lineParts[toReplaceIndex] = '"' + toReplaceValue + '"';
-
         line = '';
         for (let k = 0; k < lineParts.length; k++) {
           line += lineParts[k];
@@ -371,8 +383,8 @@ function init() {
     originalTop = zoomingWrapper.offsetTop;
     originalLeft = zoomingWrapper.offsetLeft;
 
-    maxHeight = getMaxHeight();
-    getMaxHeightAround();
+    maxHeight = getMaxPriceDiff();
+    updateMaxHeightAround();
 
     clearCanvases();
 
@@ -459,6 +471,7 @@ function setAmounts() {
   const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   uiCanvasVertical.style.marginTop = -(EXTRAAREA + 600) + 'px';
   let valueTop = document.createElement('p');
+  valueTop.id = 'ui-element-value-top';
   valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
   valueTop.className = 'uiElement';
   valueTop.classList.add('amount-text-max');
@@ -590,9 +603,15 @@ function drawCanvas() {
   gasEntries = [];
   restEntries = [];
 
-  if (pastEvents > cutTextLines.length - 2) {
+  if (cutTextLines.length - 2 < pastEvents) {
     pastEvents = cutTextLines.length - 5;
   }
+
+  if (cutTextLines.length < pastEventsOffset + 3) {
+    pastEventsOffset = cutTextLines.length - 3;
+  }
+
+  console.log(cutTextLines.length, pastEventsOffset + 2, pastEvents)
 
   let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
   let firstDay = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
@@ -726,42 +745,42 @@ function drawCanvas() {
       decided = true;
     }
 
-    if (entries[selectors.beneficiary].includes('AMAZON')) {
+    if (entrieHasCategorie(entries, 'amazon')) {
       square.classList.add('amazon-background');
-      square.category = 'Amazon';
+      square.category = 'amazon';
       amazonEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[selectors.beneficiary].includes('PayPal')) {
+    if (entrieHasCategorie(entries, 'paypal')) {
       square.classList.add('paypal-background');
-      square.category = 'PayPal';
+      square.category = 'paypal';
       paypalEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[selectors.beneficiary].includes('REWE') || entries[selectors.beneficiary].includes('EDEKA') || entries[selectors.beneficiary].includes('NETTO')) {
+    if (entrieHasCategorie(entries, 'food')) {
       square.classList.add('food-background');
       square.category = 'food';
       foodEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
+    if (entrieHasCategorie(entries, 'cash')) {
       square.classList.add('cash-background');
       square.category = 'Bargeld';
       cashEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[selectors.beneficiary].includes('Tankstelle') || entries[selectors.beneficiary].includes('SHELL') || entries[selectors.beneficiary].includes('ARAL')) {
+    if (entrieHasCategorie(entries, 'gas')) {
       square.classList.add('gas-background');
       square.category = 'Tanken';
       gasEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entries[selectors.purpose].includes('SCHULDEN')) {
+    if (entrieHasCategorie(entries, 'debt')) {
       square.classList.add('debt-background');
       square.category = 'Schulden';
       decided = true;
@@ -795,13 +814,14 @@ function drawCanvas() {
       pop.classList.remove('fade');
       this.hovered = '0';
     };
+
     let popup = document.createElement('div');
     const dateParts = entries[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = '<p class="popupText">Index: ' + i + '</p>'
                     + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
                     + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
-                    + '<p class="popupText">Value: ' + entries[selectors.amount].slice(1, -1) + '€</p>'
-                    + '<p class="popupText">Total: ' + (parseInt(entries[selectors.total]) + parseInt(entries[selectors.amount].slice(1, -1))) + ',00€</p>'
+                    + '<p class="popupText">Value: ' + numberToCurrency(entries[selectors.amount].slice(1, -1)) + '</p>'
+                    + '<p class="popupText">Total: ' + numberToCurrency(parseFloat(entries[selectors.total]) + parseFloat(entries[selectors.amount].slice(1, -1))) + '</p>'
                     + '<p class="popupText">Category: ' + square.category + '</p>';
     popup.id = 'popup' + i;
     popup.className = 'popup';
