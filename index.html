@@ -9,6 +9,7 @@
   <link rel="stylesheet/less" href="style.less" type="text/css"/>
   <script src="https://cdn.jsdelivr.net/npm/less" ></script>
   <script src="js/rule.js" ></script>
+  <script src="js/data.js" ></script>
   <script src="js/functions.js" ></script>
   <script src="js/controls.js" ></script>
   <script src="js/session-storage.js" ></script>
@@ -18,7 +19,7 @@
 
 <body style="overflow-x: hidden;">
   <h2>Vertical Zoom</h2>
-  <div id="graph-area-wrapper">
+  <div id="graph-area-wrapper" class="graph-area-wrapper-vertical">
     <div style="width: 35px; position: relative; border-right: solid 1px black;">
       <div id="range-slider-0" class="range-slider range-slider-vertical"></div>
     </div>
@@ -51,7 +52,7 @@
             <h1 class="legend-headline">Out</h1>
           </div>
           <div class="legend-holder">
-            <label id="toggle-monthly" class="checkbox-container monthly" checked="checked">
+            <label id="toggle-monthly" class="checkbox-container monthly">
               <h2 class="legend-item">Monthly</h2>
               <span class="checkmark"></span>
             </label><!--⬤-->
@@ -60,7 +61,7 @@
             <div id="legend-monthly-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-amazon" class="checkbox-container amazon" checked="checked">
+            <label id="toggle-amazon" class="checkbox-container amazon">
               <h2 class="legend-item">Amazon</h2>
               <span class="checkmark"></span>
             </label>
@@ -69,7 +70,7 @@
             <div id="legend-amazon-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-paypal" class="checkbox-container paypal" checked="checked">
+            <label id="toggle-paypal" class="checkbox-container paypal">
               <h2 class="legend-item">PayPal</h2>
               <span class="checkmark"></span>
             </label>
@@ -78,7 +79,16 @@
             <div id="legend-paypal-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-food" class="checkbox-container food" checked="checked">
+            <label id="toggle-takeout" class="checkbox-container takeout">
+              <h2 class="legend-item">Takeout</h2>
+              <span class="checkmark"></span>
+            </label>
+            <div id="legend-takeout-positive" class="legend-square-holder"></div>
+            <div id="legend-takeout-negative" class="legend-square-holder"></div>
+            <div id="legend-takeout-subtract" class="legend-square-holder"></div>
+          </div>
+          <div class="legend-holder">
+            <label id="toggle-food" class="checkbox-container food">
               <h2 class="legend-item">Food</h2>
               <span class="checkmark"></span>
             </label>
@@ -87,7 +97,7 @@
             <div id="legend-food-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-cash" class="checkbox-container cash" checked="checked">
+            <label id="toggle-cash" class="checkbox-container cash">
               <h2 class="legend-item">Cash</h2>
               <span class="checkmark"></span>
             </label>
@@ -96,7 +106,7 @@
             <div id="legend-cash-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder">
-            <label id="toggle-gas" class="checkbox-container gas" checked="checked">
+            <label id="toggle-gas" class="checkbox-container gas">
               <h2 class="legend-item">Gas</h2>
               <span class="checkmark"></span>
             </label>
@@ -105,7 +115,7 @@
             <div id="legend-gas-subtract" class="legend-square-holder"></div>
           </div>
           <div class="legend-holder" style="padding-bottom: 5rem;">
-            <label id="toggle-others" class="checkbox-container others" checked="checked">
+            <label id="toggle-others" class="checkbox-container others">
               <h2 class="legend-item">Others</h2>
               <span class="checkmark"></span>
             </label>
@@ -175,14 +185,21 @@
               <div class="buttonwrapper">
                 <span>sort by value</span>
                 <label class="switch">
-                  <input type="checkbox" onclick="toggleSort()" checked="checked">
+                  <input type="checkbox" onclick="toggleSort()">
                   <span class="switch-slider"></span>
                 </label>
               </div>
               <div class="buttonwrapper">
                 <span>group category</span>
                 <label class="switch">
-                  <input type="checkbox" onclick="toggleSort()" checked="checked">
+                  <input type="checkbox" onclick="toggleGroupByCategory()">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+              <div class="buttonwrapper">
+                <span>spread income</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="toggleSpreadMonthlyIncome()">
                   <span class="switch-slider"></span>
                 </label>
               </div>

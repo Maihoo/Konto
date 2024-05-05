@@ -7,6 +7,8 @@ function clearSessionStorage() {
   sessionStorage.setItem('settingsExtended', '');
   sessionStorage.setItem('settingsVertical', '');
   sessionStorage.setItem('sortType', '');
+  sessionStorage.setItem('groupByCategory', '');
+  sessionStorage.setItem('spreadMonthlyIncome', '');
   sessionStorage.setItem('verticalScaleFactor', '');
   sessionStorage.setItem('zoomLevel', '');
   sessionStorage.setItem('legendMultiplyer', '');
@@ -87,10 +89,11 @@ function getFromSessionStorage() {
     'monthly':  allValues[0],
     'amazon':   allValues[1],
     'paypal':   allValues[2],
-    'food':     allValues[3],
-    'cash':     allValues[4],
-    'gas':      allValues[5],
-    'others':   allValues[6]
+    'takeout':  allValues[3],
+    'food':     allValues[4],
+    'cash':     allValues[5],
+    'gas':      allValues[6],
+    'others':   allValues[7]
   };
 
   sessionValue = sessionStorage.getItem('settingsExtended');
@@ -112,6 +115,24 @@ function getFromSessionStorage() {
     } else {
       settingsVertical = false;
       document.getElementById('graph-area-wrapper').classList.remove('graph-area-wrapper-vertical');
+    }
+  }
+
+  sessionValue = sessionStorage.getItem('groupByCategory');
+  if (sessionValue && sessionValue.length > 0) {
+    if (sessionValue === 'true') {
+      groupByCategory = true;
+    } else {
+      groupByCategory = false;
+    }
+  }
+
+  sessionValue = sessionStorage.getItem('spreadMonthlyIncome');
+  if (sessionValue && sessionValue.length > 0) {
+    if (sessionValue === 'true') {
+      spreadMonthlyIncome = true;
+    } else {
+      spreadMonthlyIncome = false;
     }
   }
 }

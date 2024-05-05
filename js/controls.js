@@ -5,6 +5,7 @@ function resetControls() {
   replace('toggle-monthly'),
   replace('toggle-amazon'),
   replace('toggle-paypal'),
+  replace('toggle-takeout'),
   replace('toggle-food'),
   replace('toggle-cash'),
   replace('toggle-gas'),
@@ -43,18 +44,11 @@ function initControls() {
   document.getElementById('toggle-monthly').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-amazon').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-paypal').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-takeout').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-food').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-cash').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-gas').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-others').addEventListener('mousedown', handleToggleClick);
-
-  document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
-  document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
-  document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
-  document.getElementById('toggle-food').setAttribute('checked', 'checked');
-  document.getElementById('toggle-cash').setAttribute('checked', 'checked');
-  document.getElementById('toggle-gas').setAttribute('checked', 'checked');
-  document.getElementById('toggle-others').setAttribute('checked', 'checked');
 
   // drag move
   overflowrapper.onclick = handleDragClick;
@@ -73,6 +67,18 @@ function handleRefreshButton() {
   initTextLines();
   init();
   initRangeSlider1();
+}
+
+function checkRadios() {
+  oneRadioUnchecked = false;
+  if (document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-amazon').getAttribute('checked')  !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-paypal').getAttribute('checked')  !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-takeout').getAttribute('checked') !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-food').getAttribute('checked')    !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-gas').getAttribute('checked')     !== 'checked') { oneRadioUnchecked = true };
+  if (document.getElementById('toggle-others').getAttribute('checked')  !== 'checked') { oneRadioUnchecked = true };
 }
 
 function handleKeyUp(event) {
@@ -182,10 +188,11 @@ function updateActiveCategories() {
     'monthly':  allValues[0],
     'amazon':   allValues[1],
     'paypal':   allValues[2],
-    'food':     allValues[3],
-    'cash':     allValues[4],
-    'gas':      allValues[5],
-    'others':   allValues[6]
+    'takeout':  allValues[3],
+    'food':     allValues[4],
+    'cash':     allValues[5],
+    'gas':      allValues[6],
+    'others':   allValues[7]
   };
 }
 
@@ -262,6 +269,30 @@ function toggleSettingsOrientation() {
   }
 }
 
+function toggleGroupByCategory() {
+  groupByCategory = !groupByCategory;
+  sessionStorage.setItem('groupByCategory', groupByCategory);
+  initTextLines();
+  initRangeSlider2();
+  init();
+}
+
+function toggleSpreadMonthlyIncome() {
+  spreadMonthlyIncome = !spreadMonthlyIncome;
+  sessionStorage.setItem('toggleSpreadMonthlyIncome', spreadMonthlyIncome);
+  document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
+  document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
+  document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
+  document.getElementById('toggle-takeout').setAttribute('checked', 'checked');
+  document.getElementById('toggle-food').setAttribute('checked', 'checked');
+  document.getElementById('toggle-cash').setAttribute('checked', 'checked');
+  document.getElementById('toggle-gas').setAttribute('checked', 'checked');
+  document.getElementById('toggle-others').setAttribute('checked', 'checked');
+  initTextLines();
+  initRangeSlider2();
+  init();
+}
+
 function togglePath() {
   pathMode = !pathMode;
 
@@ -308,6 +339,8 @@ function handleEscape(event) {
 
 function handleDragClick(event) {
   if (event.button !== 0 || ((dragstartXstorage !== event.clientX || dragstartYstorage !== event.clientY) && ts1 - Date.now() < 50) ) {
+    document.onmousemove = () => {};
+    linepoint = [];
     return;
   }
 
@@ -410,8 +443,30 @@ function handleZoomScroll(zoomIn) {
   sessionStorage.setItem('zoomLevel', zoomLevel);
 }
 
+function toggleSort() {
+  switch (sortType) {
+    case 'amount':
+      sortType = 'date';
+      sessionStorage.setItem('sortType', sortType);
+      break;
+
+    case 'date':
+      sortType = 'amount';
+      sessionStorage.setItem('sortType', sortType);
+      break;
+
+    default:
+      break;
+  }
+
+  initTextLines();
+  initRangeSlider2();
+  init();
+}
+
 function handleDragMouseDown(event) {
   if (event.button !== 0) {
+    overflowrapper.onmousemove = undefined;
     return;
   }
 
@@ -420,7 +475,7 @@ function handleDragMouseDown(event) {
   dragstartXstorage = event.clientX;
   dragstartYstorage = event.clientY;
   ts1 = Date.now();
-  overflowrapper.onmouseup = function() {
+  document.onmouseup = function() {
     overflowrapper.onmousemove = undefined;
   }
 
@@ -437,8 +492,6 @@ function handleDragMouseDown(event) {
       moveOffsetY -= diffY;
       dragstartX = clientX;
       dragstartY = clientY;
-
-      const uiLine = document.getElementById('uiline');
 
       // move canvases
       const movingWrapper = document.getElementById('movingWrapper');
@@ -597,10 +650,12 @@ function processAllPDFs() {
   processSinglePDF(pdfNames.length - 1, totalDiff)
     .catch(error => {
       console.error('Error processing PDFs:', error);
-    });
+    }
+  );
 }
 
 function processSinglePDF(index, previousTotalMinusPastEvents) {
+  console.log('processing')
   if (index >= 0) {
     return processPDFContent(pdfNames[index])
       .then(() => processSinglePDF(index - 1, previousTotalMinusPastEvents)); // Process the next PDF in the chain

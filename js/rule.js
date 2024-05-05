@@ -21,15 +21,16 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 19094.31;
+const STARTBUDGET = 18717.91;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
-const categories = ['monthly', 'amazon', 'paypal', 'food', 'cash', 'gas', 'others'];
+const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
 
 let activeCategories = {
   'monthly': true,
   'amazon': true,
   'paypal': true,
+  'takeout': true,
   'food': true,
   'cash': true,
   'gas': true,
@@ -37,16 +38,17 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"900";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"800";"EUR";""'
 ];
 
 const selectors= {
-  'date': 2,
+  'date': 1,
   'content': 3,
   'purpose': 4,
   'beneficiary': 11,
   'amount': 14,
-  'total': 17
+  'category': 17,
+  'total': 18
 };
 
 const replacements = [
@@ -68,6 +70,9 @@ let gridMode = false;
 let showShadow = true;
 let settingsExtended = false;
 let settingsVertical = false;
+let groupByCategory = false;
+let spreadMonthlyIncome = false;
+let oneRadioUnchecked = false;
 
 let dataset;
 
@@ -109,6 +114,7 @@ let linepoint = [];
 
 let amazonEntries = [];
 let paypalEntries = [];
+let takeoutEntries = [];
 let foodEntries = [];
 let monthlyEntries = [];
 let cashEntries = [];
@@ -140,6 +146,11 @@ function resetSettings() {
   pathMode = false;
   gridMode = false;
   showShadow = true;
+  settingsExtended = false;
+  settingsVertical = false;
+  groupByCategory = false;
+  spreadMonthlyIncome = false;
+  oneRadioUnchecked = false;
 
   totalBudget = STARTBUDGET;
   verticalScaleFactor = 1.0;
@@ -174,6 +185,7 @@ function resetSettings() {
 
   clearSessionStorage();
   clearLines();
+  location.reload(true);
   initTextLines();
   setColorDefault();
   initControls();
@@ -186,6 +198,7 @@ function resetHTML() {
   linepoint = [];
   amazonEntries = [];
   paypalEntries = [];
+  takeoutEntries = [];
   foodEntries = [];
   monthlyEntries = [];
   cashEntries = [];
@@ -242,134 +255,6 @@ function resetHTML() {
   }
 }
 
-function initTextLines() {
-  allTextLines = dataset.split(/\r\n|\n/);
-  allTextLines = allTextLines.filter(function(item) {
-    return item !== '' && item !== '.';
-  });
-
-  allTextLines = allTextLines.filter(function(item) {
-    const itemEntries = item.split(';');
-    if (entrieHasCategorie(itemEntries, 'monthly') && document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'amazon') && document.getElementById('toggle-amazon').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'paypal') && document.getElementById('toggle-paypal').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'food') && document.getElementById('toggle-food').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'cash') && document.getElementById('toggle-cash').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'gas') && document.getElementById('toggle-gas').getAttribute('checked') !== 'checked') { return false; }
-    if (entrieHasCategorie(itemEntries, 'others') && document.getElementById('toggle-others').getAttribute('checked') !== 'checked') { return false; }
-
-    return true;
-  });
-
-  for (let i = 0; i < replacements.length; i++) {
-    const replacementParts = replacements[i].split(';');
-    if (replacementParts.length < 3) {
-      return;
-    }
-
-    const selectorIndex = parseInt(replacementParts[0]);
-    const selectorValue = replacementParts[1];
-    const toReplaceIndex = parseInt(replacementParts[2]);
-    const toReplaceValue = replacementParts[3];
-
-    for (let j = 0; j < allTextLines.length - 1; j++) {
-      let line = allTextLines[j];
-      let lineParts = line.split(';');
-      if (lineParts.length < selectorIndex || lineParts.length < toReplaceIndex) {
-        return;
-      }
-
-      if (lineParts[selectorIndex].includes(selectorValue)) {
-        lineParts[toReplaceIndex] = '"' + toReplaceValue + '"';
-        line = '';
-        for (let k = 0; k < lineParts.length; k++) {
-          line += lineParts[k];
-          if (k !== lineParts.length - 1) {
-            line += ';';
-          }
-        }
-
-        allTextLines[j] = line;
-      }
-    }
-  }
-
-  if (pastEvents > allTextLines.length - 1) {
-    pastEvents = allTextLines.length - 1;
-  }
-
-  cutTextLines = allTextLines.slice(pastEventsOffset, pastEventsOffset + pastEvents + 1);
-
-  //insert date into constant positions
-  const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate() + 7);
-  const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
-  for (let i = 0; i < constantPositions.length; i++) {
-    let positionParts = constantPositions[i].split(';');
-    let temp = positionParts[0] + ';';
-    temp += currentDateString + ';' + currentDateString + ';';
-    for (let j = 3; j < positionParts.length; j++) {
-      temp += positionParts[j] + ';';
-    }
-
-    temp = temp.slice(0, -1);
-    constantPositions[i] = temp;
-  }
-
-  totalBudget = STARTBUDGET;
-
-  //pushing constant positions
-  for (let i = 0; i < constantPositions.length; i++) {
-    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
-    totalBudget += parseInt(value);
-    cutTextLines.splice(1, 0, constantPositions[i]);
-  }
-
-  let tempBudget = totalBudget;
-  for (let i = 0; i < cutTextLines.length; i++) {
-    let entries = cutTextLines[i].split(';');
-    if (i > 0 && entries.length > 13) {
-      tempBudget -= parseFloat(entries[selectors.amount].slice(1, -1));
-      cutTextLines[i] += ';' + tempBudget;
-    }
-  }
-
-  if (categories.monthly) {
-    // cutTextLines TODO
-
-  }
-
-  if (sortType === 'amount') {
-    fixSortedArray(cutTextLines, 14);
-  }
-
-}
-
-function fixSortedArray(arr, fieldIndex) {
-  if (arr.length <= 1) {
-    return;
-  }
-
-  const firstElement = arr[0];
-
-  sortArrayByField(arr, fieldIndex);
-
-  arr.unshift(firstElement);
-  arr.pop();
-}
-
-function sortArrayByField(arr, fieldIndex) {
-  arr.sort(function (a, b) {
-    const aValue = parseInt(a.split(';')[fieldIndex].slice(1, -1));
-    const bValue = parseInt(b.split(';')[fieldIndex].slice(1, -1));
-
-    if (isNaN(aValue)) return 1; // Treat non-integer values as greater
-    if (isNaN(bValue)) return -1; // Treat non-integer values as greater
-
-    return aValue - bValue;
-  });
-}
-
 function init() {
   document.getElementById('spinner-element').style.display = 'block';
 
@@ -389,9 +274,9 @@ function init() {
     clearCanvases();
 
     drawCanvas();
-    drawPath();         //draws 2px solid line
-    drawBlurPath();     //draws opaque background below path
-    hidePathBlurTop();  //caps blurred paths above path
+    drawPath();         // draws 2px solid line
+    drawBlurPath();     // draws opaque background below path
+    hidePathBlurTop();  // caps blurred paths above path
 
     setAmounts();
     setDates();
@@ -489,7 +374,7 @@ function setAmounts() {
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvasVertical.appendChild(valueBottom);
 
-  //draw Lines
+  // draw Lines
   for (let i = 0; i <= 200; i++) {
     let valueLine = document.createElement('div');
     valueLine.classList.add('value-line');
@@ -507,7 +392,7 @@ function setAmounts() {
     uiCanvasVertical.appendChild(valueLine);
   }
 
-  //draw Amounts
+  // draw Amounts
   let amountHolder = document.createElement('div');
   amountHolder.classList.add('amount-holder');
   amountHolder.style.backgroundColor = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
@@ -589,14 +474,13 @@ function drawCanvas() {
   path = [];
   dateLines = [];
   let paddingLeft = 980 + moveOffsetX;
-  let diffHeight = 550 - valueToPx(endbudget - lowest);
-  let diffHeightIndex = 0;
   let lastDayDiff = 0;
   let fgOffset = 0;
   let evenFgOffset = 100;
 
   amazonEntries = [];
   paypalEntries = [];
+  takeoutEntries = [];
   foodEntries = [];
   monthlyEntries = [];
   cashEntries = [];
@@ -611,10 +495,8 @@ function drawCanvas() {
     pastEventsOffset = cutTextLines.length - 3;
   }
 
-  console.log(cutTextLines.length, pastEventsOffset + 2, pastEvents)
-
-  let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
-  let firstDay = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
+  let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[selectors.date].slice(1, -1);
+  let firstDay = cutTextLines[pastEvents].split(';')[selectors.date].slice(1, -1);
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
   if (sortType === 'amount') {
     totalDays = cutTextLines.length;
@@ -641,11 +523,14 @@ function drawCanvas() {
     }
   }
 
-  for (let i = pastEvents; i > pastEventsOffset; i--) {
+  for (let i = pastEvents - 1; i > pastEventsOffset; i--) {
     let entries = cutTextLines[i].split(';');
+    const lastTotalValue = valueToMarginTop(cutTextLines[i - 1].split(';')[selectors.total].slice(1, -1));
+    const totalValue =     valueToMarginTop(entries[selectors.total].slice(1, -1));
+    const nextTotalValue = valueToMarginTop(cutTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
+
     let decided = false;
     let value = valueToPx(entries[selectors.amount].slice(1, -1));
-    let diffBefore = diffHeight;
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     if (i >= pastEvents) {
       diffDays = 2;
@@ -674,10 +559,9 @@ function drawCanvas() {
     square.style.height = '' + Math.abs(value) + 'px';
     square.style.width = '' + (dayWidth - 2) + 'px';
 
-    diffHeight -= value;
-    if (diffDays > 0) { square.id = 'linePoint' + diffHeightIndex; diffHeightIndex += 2; }
-    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = diffHeight + 'px'; }
-    else { square.style.marginTop = (diffHeight + value) + 'px'; }
+    if (diffDays > 0) { square.id = 'linePoint' + i * 2; }
+    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = (totalValue) + 'px'; }
+    else { square.style.marginTop = (nextTotalValue) + 'px'; }
 
     // Fill empty days
     if (diffDays > 1 && sortType !== 'amount') {
@@ -686,7 +570,7 @@ function drawCanvas() {
       placeholder.classList.add('negative-background');
       placeholder.style.height = '1px';
       placeholder.style.width = '' + ((diffDays - 1) * dayWidth) + 'px';
-      placeholder.style.marginTop = (diffBefore) + 'px'
+      placeholder.style.marginTop = (nextTotalValue) + 'px'
       placeholder.style.marginLeft = (paddingLeft - ((lastDayDiff - 1) * dayWidth)) + 'px';
       canvas.appendChild(placeholder);
     }
@@ -730,57 +614,61 @@ function drawCanvas() {
 
     // Push Path Points
     let temp = [];
-    temp.push(diffHeight);
+    temp.push(lastTotalValue);
     temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
     path.push(temp);
 
     // legend filling - Kategorien
-    if (entries[selectors.beneficiary].includes('ADAC') ||
-        entries[selectors.beneficiary].includes('klarmobil') ||
-        entries[selectors.beneficiary].includes('Mecklenburgische') ||
-        entries[selectors.purpose].includes('Miete')) {
+    if (getEntrieCategorie(entries) === 'monthly') {
       square.classList.add('monthly-background');
       square.category = 'Monthly';
       monthlyEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'amazon')) {
+    if (getEntrieCategorie(entries) === 'amazon') {
       square.classList.add('amazon-background');
-      square.category = 'amazon';
+      square.category = 'Amazon';
       amazonEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'paypal')) {
+    if (getEntrieCategorie(entries) === 'paypal') {
       square.classList.add('paypal-background');
-      square.category = 'paypal';
+      square.category = 'PayPal';
       paypalEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'food')) {
+    if (getEntrieCategorie(entries) === 'takeout') {
+      square.classList.add('takeout-background');
+      square.category = 'Takeout';
+      takeoutEntries.push(cutTextLines[i]);
+      decided = true;
+    }
+
+    if (getEntrieCategorie(entries) === 'food') {
       square.classList.add('food-background');
-      square.category = 'food';
+      square.category = 'Food';
       foodEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'cash')) {
+    if (getEntrieCategorie(entries) === 'cash') {
       square.classList.add('cash-background');
-      square.category = 'Bargeld';
+      square.category = 'Cash';
       cashEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'gas')) {
+    if (getEntrieCategorie(entries) === 'gas') {
       square.classList.add('gas-background');
       square.category = 'Tanken';
       gasEntries.push(cutTextLines[i]);
       decided = true;
     }
 
-    if (entrieHasCategorie(entries, 'debt')) {
+    if (getEntrieCategorie(entries) === 'debt') {
       square.classList.add('debt-background');
       square.category = 'Schulden';
       decided = true;
@@ -821,7 +709,8 @@ function drawCanvas() {
                     + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
                     + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
                     + '<p class="popupText">Value: ' + numberToCurrency(entries[selectors.amount].slice(1, -1)) + '</p>'
-                    + '<p class="popupText">Total: ' + numberToCurrency(parseFloat(entries[selectors.total]) + parseFloat(entries[selectors.amount].slice(1, -1))) + '</p>'
+                    + '<p class="popupText">Total: ' + numberToCurrency(parseFloat(entries[selectors.total].slice(1, -1))) + '</p>'
+                    + '<p class="popupText">Calculated Total: ' + numberToCurrency(parseFloat(pxToValue(square.style.marginTop))) + '</p>'
                     + '<p class="popupText">Category: ' + square.category + '</p>';
     popup.id = 'popup' + i;
     popup.className = 'popup';
@@ -844,6 +733,7 @@ function drawLegends() {
   positiveTotal += getTotal(monthlyEntries, true);
   positiveTotal += getTotal(amazonEntries, true);
   positiveTotal += getTotal(paypalEntries, true);
+  positiveTotal += getTotal(takeoutEntries, true);
   positiveTotal += getTotal(foodEntries, true);
   positiveTotal += getTotal(cashEntries, true);
   positiveTotal += getTotal(gasEntries, true);
@@ -853,6 +743,7 @@ function drawLegends() {
   negativeTotal += getTotal(monthlyEntries, false);
   negativeTotal += getTotal(amazonEntries, false);
   negativeTotal += getTotal(paypalEntries, false);
+  negativeTotal += getTotal(takeoutEntries, false);
   negativeTotal += getTotal(foodEntries, false);
   negativeTotal += getTotal(cashEntries, false);
   negativeTotal += getTotal(gasEntries, false);
@@ -866,6 +757,7 @@ function drawLegends() {
   drawPositiveLegend(maxTotal, monthlyEntries, 'monthly');
   drawPositiveLegend(maxTotal, amazonEntries, 'amazon');
   drawPositiveLegend(maxTotal, paypalEntries, 'paypal');
+  drawPositiveLegend(maxTotal, takeoutEntries, 'takeout');
   drawPositiveLegend(maxTotal, foodEntries, 'food');
   drawPositiveLegend(maxTotal, cashEntries, 'cash');
   drawPositiveLegend(maxTotal, gasEntries, 'gas');
@@ -874,6 +766,7 @@ function drawLegends() {
   drawNegativeLegend(maxTotal, monthlyEntries, 'monthly');
   drawNegativeLegend(maxTotal, amazonEntries, 'amazon');
   drawNegativeLegend(maxTotal, paypalEntries, 'paypal');
+  drawNegativeLegend(maxTotal, takeoutEntries, 'takeout');
   drawNegativeLegend(maxTotal, foodEntries, 'food');
   drawNegativeLegend(maxTotal, cashEntries, 'cash');
   drawNegativeLegend(maxTotal, gasEntries, 'gas');
@@ -882,6 +775,7 @@ function drawLegends() {
   drawTotalLegend(maxTotal, monthlyEntries, 'monthly');
   drawTotalLegend(maxTotal, amazonEntries, 'amazon');
   drawTotalLegend(maxTotal, paypalEntries, 'paypal');
+  drawTotalLegend(maxTotal, takeoutEntries, 'takeout');
   drawTotalLegend(maxTotal, foodEntries, 'food');
   drawTotalLegend(maxTotal, cashEntries, 'cash');
   drawTotalLegend(maxTotal, gasEntries, 'gas');
@@ -973,57 +867,62 @@ function drawTable() {
         if (i === 0) { cell.innerHTML = 'Index'; }
         else         { cell.innerHTML = '' + i; }
         cell.className = 'cell';
-        cell.style.width = '3vw';
+        cell.style.textAlign = 'end';
+        cell.style.width = '2.5vw';
         row.appendChild(cell);
       }
 
-      if (j === 1) { cell.style.width = '8vw'; row.appendChild(cell); }     // Date
-      if (j === 3) { cell.style.width = '10vw'; row.appendChild(cell); }    // Buchungstext
-      if (j === 4) { cell.style.width = '40vw'; row.appendChild(cell); }    // Purpose
-      if (j === 11) {                                                       // Beneficiary
-        cell.style.width = '25vw';
-        row.appendChild(cell);
-      }
-      if (j === 14) {                                                       // Amount
-        cell.style.width = '5vw';
-        cell.style.paddingRight = '0.5vw';
+      if (j === selectors.date) { cell.style.width = '7vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
+      if (j === selectors.content) { cell.style.width = '10vw'; row.appendChild(cell); }
+      if (j === selectors.purpose) { cell.style.width = '36vw'; row.appendChild(cell); }
+      if (j === selectors.beneficiary) { cell.style.width = '25vw'; row.appendChild(cell); }
+      if (j === selectors.total) { cell.style.width = '4vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
+      if (j === selectors.amount) {
+        cell.style.width = '4vw';
+        cell.style.textAlign = 'end';
         row.appendChild(cell);
         if (entries[selectors.amount].charAt(1) !== '-') { cell.classList.add('positive-background'); }
         if (entries[selectors.amount].charAt(1) === '-') { cell.classList.add('negative-background'); }
       }
 
-      if (i === 0) { cell.classList.remove('positive-background'); }
+      if (i === 0) {
+        cell.style.textAlign = '';
+        cell.classList.remove('positive-background');
+        cell.classList.remove('negative-background');
+      }
     }
 
     // Kategorien
-    if (entries[selectors.beneficiary] !== null) {
-      if (entries[selectors.beneficiary].includes('ADAC') || entries[selectors.beneficiary].includes('klarmobil') || entries[selectors.beneficiary].includes('Mecklenburgische') || entries[selectors.purpose].includes('Miete')) {
-        row.classList.add('monthly-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'monthly') {
+      row.classList.add('monthly-background-transparent');
+    }
 
-      if (entries[selectors.beneficiary].includes('AMAZON')) {
-        row.classList.add('amazon-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'amazon') {
+      row.classList.add('amazon-background-transparent');
+    }
 
-      if (entries[selectors.beneficiary].includes('PayPal') || entries[selectors.purpose].includes('PAYPAL')) {
-        row.classList.add('paypal-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'paypal') {
+      row.classList.add('paypal-background-transparent');
+    }
 
-      if (entries[selectors.beneficiary].includes('REWE') || entries[selectors.beneficiary].includes('EDEKA') || entries[selectors.beneficiary].includes('NETTO')) {
-        row.classList.add('food-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'takeout') {
+      row.classList.add('takeout-background-transparent');
+    }
 
-      if (entries[selectors.beneficiary].includes('Tankstelle') || entries[selectors.beneficiary].includes('SHELL') || entries[selectors.beneficiary].includes('ARAL')) {
-        row.classList.add('gas-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'food') {
+      row.classList.add('food-background-transparent');
+    }
 
-      if (entries[selectors.beneficiary].includes('OstseeSparkasse')) {
-        row.classList.add('cash-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'gas') {
+      row.classList.add('gas-background-transparent');
+    }
 
-      if (entries[4].includes('SCHULDEN')) {
-        row.classList.add('debt-background-transparent');
-      }
+    if (entries[selectors.category].slice(1, -1) === 'cash') {
+      row.classList.add('cash-background-transparent');
+    }
+
+    if (entries[selectors.category].slice(1, -1) === 'debt') {
+      row.classList.add('debt-background-transparent');
     }
 
     let rowHolder = document.createElement('div');

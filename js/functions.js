@@ -7,56 +7,55 @@ function differenceInDays(input1, input2) {
   return (Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)));
 }
 
-function entrieHasCategorie(entries, category) {
-  const beneficiary = entries[selectors.beneficiary]
+function getEntrieCategorie(entryParts) {
+  const beneficiary = entryParts[selectors.beneficiary]
   let isAny = false;
-  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || entries[selectors.purpose].includes('Miete')
+  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || entryParts[selectors.purpose].includes('Miete')
    || beneficiary.includes('AMAZON') || beneficiary.includes('PayPal') || beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')
-   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || entries[selectors.purpose].includes('SCHULDEN')) {
+   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || entryParts[selectors.purpose].includes('SCHULDEN')) {
     isAny = true;
   }
 
-  switch (category) {
-    case 'monthly':
-      if (beneficiary.includes('ADAC') ||
-        beneficiary.includes('klarmobil') ||
-        beneficiary.includes('Mecklenburgische') ||
-        entries[selectors.purpose].includes('Miete')
-       ) { return true; } break;
-
-    case 'amazon':
-      if (beneficiary.includes('AMAZON')) {
-        return true; } break;
-
-    case 'paypal':
-      if (beneficiary.includes('PayPal')) {
-        return true; } break;
-
-    case 'food':
-      if (beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')) {
-        return true; } break;
-
-    case 'cash':
-      if (beneficiary.includes('OstseeSparkasse')) {
-        return true; } break;
-
-    case 'gas':
-      if (beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL')) {
-        return true; } break;
-
-    case 'debt':
-      if (entries[selectors.purpose].includes('SCHULDEN')) {
-        return true; } break;
-
-    case 'others':
-      if (!isAny) {
-        return true; } break;
-
-    default:
-      return false;
+  if (beneficiary.includes('ADAC') ||
+    beneficiary.includes('klarmobil') ||
+    beneficiary.includes('Mecklenburgische') ||
+    entryParts[selectors.purpose].includes('Miete')) {
+    return 'monthly';
   }
 
-  return false;
+  if (beneficiary.includes('AMAZON')) {
+    return 'amazon';
+  }
+
+  if (beneficiary.includes('PayPal')) {
+    if (entryParts[selectors.purpose].includes('Takeaway.com')) {
+      return 'takeout';
+    } else {
+      return 'paypal';
+    }
+  }
+
+  if (beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO') || beneficiary.includes('LIDL')) {
+    return 'food';
+  }
+
+  if (beneficiary.includes('OstseeSparkasse')) {
+    return 'cash';
+  }
+
+  if (beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL')) {
+    return 'gas';
+  }
+
+  if (entryParts[selectors.purpose].includes('SCHULDEN')) {
+    return 'debt';
+  }
+
+  if (!isAny) {
+    return 'others';
+  }
+
+  return '';
 }
 
 function addZeroToSingleDigit(number) {
@@ -79,6 +78,23 @@ function pxToValue(yPixel) {
   return parseInt((pixel * (maxHeight / 500) + lowest) / verticalScaleFactor);
 }
 
+function valueToPx(value) {
+  return parseFloat(value) * verticalScaleFactor * (500 / maxHeight);
+}
+
+function valueToMarginTop(value) {
+  let pixel = ((parseFloat(value) * verticalScaleFactor) - lowest) * 500 / (maxHeight);
+  return 550 - pixel;
+}
+
+function parseDate(dateString) {
+  const parts = dateString.split('.');
+  if (parts.length < 3) return null;
+  const date = new Date('20' + parts[2] + '-' + parts[1] + '-' + parts[0]);
+  if (isNaN(date.getTime())) return null;
+  return date.getTime();
+}
+
 function numberToCurrency(number) {
   if (number.replace !== undefined) {
     number = parseInt(number.replace(',', '.'));
@@ -99,10 +115,6 @@ function pxToDate(xPixel) {
   date = date.addDays(daysDiff);
   let dateParts = date.toISOString().split('T')[0].split('-');
   return dateParts[2] + '.' + dateParts[1] + '.' + dateParts[0];
-}
-
-function valueToPx(value) {
-  return parseInt(value) * verticalScaleFactor * (500 / maxHeight);
 }
 
 function getTotal(input, positive) {
@@ -142,27 +154,6 @@ function getDayOfWeek(day, month, year) {
   return daysOfWeek[dayIndex];
 }
 
-function toggleSort() {
-  switch (sortType) {
-    case 'amount':
-      sortType = 'date';
-      sessionStorage.setItem('sortType', sortType);
-      break;
-
-    case 'date':
-      sortType = 'amount';
-      sessionStorage.setItem('sortType', sortType);
-      break;
-
-    default:
-      break;
-  }
-
-  initTextLines();
-  initRangeSlider2();
-  init();
-}
-
 function clearLines() {
   let uiLine = document.getElementById('uiline');
   ctx = uiLine.getContext('2d');
@@ -176,14 +167,12 @@ function clearLines() {
 }
 
 function getMaxPriceDiff() {
-  let current = totalBudget;
   let tempLowest = 1000000.0;
   let tempHighest = 0.0;
 
   for (let i = pastEvents; i > 0; i--) {
     if (cutTextLines[i]) {
-      let entries = cutTextLines[i].split(';');
-      current += parseFloat(entries[14].slice(1, -1));
+      let current = parseFloat(cutTextLines[i].split(';')[selectors.total].slice(1, -1));
       if (current < tempLowest)  { tempLowest  = current; }
       if (current > tempHighest) { tempHighest = current; }
     }
@@ -193,14 +182,12 @@ function getMaxPriceDiff() {
 }
 
 function updateMaxHeightAround() {
-  let current = totalBudget;
   lowest = 1000000.0;
-  highest = totalBudget;
-
+  highest = 0;
   //starts at 1 to ignore first row
-  for (let i = 1; i <= pastEvents; i++) {
+  for (let i = 1; i <= pastEvents && i < cutTextLines.length - 1; i++) {
     let entries = cutTextLines[i].split(';');
-    current -= parseFloat(entries[14].slice(1, -1));
+    const current = parseFloat(entries[selectors.total].slice(1, -1));
     if (i > pastEventsOffset) {
       if (current < lowest)  { lowest  = current; }
       if (current > highest) { highest = current; }
