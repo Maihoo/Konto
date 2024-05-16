@@ -21,7 +21,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 18717.91;
+const STARTBUDGET = 18704.71;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
@@ -65,7 +65,8 @@ let totalBudget = STARTBUDGET;
 
 let zoomInPressed = false;
 let zoomOutPressed = false;
-let pathMode = false;
+let squaresVisible = false;
+let pathVisible = false;
 let gridMode = false;
 let showShadow = true;
 let settingsExtended = false;
@@ -143,7 +144,8 @@ let settingsElement = document.getElementById('settings');
 function resetSettings() {
   zoomInPressed = false;
   zoomOutPressed = false;
-  pathMode = false;
+  squaresVisible = false;
+  pathVisible = false;
   gridMode = false;
   showShadow = true;
   settingsExtended = false;
@@ -284,7 +286,7 @@ function init() {
     drawLegends();
     drawTable();
 
-    pathMode = !pathMode;
+    pathVisible = !pathVisible;
     togglePath();
 
     document.getElementById('spinner-element').style.display = 'none';

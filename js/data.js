@@ -141,47 +141,18 @@ function spreadIncomeToDaysOfMonth() {
   paydays.push(["0.0", 0]);
   cutTextLines.forEach((row, index) => {
     const entries = row.split(';');
-    console.log(parseInt(entries[selectors.amount].slice(1, -1)));
     if (parseInt(entries[selectors.amount].slice(1, -1)) > 800) {
       paydays.push([entries[selectors.amount], index])
       removed += parseInt(entries[selectors.amount].slice(1, -1));
-      console.log('removed', parseInt(entries[selectors.amount].slice(1, -1)));
-      console.log(cutTextLines[index]);
       cutTextLines[index] = cutTextLines[index].replace(entries[selectors.amount].slice(1, -1), '0,00');
-      console.log(cutTextLines[index]);
     }
   });
 
   paydays.push(["0.0", cutTextLines.length - 2]);
 
-  console.log(paydays);
-  /*
-  for (let i = 1; i < paydays.length - 2; i++) {
-    const amount = parseInt(paydays[i][0].slice(1, -1));
-    const nextAmount = paydays[i + 1][0];
-    const index = paydays[i][1];
-    const nextIndex = paydays[i + 1][1];
-    const firstDay = cutTextLines[index].split(';')[selectors.date].slice(1, -1);
-    const lastDay = cutTextLines[nextIndex].split(';')[selectors.date].slice(1, -1);
-    const dayDiff = Math.abs(differenceInDays(firstDay, lastDay))
-    const amountPerDay = amount / dayDiff;
-    if (dayDiff < 3 && false) {
-      console.log(amountPerDay);
-      paydays.remove(i);
-      paydays.remove(i);
-      paydays.push([amount + nextAmount, index]);
-    }
-
-    if (amountPerDay > 200) {
-      console.log(firstDay, lastDay, amount, '/', dayDiff)
-      console.log('amountPerDay!!!!!!', amountPerDay);
-    }
-  }*/
-
   // each PayDay
   for (let i = 1; i < paydays.length - 1; i++) {
     let localLoop = 0;
-    console.log('went into Payday loop')
     const amount = parseInt(paydays[i][0].slice(1, -1));
     const index = paydays[i][1];
     const nextIndex = paydays[i + 1][1];
@@ -191,49 +162,53 @@ function spreadIncomeToDaysOfMonth() {
     const indexDiff = nextIndex - index;
     const amountPerDay = amount / dayDiff;
 
-    if (amountPerDay > 200) {
-      console.log(firstDay, lastDay, amount, '/', dayDiff)
-      console.log('amountPerDay', amountPerDay);
+    /*
+    // Spread the amount evenly over the next 30 days
+      for (let j = 1; j <= 30; j++) {
+        let temp = firstDay.split('.');
+        let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
+        date.setDate(date.getDate() + j);
+        let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
+        // Add amount for the day
+        added += amountPerDay;
+        const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
+        cutTextLines.splice(nextIndex + j, 0, row);
+      }
     }
+    */
+
     // each day until the next PayDay
     if (amountPerDay > 0 && amountPerDay < 10000) {
       for (let j = index + dayDiff; j > index; j--) {
-        console.log('went into day loop')
         let temp = lastDay.split('.');
         let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
         date.setDate(date.getDate() + j - index);
         let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
         let resultIndex = nextIndex - 20;
         let lastDifferenceInDays = 9999999;
-        for (let k = -5; k < indexDiff && cutTextLines[nextIndex - k]; k++) {
-          const testedIndex = nextIndex - k;
-          const comparisonDay = cutTextLines[testedIndex].split(';')[selectors.date].slice(1, -1);
-          const diffDays = Math.abs(differenceInDays(currentDateString, comparisonDay))
-          // console.log(lastDifferenceInDays, '>', diffDays, comparisonDay, currentDateString);
-          if (lastDifferenceInDays < diffDays || comparisonDay === currentDateString) {
-            // console.log('closest match', testedIndex, cutTextLines[testedIndex + 1].split(';')[selectors.date], currentDateString);
-            resultIndex = testedIndex;
-            break;
-          } else {
-            // continue
-            resultIndex = testedIndex;
+
+        // Search within a margin of 20 days backward
+        for (let k = 0; k < 20 && resultIndex > index; k++) {
+          const comparisonDay = cutTextLines[resultIndex].split(';')[selectors.date].slice(1, -1);
+          const diffDays = Math.abs(differenceInDays(currentDateString, comparisonDay));
+          // If current difference is less than last one, update resultIndex
+          if (diffDays <= lastDifferenceInDays) {
+            resultIndex--;
             lastDifferenceInDays = diffDays;
+          } else {
+            break;
           }
         }
 
         if (resultIndex > -1) {
-          localLoop += amountPerDay
+          localLoop += amountPerDay;
           added += amountPerDay;
-          const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`
+          const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
           cutTextLines.splice(resultIndex + 1, 0, row);
         }
       }
-
-      console.log('added', localLoop)
     }
   }
-
-  console.log('added', added, 'removed', removed);
 }
 
 function fixSortedArray(array, fieldIndex) {

@@ -1,0 +1,187 @@
+@import "./style.less";
+
+#legend {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  margin-bottom: 5rem;
+}
+
+.legend-headline {
+  color: @custom-ui-color;
+  font-size: large;
+  margin: auto;
+  margin-top: -0.5rem;
+}
+
+.legend-item {
+  margin: -0.3rem 0 0 1rem;
+  width: 6rem;
+  min-width: 6rem;
+}
+
+.legend-holder {
+  display: flex;
+  margin-top: 0.5rem;
+  max-width: 100%;
+  width: 100%;
+
+  #refresh-button {
+    display: flex;
+    width: 5rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    border: none;
+    padding: auto;
+    padding-top: 0.5rem;
+    margin-left: 0.5rem;
+    background-color: #2980b9;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+
+    h4 {
+      margin: -0.1rem 1rem 0 0.25rem;
+      padding: 0;
+      width: 4rem;
+      min-width: 3rem;
+      padding-right: 0.25rem;
+    }
+  }
+
+  #refresh-button:hover {
+    cursor: pointer;
+  }
+
+  #refresh-button i {
+    margin-left: 0.2rem;
+  }
+
+  .checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 15px;
+    cursor: pointer;
+    font-size: 22px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* Hide the browser's default checkbox */
+    input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .checkmark {
+      position: absolute;
+      top: 0;
+      left: 0.5rem;
+      right: 0.5rem;
+      height: 0.5rem;
+      width: 0.5rem;
+      background-color: transparent;
+      border-radius: 1rem;
+      border: 4px solid green
+    }
+
+    &:hover input ~ .checkmark {
+      outline: 1px solid #fff;
+    }
+
+    &[checked="checked"] .checkmark {
+      background-color: #fff;
+    }
+
+    &.others {
+      @my-color: @negative-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.amazon {
+      @my-color: @amazon-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.paypal {
+      @my-color: @paypal-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.takeout {
+      @my-color: @takeout-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.food {
+      @my-color: @food-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.monthly {
+      @my-color: @monthly-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.cash {
+      @my-color: @cash-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
+    &.gas {
+      @my-color: @gas-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+  }
+}
+
+.legend-text-holder {
+  display: flex;
+}
+
+.legend-text-holder-right {
+  display: flex;
+  padding-left: 0.5rem;
+  padding-right: 1rem;
+}
+
+.legend-square-holder {
+  width: 2rem !important;
+  min-width: 2rem !important;
+  margin-left: 1rem;
+}
+
+.legendsquare {
+  position: relative;
+  z-index: 200;
+  outline: 1px solid rgba(0, 0, 0, 0.2);
+  border: 0;
+  width: 2rem;
+  background-color: @positive-color;
+}

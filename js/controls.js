@@ -293,15 +293,23 @@ function toggleSpreadMonthlyIncome() {
   init();
 }
 
-function togglePath() {
-  pathMode = !pathMode;
+function toggleSquares() {
+  squaresVisible = !squaresVisible;
 
-  if (pathMode) {
+  if (squaresVisible) {
     canvas.style.opacity = 0;
+  } else {
+    canvas.style.opacity = '100%';
+  }
+}
+
+function togglePath() {
+  pathVisible = !pathVisible;
+
+  if (pathVisible) {
     pathCanvas.style.opacity = '100%';
     pathBlurCanvas.style.opacity = '100%';
   } else {
-    canvas.style.opacity = '100%';
     pathCanvas.style.opacity = 0;
     pathBlurCanvas.style.opacity = 0;
   }

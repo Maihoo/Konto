@@ -7,6 +7,8 @@
   <title>Document</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
   <link rel="stylesheet/less" href="style.less" type="text/css"/>
+  <link rel="stylesheet/less" href="ui-style.less" type="text/css"/>
+  <link rel="stylesheet/less" href="legend-style.less" type="text/css"/>
   <script src="https://cdn.jsdelivr.net/npm/less" ></script>
   <script src="js/rule.js" ></script>
   <script src="js/data.js" ></script>
@@ -168,6 +170,13 @@
         <div id="settings-content">
           <div class="settings-button-collection">
             <div class="settings-button-group">
+              <div class="buttonwrapper">
+                <span>Squares</span>
+                <label class="switch">
+                  <input type="checkbox" onclick="toggleSquares()" checked="checked">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
               <div class="buttonwrapper">
                 <span>Path</span>
                 <label class="switch">
