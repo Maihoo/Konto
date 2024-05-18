@@ -101,6 +101,7 @@ let ts2 = 0;
 let startDate = '';
 let endDate = '';
 let sortType = 'date';
+let firstLine = '';
 
 let backgroundColor = '25, 25, 25';
 let lineColor = '255, 0, 0';
@@ -120,6 +121,7 @@ let foodEntries = [];
 let monthlyEntries = [];
 let cashEntries = [];
 let gasEntries = [];
+let debtEntries = [];
 let restEntries = [];
 
 // zooming
@@ -205,6 +207,7 @@ function resetHTML() {
   monthlyEntries = [];
   cashEntries = [];
   gasEntries = [];
+  debtEntries = [];
   restEntries = [];
   zoomLevel = 1.0;
 
@@ -487,6 +490,7 @@ function drawCanvas() {
   monthlyEntries = [];
   cashEntries = [];
   gasEntries = [];
+  debtEntries = [];
   restEntries = [];
 
   if (cutTextLines.length - 2 < pastEvents) {
@@ -566,10 +570,11 @@ function drawCanvas() {
     else { square.style.marginTop = (nextTotalValue) + 'px'; }
 
     // Fill empty days
+    const category = getEntrieCategorie(entries);
     if (diffDays > 1 && sortType !== 'amount') {
       let placeholder = document.createElement('div');
       placeholder.className = 'square';
-      placeholder.classList.add('negative-background');
+      placeholder.classList.add(category + '-background');
       placeholder.style.height = '1px';
       placeholder.style.width = '' + ((diffDays - 1) * dayWidth) + 'px';
       placeholder.style.marginTop = (nextTotalValue) + 'px'
@@ -621,60 +626,18 @@ function drawCanvas() {
     path.push(temp);
 
     // legend filling - Kategorien
-    if (getEntrieCategorie(entries) === 'monthly') {
-      square.classList.add('monthly-background');
-      square.category = 'Monthly';
-      monthlyEntries.push(cutTextLines[i]);
-      decided = true;
-    }
+    square.classList.add(category + '-background')
+    square.category = category;
+    decided = category !== 'others';
 
-    if (getEntrieCategorie(entries) === 'amazon') {
-      square.classList.add('amazon-background');
-      square.category = 'Amazon';
-      amazonEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'paypal') {
-      square.classList.add('paypal-background');
-      square.category = 'PayPal';
-      paypalEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'takeout') {
-      square.classList.add('takeout-background');
-      square.category = 'Takeout';
-      takeoutEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'food') {
-      square.classList.add('food-background');
-      square.category = 'Food';
-      foodEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'cash') {
-      square.classList.add('cash-background');
-      square.category = 'Cash';
-      cashEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'gas') {
-      square.classList.add('gas-background');
-      square.category = 'Tanken';
-      gasEntries.push(cutTextLines[i]);
-      decided = true;
-    }
-
-    if (getEntrieCategorie(entries) === 'debt') {
-      square.classList.add('debt-background');
-      square.category = 'Schulden';
-      decided = true;
-    }
+    if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'food') { foodEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(cutTextLines[i]); }
 
     if (!decided) {
       restEntries.push(cutTextLines[i]);
@@ -841,6 +804,8 @@ function drawTable() {
   let table = document.getElementById('table');
   table.innerHTML = '';
 
+  cutTextLines[0] = firstLine;
+
   for (let i = 0; i < cutTextLines.length; i++) {
     let entries = cutTextLines[i].split(';');
     let row = document.createElement('div');
@@ -895,36 +860,38 @@ function drawTable() {
     }
 
     // Kategorien
-    if (entries[selectors.category].slice(1, -1) === 'monthly') {
-      row.classList.add('monthly-background-transparent');
-    }
+    if (entries[selectors.category]) {
+      if (entries[selectors.category].slice(1, -1) === 'monthly') {
+        row.classList.add('monthly-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'amazon') {
-      row.classList.add('amazon-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'amazon') {
+        row.classList.add('amazon-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'paypal') {
-      row.classList.add('paypal-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'paypal') {
+        row.classList.add('paypal-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'takeout') {
-      row.classList.add('takeout-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'takeout') {
+        row.classList.add('takeout-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'food') {
-      row.classList.add('food-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'food') {
+        row.classList.add('food-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'gas') {
-      row.classList.add('gas-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'gas') {
+        row.classList.add('gas-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'cash') {
-      row.classList.add('cash-background-transparent');
-    }
+      if (entries[selectors.category].slice(1, -1) === 'cash') {
+        row.classList.add('cash-background-transparent');
+      }
 
-    if (entries[selectors.category].slice(1, -1) === 'debt') {
-      row.classList.add('debt-background-transparent');
+      if (entries[selectors.category].slice(1, -1) === 'debt') {
+        row.classList.add('debt-background-transparent');
+      }
     }
 
     let rowHolder = document.createElement('div');

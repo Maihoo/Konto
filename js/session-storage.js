@@ -58,6 +58,11 @@ function getFromSessionStorage() {
   sessionValue = sessionStorage.getItem('sortType');
   if (sessionValue && sessionValue.length > 0) {
     sortType = sessionValue;
+    if (sortType === 'amount') {
+      document.getElementById('sort-value-input').setAttribute('checked', 'checked');
+    } else {
+      document.getElementById('sort-value-input').removeAttribute('checked');
+    }
   }
 
   sessionValue = sessionStorage.getItem('verticalScaleFactor');
@@ -122,8 +127,10 @@ function getFromSessionStorage() {
   if (sessionValue && sessionValue.length > 0) {
     if (sessionValue === 'true') {
       groupByCategory = true;
+      document.getElementById('group-category-input').setAttribute('checked', 'checked');
     } else {
       groupByCategory = false;
+      document.getElementById('group-category-input').removeAttribute('checked');
     }
   }
 

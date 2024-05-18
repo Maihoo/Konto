@@ -9,17 +9,20 @@ function differenceInDays(input1, input2) {
 
 function getEntrieCategorie(entryParts) {
   const beneficiary = entryParts[selectors.beneficiary]
+  const purpose = entryParts[selectors.purpose]
   let isAny = false;
-  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || entryParts[selectors.purpose].includes('Miete')
+  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || purpose.includes('Miete')
    || beneficiary.includes('AMAZON') || beneficiary.includes('PayPal') || beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')
-   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || entryParts[selectors.purpose].includes('SCHULDEN')) {
+   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || purpose.includes('SCHULDEN')) {
     isAny = true;
   }
 
   if (beneficiary.includes('ADAC') ||
     beneficiary.includes('klarmobil') ||
     beneficiary.includes('Mecklenburgische') ||
-    entryParts[selectors.purpose].includes('Miete')) {
+    purpose.includes('Spotify') ||
+    purpose.includes('123-reg') ||
+    purpose.includes('Miete')) {
     return 'monthly';
   }
 
@@ -28,7 +31,7 @@ function getEntrieCategorie(entryParts) {
   }
 
   if (beneficiary.includes('PayPal')) {
-    if (entryParts[selectors.purpose].includes('Takeaway.com')) {
+    if (purpose.includes('Takeaway.com') || beneficiary.includes('Hot Chickeria')) {
       return 'takeout';
     } else {
       return 'paypal';
@@ -47,7 +50,7 @@ function getEntrieCategorie(entryParts) {
     return 'gas';
   }
 
-  if (entryParts[selectors.purpose].includes('SCHULDEN')) {
+  if (purpose.includes('SCHULDEN')) {
     return 'debt';
   }
 

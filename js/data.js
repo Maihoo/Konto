@@ -17,7 +17,7 @@ function initTextLines() {
     const toReplaceIndex = parseInt(replacementParts[2]);
     const toReplaceValue = replacementParts[3];
 
-    for (let j = 0; j < allTextLines.length - 1; j++) {
+    for (let j = 0; j < allTextLines.length; j++) {
       let line = allTextLines[j];
       let lineParts = line.split(';');
       if (lineParts.length < selectorIndex || lineParts.length < toReplaceIndex) {
@@ -68,9 +68,12 @@ function initTextLines() {
     totalBudget = STARTBUDGET;
   }
 
+  firstLine = allTextLines[0];
+
   // filter out categories
-  allTextLines = allTextLines.filter(function(item) {
+  allTextLines = allTextLines.filter(function(item, index) {
     const itemEntries = item.split(';');
+    if (index === 0) { return false; }
     if (document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked' && getEntrieCategorie(itemEntries) === 'monthly') { return false; }
     if (document.getElementById('toggle-amazon').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'amazon')  { return false; }
     if (document.getElementById('toggle-paypal').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'paypal')  { return false; }
@@ -111,11 +114,21 @@ function initTextLines() {
     fixSortedArray(cutTextLines, selectors.date);
   }
 
+  if (groupByCategory) {
+    cutTextLines = groupArrayByField(cutTextLines, selectors.category);
+  }
+
   // pushing total value
   let tempBudget = totalBudget;
+  let lastCategory = "";
   for (let i = 0; i < cutTextLines.length; i++) {
     let entries = cutTextLines[i].split(';');
     if (entries.length > 10) {
+      if (groupByCategory && lastCategory !== entries[selectors.category]) {
+        lastCategory = entries[selectors.category];
+        tempBudget = 0;
+      }
+
       cutTextLines[i] += ';"' + tempBudget.toFixed(2) + '"';
       const nextValue = parseFloat(entries[selectors.amount].slice(1, -1).replace(',', '.'));
       if (nextValue) {
@@ -123,13 +136,24 @@ function initTextLines() {
       }
     }
   }
-
-  if (categories.monthly) {
-    // TODO
-  }
-
+  // align starts at 0
+  let categoryTotal = parseFloat(cutTextLines[cutTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.'));
   if (groupByCategory) {
-    // TODO
+    for (let i = cutTextLines.length - 3; i > 1; i--) {
+      let entries = cutTextLines[i].split(';');
+      let nextEntries = cutTextLines[i - 2].split(';');
+      if (lastCategory !== nextEntries[selectors.category]) {
+        lastCategory = nextEntries[selectors.category];
+        categoryTotal = parseFloat(nextEntries[selectors.total].slice(1, -1).replace(',', '.'));
+      }
+      // Calculate the difference and update the entry
+      let currentValue = parseFloat(entries[selectors.total].slice(1, -1).replace(',', '.'));
+      let nextValue = currentValue - categoryTotal;
+      // Update the entry only if the next value is different from the current value
+      if (nextValue !== currentValue) {
+        cutTextLines[i] = cutTextLines[i].replace(entries[selectors.total], '"' + nextValue.toString().replace('.', ',') + '"');
+      }
+    }
   }
 }
 
@@ -238,4 +262,32 @@ function sortArrayByField(array, fieldIndex) {
 
     return aValue - bValue;
   });
+}
+
+function groupArrayByField(array, fieldIndex) {
+  if (array.length <= 1) {
+    return array;
+  }
+
+  const groupedArray = [];
+  const groups = {};
+
+  array.forEach(element => {
+    const fieldValue = getFieldValue(element, fieldIndex);
+
+    if (!groups[fieldValue]) {
+      groups[fieldValue] = [];
+    }
+    groups[fieldValue].push(element);
+  });
+  // Collect groups maintaining chronological order
+  for (const fieldValue in groups) {
+    groupedArray.push(...groups[fieldValue]);
+  }
+
+  return groupedArray;
+}
+
+function getFieldValue(element, fieldIndex) {
+  return element.split(';')[fieldIndex].trim();
 }
