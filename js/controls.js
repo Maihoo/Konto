@@ -20,8 +20,6 @@ function replace(id) {
   if (originalElement instanceof HTMLElement) {
     clonedElement = originalElement.cloneNode(true);
     originalElement.parentNode.replaceChild(clonedElement, originalElement);
-  } else {
-    console.log('couldnt find element with id', id);
   }
 }
 
@@ -663,7 +661,6 @@ function processAllPDFs() {
 }
 
 function processSinglePDF(index, previousTotalMinusPastEvents) {
-  console.log('processing')
   if (index >= 0) {
     return processPDFContent(pdfNames[index])
       .then(() => processSinglePDF(index - 1, previousTotalMinusPastEvents)); // Process the next PDF in the chain
@@ -685,7 +682,6 @@ function processPDFContent(name) {
       .then(data => pdfjsLib.getDocument(new Uint8Array(data)).promise)
       .then(pdf => {
         const numPages = pdf.numPages;
-
         // Helper function to process a single page
         function processSinglePage(pageIndex) {
           if (pageIndex >= 1) {
@@ -696,11 +692,9 @@ function processPDFContent(name) {
               })
               .then(() => processSinglePage(pageIndex - 1)); // Process the next page in the chain
           } else {
-            // All pages processed for this PDF
-            resolve();
+            resolve(); // All pages processed for this PDF
           }
         }
-
         // Start processing pages for this PDF
         processSinglePage(numPages)
           .then(() => resolve(totalAmount));

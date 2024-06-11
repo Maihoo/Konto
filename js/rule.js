@@ -21,7 +21,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 18704.71;
+const STARTBUDGET = 18320.40;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
@@ -38,7 +38,8 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"800";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""',
+  '"DE45150505001101110771";"";"";"Amazon Rückgabe";"mir gegenüber";"";"";"";"";"";"";"Amazon";"";"";"200";"EUR";""'
 ];
 
 const selectors= {
@@ -841,8 +842,9 @@ function drawTable() {
 
       if (j === selectors.date) { cell.style.width = '7vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
       if (j === selectors.content) { cell.style.width = '10vw'; row.appendChild(cell); }
-      if (j === selectors.purpose) { cell.style.width = '36vw'; row.appendChild(cell); }
+      if (j === selectors.purpose) { cell.style.width = '32vw'; row.appendChild(cell); }
       if (j === selectors.beneficiary) { cell.style.width = '25vw'; row.appendChild(cell); }
+      if (j === selectors.category) { cell.style.width = '4vw'; row.appendChild(cell); }
       if (j === selectors.total) { cell.style.width = '4vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
       if (j === selectors.amount) {
         cell.style.width = '4vw';
@@ -853,7 +855,6 @@ function drawTable() {
       }
 
       if (i === 0) {
-        cell.style.textAlign = '';
         cell.classList.remove('positive-background');
         cell.classList.remove('negative-background');
       }

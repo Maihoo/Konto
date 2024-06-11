@@ -55,20 +55,20 @@ function initTextLines() {
     constantPositions[i] = temp;
   }
 
-  // pushing constant positions
-  for (let i = 0; i < constantPositions.length; i++) {
-    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
-    totalBudget += parseInt(value);
-    cutTextLines.splice(1, 0, constantPositions[i]);
-  }
-
   if (oneRadioUnchecked) {
     totalBudget = 0;
   } else {
     totalBudget = STARTBUDGET;
   }
 
-  firstLine = allTextLines[0];
+  // pushing constant positions
+  for (let i = 0; i < constantPositions.length; i++) {
+    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
+    totalBudget += 2 * parseInt(value); // has to be added twice, because it's removed once later
+    allTextLines.splice(1, 0, constantPositions[i]);
+  }
+
+  firstLine = allTextLines[0] + ';"Category";"Total"';
 
   // filter out categories
   allTextLines = allTextLines.filter(function(item, index) {
@@ -82,7 +82,6 @@ function initTextLines() {
     if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked' && getEntrieCategorie(itemEntries) === 'cash')    { return false; }
     if (document.getElementById('toggle-gas').getAttribute('checked')     !== 'checked' && getEntrieCategorie(itemEntries) === 'gas')     { return false; }
     if (document.getElementById('toggle-others').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'others')  { return false; }
-
     return true;
   });
 
@@ -91,7 +90,6 @@ function initTextLines() {
   }
 
   cutTextLines = allTextLines.slice(pastEventsOffset, pastEventsOffset + pastEvents + 1);
-
 
   // spreading monthly income onto every day
   if (spreadMonthlyIncome) {
@@ -115,7 +113,7 @@ function initTextLines() {
   }
 
   if (groupByCategory) {
-    cutTextLines = groupArrayByField(cutTextLines, selectors.category);
+    cutTextLines = groupArrayByField(cutTextLines, selectors.category, currentDateString);
   }
 
   // pushing total value
@@ -135,6 +133,10 @@ function initTextLines() {
         tempBudget -= nextValue;
       }
     }
+  }
+
+  if (cutTextLines.length === 0) {
+    return;
   }
   // align starts at 0
   let categoryTotal = parseFloat(cutTextLines[cutTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.'));
@@ -264,7 +266,7 @@ function sortArrayByField(array, fieldIndex) {
   });
 }
 
-function groupArrayByField(array, fieldIndex) {
+function groupArrayByField(array, fieldIndex, currentDate) {
   if (array.length <= 1) {
     return array;
   }
@@ -274,14 +276,17 @@ function groupArrayByField(array, fieldIndex) {
 
   array.forEach(element => {
     const fieldValue = getFieldValue(element, fieldIndex);
-
     if (!groups[fieldValue]) {
       groups[fieldValue] = [];
     }
+
     groups[fieldValue].push(element);
   });
-  // Collect groups maintaining chronological order
+
   for (const fieldValue in groups) {
+    // add a filler entry for today to each category
+    groupedArray.push(`"filler";${currentDate};${currentDate};"filler";"filler";"";"";"";"";"";"";"filler";"";"";"0";"EUR";"";${fieldValue};""`);
+    // Collect groups maintaining chronological order
     groupedArray.push(...groups[fieldValue]);
   }
 

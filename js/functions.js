@@ -10,19 +10,17 @@ function differenceInDays(input1, input2) {
 function getEntrieCategorie(entryParts) {
   const beneficiary = entryParts[selectors.beneficiary]
   const purpose = entryParts[selectors.purpose]
-  let isAny = false;
-  if (beneficiary.includes('ADAC') || beneficiary.includes('klarmobil') || beneficiary.includes('Mecklenburgische') || purpose.includes('Miete')
-   || beneficiary.includes('AMAZON') || beneficiary.includes('PayPal') || beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO')
-   || beneficiary.includes('OstseeSparkasse') || beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL') || purpose.includes('SCHULDEN')) {
-    isAny = true;
-  }
 
   if (beneficiary.includes('ADAC') ||
-    beneficiary.includes('klarmobil') ||
-    beneficiary.includes('Mecklenburgische') ||
-    purpose.includes('Spotify') ||
-    purpose.includes('123-reg') ||
-    purpose.includes('Miete')) {
+      beneficiary.includes('klarmobil') ||
+      beneficiary.includes('Mecklenburgische') ||
+      beneficiary.includes('Bundeskasse DO Kiel') ||
+      beneficiary.includes('WG Union') ||
+      beneficiary.includes('Landeszentralkasse') ||
+      purpose.includes('Netflix') ||
+      purpose.includes('Spotify') ||
+      purpose.includes('123-reg') ||
+      purpose.includes('Miete')) {
     return 'monthly';
   }
 
@@ -30,15 +28,28 @@ function getEntrieCategorie(entryParts) {
     return 'amazon';
   }
 
-  if (beneficiary.includes('PayPal')) {
-    if (purpose.includes('Takeaway.com') || beneficiary.includes('Hot Chickeria')) {
-      return 'takeout';
-    } else {
-      return 'paypal';
-    }
+  if (purpose.includes('Takeaway.com') ||
+      beneficiary.includes('Hot Chickeria') ||
+      beneficiary.includes('HOT CHICKERIA')) {
+    return 'takeout';
   }
 
-  if (beneficiary.includes('REWE') || beneficiary.includes('EDEKA') || beneficiary.includes('NETTO') || beneficiary.includes('LIDL')) {
+  if (beneficiary.includes('PayPal') ||
+      beneficiary.includes('OTTO Payments')) {
+    return 'paypal';
+  }
+
+  if (beneficiary.includes('REWE') ||
+      beneficiary.includes('EDEKA') ||
+      beneficiary.includes('NETTO') ||
+      beneficiary.includes('netto') ||
+      beneficiary.includes('LIDL') ||
+      beneficiary.includes('ALDI') ||
+      beneficiary.includes('GLOBUS') ||
+      beneficiary.includes('PENNY') ||
+      beneficiary.includes('Kaufland') ||
+      beneficiary.includes('Tabak') ||
+      beneficiary.includes('BAECKEREI')) {
     return 'food';
   }
 
@@ -46,7 +57,12 @@ function getEntrieCategorie(entryParts) {
     return 'cash';
   }
 
-  if (beneficiary.includes('Tankstelle') || beneficiary.includes('SHELL') || beneficiary.includes('ARAL')) {
+  if (beneficiary.includes('Tankstelle') ||
+      beneficiary.includes('SHELL') ||
+      beneficiary.includes('ARAL') ||
+      beneficiary.includes('TOTAL') ||
+      beneficiary.includes('famila tank') ||
+      beneficiary.includes('ESSO')) {
     return 'gas';
   }
 
@@ -54,11 +70,7 @@ function getEntrieCategorie(entryParts) {
     return 'debt';
   }
 
-  if (!isAny) {
-    return 'others';
-  }
-
-  return '';
+  return 'others';
 }
 
 function addZeroToSingleDigit(number) {
