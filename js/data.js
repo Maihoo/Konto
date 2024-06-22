@@ -188,21 +188,6 @@ function spreadIncomeToDaysOfMonth() {
     const indexDiff = nextIndex - index;
     const amountPerDay = amount / dayDiff;
 
-    /*
-    // Spread the amount evenly over the next 30 days
-      for (let j = 1; j <= 30; j++) {
-        let temp = firstDay.split('.');
-        let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
-        date.setDate(date.getDate() + j);
-        let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
-        // Add amount for the day
-        added += amountPerDay;
-        const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
-        cutTextLines.splice(nextIndex + j, 0, row);
-      }
-    }
-    */
-
     // each day until the next PayDay
     if (amountPerDay > 0 && amountPerDay < 10000) {
       for (let j = index + dayDiff; j > index; j--) {

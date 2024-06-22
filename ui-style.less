@@ -253,33 +253,50 @@ h1 {
     background-color: #646464;
     -webkit-transition: .4s;
     transition: .4s;
+
+    &::before {
+      position: absolute;
+      content: "";
+      height: 0.9rem;
+      width: 0.9rem;
+      top: 0;
+      left: 0;
+      bottom: 4px;
+      border-radius: 100%;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+
+    &[disabled] {
+      background-color: #383838 !important;
+      &::before {
+        background-color: rgb(78, 78, 78);
+      }
+    }
   }
-  
-  .switch-slider:before {
-    position: absolute;
-    content: "";
-    height: 0.9rem;
-    width: 0.9rem;
-    top: 0;
-    left: 0;
-    bottom: 4px;
-    border-radius: 100%;
-    background-color: white;
-    -webkit-transition: .4s;
-    transition: .4s;
-  }
-  
+
   input:checked + .switch-slider {
     background-color: #2196F3;
   }
-  
+
   input:focus + .switch-slider {
     box-shadow: 0 0 1px #2196F3;
   }
-  
-  input:checked + .switch-slider:before {
-    -webkit-transform: translateX(1rem);
-    -ms-transform: translateX(1rem);
-    transform: translateX(1rem);
+
+  input:checked + .switch-slider{
+    &::before {
+      -webkit-transform: translateX(1rem);
+      -ms-transform: translateX(1rem);
+      transform: translateX(1rem);
+    }
+
+    &[disabled] {
+      &::before {
+        -webkit-transform: translateX(0);
+        -ms-transform: translateX(0);
+        transform: translateX(0);
+      }
+    }
   }
 }

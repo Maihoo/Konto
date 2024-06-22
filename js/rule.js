@@ -15,13 +15,13 @@ $(document).ready(function () {
       getFromSessionStorage();
       initTextLines();
       initControls();
-      init();
+      initDrawing();
     }
   });
 });
 
 // Constants
-const STARTBUDGET = 18320.40;
+const STARTBUDGET = 20811.39;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
@@ -38,8 +38,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""',
-  '"DE45150505001101110771";"";"";"Amazon Rückgabe";"mir gegenüber";"";"";"";"";"";"";"Amazon";"";"";"200";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""'
 ];
 
 const selectors= {
@@ -140,7 +139,7 @@ let uiline = document.getElementById('uiline');
 let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
-let uipopup = document.getElementById('uipopup');
+let uiPopup = document.getElementById('uiPopup');
 let zoomingWrapper = document.getElementById('zoomingWrapper');
 let settingsElement = document.getElementById('settings');
 
@@ -194,7 +193,7 @@ function resetSettings() {
   initTextLines();
   setColorDefault();
   initControls();
-  init();
+  initDrawing();
 }
 
 function resetHTML() {
@@ -219,7 +218,7 @@ function resetHTML() {
   uiCanvas = document.getElementById('uiCanvas');
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
-  uipopup = document.getElementById('uipopup');
+  uiPopup = document.getElementById('uiPopup');
   zoomingWrapper = document.getElementById('zoomingWrapper');
   settingsElement = document.getElementById('settings');
 
@@ -229,7 +228,7 @@ function resetHTML() {
 
   canvas.innerHTML = '';
   uiline.innerHTML = '';
-  uipopup.innerHTML = '';
+  uiPopup.innerHTML = '';
   uiCanvas.innerHTML = '';
   pathCanvas.innerHTML = '';
   pathBlurCanvas.innerHTML = '';
@@ -261,7 +260,7 @@ function resetHTML() {
   }
 }
 
-function init() {
+function initDrawing() {
   document.getElementById('spinner-element').style.display = 'block';
 
   setTimeout(() => {
@@ -289,9 +288,6 @@ function init() {
 
     drawLegends();
     drawTable();
-
-    pathVisible = !pathVisible;
-    togglePath();
 
     document.getElementById('spinner-element').style.display = 'none';
   }, 2);
@@ -343,7 +339,9 @@ function hidePathBlurTop() {
 
   // Fill the area below the graph with a fade effect
   ctx.beginPath();
-  ctx.moveTo(parseInt(path[0][1]), parseInt(path[0][0]));
+  if (path[0] && path[0][0] && path[0][1]) {
+    ctx.moveTo(parseInt(path[0][1]), parseInt(path[0][0]));
+  }
 
   ctx.fillStyle = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
 
@@ -494,12 +492,12 @@ function drawCanvas() {
   debtEntries = [];
   restEntries = [];
 
-  if (cutTextLines.length - 2 < pastEvents) {
-    pastEvents = cutTextLines.length - 5;
+  if (cutTextLines.length < pastEvents) {
+    // pastEvents = cutTextLines.length - 5;
   }
 
   if (cutTextLines.length < pastEventsOffset + 3) {
-    pastEventsOffset = cutTextLines.length - 3;
+    // pastEventsOffset = cutTextLines.length - 3;
   }
 
   let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[selectors.date].slice(1, -1);
@@ -658,12 +656,12 @@ function drawCanvas() {
     square.onmousemove = function(event) {
       let pop = document.getElementById('popup' + this.index);
       if (this.hovered === '1') {
-        pop.style.top = (event.clientY + window.scrollY - 100) + 'px';
+        pop.style.top = (event.clientY - uiPopup.getBoundingClientRect().y) + 'px';
         pop.style.left = (event.clientX + 5) + 'px';
       }
     };
 
-    square.onmouseout = function(event) {
+    square.onmouseout = function() {
       let pop = document.getElementById('popup' + this.index);
       pop.classList.remove('fade');
       this.hovered = '0';
@@ -684,7 +682,7 @@ function drawCanvas() {
     popup.style.marginTop = '0';
     popup.style.marginLeft = '0';
 
-    uipopup.appendChild(popup);
+    uiPopup.appendChild(popup);
     canvas.appendChild(square);
   }
 }

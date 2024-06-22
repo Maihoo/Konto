@@ -14,6 +14,7 @@
   <script src="js/data.js" ></script>
   <script src="js/functions.js" ></script>
   <script src="js/controls.js" ></script>
+  <script src="js/import.js" ></script>
   <script src="js/session-storage.js" ></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
@@ -38,7 +39,7 @@
         </div>
         <div id="uiCanvasHorizontal" style="position: absolute; margin-top: -100%; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
         <div id="uiCanvasVertical" style="position: absolute; width: 200%; height: 200%; z-index: 200; pointer-events: none;"></div>
-        <div id="uipopup" style="position: absolute; margin-top: -600px; width: 100%; height: 100%; z-index: 400; pointer-events: none;"></div>
+        <div id="uiPopup" style="position: absolute; margin-top: -600px; width: 100%; height: 100%; z-index: 400; pointer-events: none;"></div>
       </div>
     </div>
 
@@ -180,8 +181,8 @@
               <div class="buttonwrapper">
                 <span>Path</span>
                 <label class="switch">
-                  <input type="checkbox" onclick="togglePath()">
-                  <span class="switch-slider"></span>
+                  <input id="path-toggle-input" type="checkbox" onclick="togglePath()">
+                  <span id="path-toggle-span" class="switch-slider"></span>
                 </label>
               </div>
               <div class="buttonwrapper">

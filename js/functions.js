@@ -29,8 +29,7 @@ function getEntrieCategorie(entryParts) {
   }
 
   if (purpose.includes('Takeaway.com') ||
-      beneficiary.includes('Hot Chickeria') ||
-      beneficiary.includes('HOT CHICKERIA')) {
+      beneficiary.toLowerCase().includes('hot chickeria')) {
     return 'takeout';
   }
 
@@ -41,8 +40,7 @@ function getEntrieCategorie(entryParts) {
 
   if (beneficiary.includes('REWE') ||
       beneficiary.includes('EDEKA') ||
-      beneficiary.includes('NETTO') ||
-      beneficiary.includes('netto') ||
+      beneficiary.toLowerCase().includes('netto') ||
       beneficiary.includes('LIDL') ||
       beneficiary.includes('ALDI') ||
       beneficiary.includes('GLOBUS') ||
