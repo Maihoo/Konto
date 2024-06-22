@@ -1,6 +1,6 @@
 function clearSessionStorage() {
-  sessionStorage.setItem('pastEvents', '');
-  sessionStorage.setItem('pastEventsOffset', '');
+  sessionStorage.setItem('startDateCap', '');
+  sessionStorage.setItem('endDateCap', '');
   sessionStorage.setItem('backgroundColor', 'rgb(25, 25, 25)');
   sessionStorage.setItem('lineColor', 'rgb(255, 0, 0)');
   sessionStorage.setItem('uiColor', 'rgb(255, 255, 255)');
@@ -19,14 +19,14 @@ function clearSessionStorage() {
 }
 
 function getFromSessionStorage() {
-  let sessionValue = sessionStorage.getItem('pastEvents');
+  let sessionValue = sessionStorage.getItem('startDateCap');
   if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEvents = parseInt(sessionValue);
+    startDateCap = parseInt(sessionValue);
   }
 
-  sessionValue = sessionStorage.getItem('pastEventsOffset');
+  sessionValue = sessionStorage.getItem('endDateCap');
   if (sessionValue && parseInt(sessionValue) >= 0) {
-    pastEventsOffset = parseInt(sessionValue);
+    endDateCap = parseInt(sessionValue);
   }
 
   sessionValue = sessionStorage.getItem('backgroundColor');

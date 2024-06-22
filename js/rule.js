@@ -62,6 +62,7 @@ const shadowDistance = 4; // spacing between each blurred line
 
 // Variables
 let totalBudget = STARTBUDGET;
+let globallyLastDay = 0;
 
 let zoomInPressed = false;
 let zoomOutPressed = false;
@@ -79,8 +80,6 @@ let dataset;
 
 let verticalScaleFactor = 1.0;
 let zoomLevel = 1.0;
-let pastEventsOffset = 0;
-let pastEvents = 250;
 
 let legendMultiplier = 100;
 let maxHeight = 500;
@@ -98,6 +97,8 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
+let startDateCap = '01.01.24';
+let endDateCap = '';
 let startDate = '';
 let endDate = '';
 let sortType = 'date';
@@ -109,7 +110,6 @@ let uiColor = '255, 255, 255';
 
 let pdfImportedLines = [];
 let allTextLines = [];
-let cutTextLines = [];
 let dateLines = [];
 let path = [];
 let linepoint = [];
@@ -157,10 +157,9 @@ function resetSettings() {
   oneRadioUnchecked = false;
 
   totalBudget = STARTBUDGET;
+  globallyLastDay = 0;
   verticalScaleFactor = 1.0;
   zoomLevel = 1.0;
-  pastEventsOffset = 0;
-  pastEvents = 250;
   legendMultiplier = 100;
   maxHeight = 500;
   startHeight = 0.0;
@@ -177,6 +176,8 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
+  startDateCap = '01.01.24';
+  endDateCap = '';
   startDate = '';
   endDate = '';
   backgroundColor = '25, 25, 25';
@@ -426,7 +427,7 @@ function setDates() {
   uiCanvasHorizontal.style.marginLeft = -EXTRAAREA + 'px';
 
   let dateLeft = document.createElement('p');
-  let tempLeft1 = cutTextLines[pastEvents].split(';');
+  let tempLeft1 = allTextLines[allTextLines.length - 1].split(';');
   let tempLeft2 = tempLeft1[1].slice(1, -1).split('.');
   dateLeft.innerHTML = tempLeft2[0] + '.' + tempLeft2[1] + '.' + '20' + tempLeft2[2];
   dateLeft.className = 'uiElement';
@@ -437,7 +438,7 @@ function setDates() {
   uiCanvas.appendChild(dateLeft);
 
   let dateRight = document.createElement('p');
-  let tempRight1 = cutTextLines[pastEventsOffset + 1].split(';');
+  let tempRight1 = allTextLines[1].split(';');
   let tempRight2 = tempRight1[1].slice(1, -1).split('.');
   dateRight.innerHTML = tempRight2[0] + '.' + tempRight2[1] + '.' + '20' + tempRight2[2];
   dateRight.className = 'uiElement';
@@ -492,19 +493,11 @@ function drawCanvas() {
   debtEntries = [];
   restEntries = [];
 
-  if (cutTextLines.length < pastEvents) {
-    // pastEvents = cutTextLines.length - 5;
-  }
-
-  if (cutTextLines.length < pastEventsOffset + 3) {
-    // pastEventsOffset = cutTextLines.length - 3;
-  }
-
-  let lastDay = cutTextLines[pastEventsOffset + 2].split(';')[selectors.date].slice(1, -1);
-  let firstDay = cutTextLines[pastEvents].split(';')[selectors.date].slice(1, -1);
+  let lastDay = allTextLines[1].split(';')[selectors.date].slice(1, -1);
+  let firstDay = allTextLines[allTextLines.length - 1].split(';')[selectors.date].slice(1, -1);
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
   if (sortType === 'amount') {
-    totalDays = cutTextLines.length;
+    totalDays = allTextLines.length;
   }
 
   totalDays = Math.abs(totalDays);
@@ -528,29 +521,29 @@ function drawCanvas() {
     }
   }
 
-  for (let i = pastEvents - 1; i > pastEventsOffset; i--) {
-    let entries = cutTextLines[i].split(';');
-    const lastTotalValue = valueToMarginTop(cutTextLines[i - 1].split(';')[selectors.total].slice(1, -1));
+  for (let i = allTextLines.length - 2; i >= 1; i--) {
+    let entries = allTextLines[i].split(';');
+    const lastTotalValue = valueToMarginTop(allTextLines[i - 1].split(';')[selectors.total].slice(1, -1));
     const totalValue =     valueToMarginTop(entries[selectors.total].slice(1, -1));
-    const nextTotalValue = valueToMarginTop(cutTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
+    const nextTotalValue = valueToMarginTop(allTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
 
     let decided = false;
     let value = valueToPx(entries[selectors.amount].slice(1, -1));
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
-    if (i >= pastEvents) {
+    if (i > allTextLines.length) {
       diffDays = 2;
     }
 
     let sharedDates = 0;
     for (let j = i - 1; j > 0 + 1; j--) {
-      let comparison = cutTextLines[j].split(';');
+      let comparison = allTextLines[j].split(';');
       if (comparison[1] === entries[selectors.date]) {
         sharedDates++;
       }
     }
 
-    for (let l = i + 1; l < cutTextLines.length - 1; l++) {
-      let comparison = cutTextLines[l].split(';');
+    for (let l = i + 1; l < allTextLines.length - 1; l++) {
+      let comparison = allTextLines[l].split(';');
       if (comparison[1] === entries[selectors.date]) {
         sharedDates++;
       }
@@ -603,8 +596,8 @@ function drawCanvas() {
     }
 
     let pastNegative = false;
-    if (cutTextLines[i+1] !== null && cutTextLines[i+1].split(';')[selectors.amount] !== null) {
-      pastNegative = cutTextLines[i+1].split(';')[selectors.amount].charAt(1) === '-';
+    if (allTextLines[i+1] !== null && allTextLines[i+1].split(';')[selectors.amount] !== null) {
+      pastNegative = allTextLines[i+1].split(';')[selectors.amount].charAt(1) === '-';
     }
 
     if (diffDays === 0 && ((entries[selectors.amount].charAt(1) === '-' && !pastNegative) || (entries[selectors.amount].charAt(1) !== '-' && pastNegative))) {
@@ -629,17 +622,17 @@ function drawCanvas() {
     square.category = category;
     decided = category !== 'others';
 
-    if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'food') { foodEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(cutTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(cutTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'food') { foodEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(allTextLines[i]); }
+    if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(allTextLines[i]); }
 
     if (!decided) {
-      restEntries.push(cutTextLines[i]);
+      restEntries.push(allTextLines[i]);
     }
 
     // Adding Popups
@@ -803,10 +796,10 @@ function drawTable() {
   let table = document.getElementById('table');
   table.innerHTML = '';
 
-  cutTextLines[0] = firstLine;
+  allTextLines[0] = firstLine;
 
-  for (let i = 0; i < cutTextLines.length; i++) {
-    let entries = cutTextLines[i].split(';');
+  for (let i = 0; i < allTextLines.length; i++) {
+    let entries = allTextLines[i].split(';');
     let row = document.createElement('div');
 
     row.id = 'row' + i;
@@ -841,7 +834,7 @@ function drawTable() {
       if (j === selectors.date) { cell.style.width = '7vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
       if (j === selectors.content) { cell.style.width = '10vw'; row.appendChild(cell); }
       if (j === selectors.purpose) { cell.style.width = '32vw'; row.appendChild(cell); }
-      if (j === selectors.beneficiary) { cell.style.width = '25vw'; row.appendChild(cell); }
+      if (j === selectors.beneficiary) { cell.style.width = '26vw'; row.appendChild(cell); }
       if (j === selectors.category) { cell.style.width = '4vw'; row.appendChild(cell); }
       if (j === selectors.total) { cell.style.width = '4vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
       if (j === selectors.amount) {

@@ -261,7 +261,12 @@
             </div>
           </div>
           <div class="rangewrapper">
-            <h2 class="range-headline range-headline-dataset">Dataset Range</h2>
+            <h2 class="range-headline date-range-headline">Date Range</h2>
+            <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
+              <input id="date-range-start" placeholder="DD.MM.(YY)YY" class="dataset-range-input active"/>
+              -
+              <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="dataset-range-input"/>
+            </div>
             <div id="range-slider-1" class="range-slider"></div>
           </div>
         </div>

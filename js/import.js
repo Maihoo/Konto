@@ -26,24 +26,21 @@ function processAllPDFs() {
     'statements/Konto_1101110771-Auszug_2021_0005.pdf'
   ];
 
-  let totalDiff = allTextLines.length - 2 - pastEvents;
-
   // Start the processing chain
-  processSinglePDF(pdfNames.length - 1, totalDiff)
+  processSinglePDF(pdfNames.length - 1)
     .catch(error => {
       console.error('Error processing PDFs:', error);
     }
   );
 }
 
-function processSinglePDF(index, previousTotalMinusPastEvents) {
+function processSinglePDF(index) {
   if (index >= 0) {
     return processPDFContent(pdfNames[index])
-      .then(() => processSinglePDF(index - 1, previousTotalMinusPastEvents)); // Process the next PDF in the chain
+      .then(() => processSinglePDF(index - 1)); // Process the next PDF in the chain
   } else {
     // All PDFs processed, perform any final actions
     initTextLines();
-    // pastEvents = allTextLines.length - previousTotalMinusPastEvents - 2;
     initTextLines();
     initControls();
     initDrawing();

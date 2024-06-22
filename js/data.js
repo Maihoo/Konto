@@ -70,6 +70,34 @@ function initTextLines() {
 
   firstLine = allTextLines[0] + ';"Category";"Total"';
 
+  const lastLine = allTextLines[allTextLines.length - 1].split(';');
+  globallyLastDay = lastLine[selectors.date].slice(1, -1);
+
+  // apply date filter
+  if (startDateCap.length === 8) {
+    allTextLines = allTextLines.filter(function(item, index) {
+      const itemEntries = item.split(';');
+      if (index === 0) { return false; }
+      if (differenceInDays(startDateCap, itemEntries[selectors.date].slice(1, -1)) < 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  if (endDateCap.length === 8) {
+    allTextLines = allTextLines.filter(function(item, index) {
+      const itemEntries = item.split(';');
+      if (index === 0) { return false; }
+      if (differenceInDays(endDateCap, itemEntries[selectors.date].slice(1, -1)) > 0) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
   // filter out categories
   allTextLines = allTextLines.filter(function(item, index) {
     const itemEntries = item.split(';');
@@ -85,49 +113,43 @@ function initTextLines() {
     return true;
   });
 
-  if (pastEvents > allTextLines.length - 1) {
-    pastEvents = allTextLines.length - 1;
-  }
-
-  cutTextLines = allTextLines.slice(pastEventsOffset, pastEventsOffset + pastEvents + 1);
-
   // spreading monthly income onto every day
   if (spreadMonthlyIncome) {
-    spreadIncomeToDaysOfMonth(cutTextLines);
+    spreadIncomeToDaysOfMonth(allTextLines);
   }
 
   // inserting category to entry
-  for (let i = 0; i < cutTextLines.length; i++) {
-    let entries = cutTextLines[i].split(';');
+  for (let i = 0; i < allTextLines.length; i++) {
+    let entries = allTextLines[i].split(';');
     if (entries.length > 13) {
-      cutTextLines[i] += ';"' + getEntrieCategorie(entries) + '"';
+      allTextLines[i] += ';"' + getEntrieCategorie(entries) + '"';
     }
   }
 
   // sorting by amount
   if (sortType === 'amount') {
-    fixSortedArray(cutTextLines, selectors.amount);
+    fixSortedArray(allTextLines, selectors.amount);
   } else {
     // sorting by date
-    fixSortedArray(cutTextLines, selectors.date);
+    fixSortedArray(allTextLines, selectors.date);
   }
 
   if (groupByCategory) {
-    cutTextLines = groupArrayByField(cutTextLines, selectors.category, currentDateString);
+    allTextLines = groupArrayByField(allTextLines, selectors.category, currentDateString);
   }
 
   // pushing total value
   let tempBudget = totalBudget;
   let lastCategory = "";
-  for (let i = 0; i < cutTextLines.length; i++) {
-    let entries = cutTextLines[i].split(';');
+  for (let i = 0; i < allTextLines.length; i++) {
+    let entries = allTextLines[i].split(';');
     if (entries.length > 10) {
       if (groupByCategory && lastCategory !== entries[selectors.category]) {
         lastCategory = entries[selectors.category];
         tempBudget = 0;
       }
 
-      cutTextLines[i] += ';"' + tempBudget.toFixed(2) + '"';
+      allTextLines[i] += ';"' + tempBudget.toFixed(2) + '"';
       const nextValue = parseFloat(entries[selectors.amount].slice(1, -1).replace(',', '.'));
       if (nextValue) {
         tempBudget -= nextValue;
@@ -135,15 +157,15 @@ function initTextLines() {
     }
   }
 
-  if (cutTextLines.length === 0) {
+  if (allTextLines.length === 0) {
     return;
   }
   // align starts at 0
-  let categoryTotal = parseFloat(cutTextLines[cutTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.'));
+  let categoryTotal = parseFloat(allTextLines[allTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.'));
   if (groupByCategory) {
-    for (let i = cutTextLines.length - 3; i > 1; i--) {
-      let entries = cutTextLines[i].split(';');
-      let nextEntries = cutTextLines[i - 2].split(';');
+    for (let i = allTextLines.length - 3; i > 1; i--) {
+      let entries = allTextLines[i].split(';');
+      let nextEntries = allTextLines[i - 2].split(';');
       if (lastCategory !== nextEntries[selectors.category]) {
         lastCategory = nextEntries[selectors.category];
         categoryTotal = parseFloat(nextEntries[selectors.total].slice(1, -1).replace(',', '.'));
@@ -153,7 +175,7 @@ function initTextLines() {
       let nextValue = currentValue - categoryTotal;
       // Update the entry only if the next value is different from the current value
       if (nextValue !== currentValue) {
-        cutTextLines[i] = cutTextLines[i].replace(entries[selectors.total], '"' + nextValue.toString().replace('.', ',') + '"');
+        allTextLines[i] = allTextLines[i].replace(entries[selectors.total], '"' + nextValue.toString().replace('.', ',') + '"');
       }
     }
   }
@@ -165,16 +187,16 @@ function spreadIncomeToDaysOfMonth() {
 
   let paydays = [];
   paydays.push(["0.0", 0]);
-  cutTextLines.forEach((row, index) => {
+  allTextLines.forEach((row, index) => {
     const entries = row.split(';');
     if (parseInt(entries[selectors.amount].slice(1, -1)) > 800) {
       paydays.push([entries[selectors.amount], index])
       removed += parseInt(entries[selectors.amount].slice(1, -1));
-      cutTextLines[index] = cutTextLines[index].replace(entries[selectors.amount].slice(1, -1), '0,00');
+      allTextLines[index] = allTextLines[index].replace(entries[selectors.amount].slice(1, -1), '0,00');
     }
   });
 
-  paydays.push(["0.0", cutTextLines.length - 2]);
+  paydays.push(["0.0", allTextLines.length - 2]);
 
   // each PayDay
   for (let i = 1; i < paydays.length - 1; i++) {
@@ -182,8 +204,8 @@ function spreadIncomeToDaysOfMonth() {
     const amount = parseInt(paydays[i][0].slice(1, -1));
     const index = paydays[i][1];
     const nextIndex = paydays[i + 1][1];
-    const firstDay = cutTextLines[index].split(';')[selectors.date].slice(1, -1);
-    const lastDay = cutTextLines[nextIndex].split(';')[selectors.date].slice(1, -1);
+    const firstDay = allTextLines[index].split(';')[selectors.date].slice(1, -1);
+    const lastDay = allTextLines[nextIndex].split(';')[selectors.date].slice(1, -1);
     const dayDiff = Math.abs(differenceInDays(firstDay, lastDay))
     const indexDiff = nextIndex - index;
     const amountPerDay = amount / dayDiff;
@@ -200,7 +222,7 @@ function spreadIncomeToDaysOfMonth() {
 
         // Search within a margin of 20 days backward
         for (let k = 0; k < 20 && resultIndex > index; k++) {
-          const comparisonDay = cutTextLines[resultIndex].split(';')[selectors.date].slice(1, -1);
+          const comparisonDay = allTextLines[resultIndex].split(';')[selectors.date].slice(1, -1);
           const diffDays = Math.abs(differenceInDays(currentDateString, comparisonDay));
           // If current difference is less than last one, update resultIndex
           if (diffDays <= lastDifferenceInDays) {
@@ -215,7 +237,7 @@ function spreadIncomeToDaysOfMonth() {
           localLoop += amountPerDay;
           added += amountPerDay;
           const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
-          cutTextLines.splice(resultIndex + 1, 0, row);
+          allTextLines.splice(resultIndex + 1, 0, row);
         }
       }
     }

@@ -118,8 +118,8 @@ function numberToCurrency(number) {
 
 function pxToDate(xPixel) {
   xPixel = xPixel.slice(0, -2);
-  let firstDayVisible = cutTextLines[pastEvents].split(';')[1].slice(1, -1);
-  let lastDayVisible = cutTextLines[pastEventsOffset + 2].split(';')[1].slice(1, -1);
+  let firstDayVisible = allTextLines[allTextLines.length - 1].split(';')[1].slice(1, -1);
+  let lastDayVisible = allTextLines[1].split(';')[1].slice(1, -1);
   let totalDaysVisible = differenceInDays(firstDayVisible, lastDayVisible) + 2;
   let distancePerDay = 1000 / totalDaysVisible;
   let daysDiff = parseInt(parseInt((xPixel) + moveOffsetX) / distancePerDay);
@@ -183,9 +183,9 @@ function getMaxPriceDiff() {
   let tempLowest = 1000000.0;
   let tempHighest = 0.0;
 
-  for (let i = pastEvents; i > 0; i--) {
-    if (cutTextLines[i]) {
-      let current = parseFloat(cutTextLines[i].split(';')[selectors.total].slice(1, -1));
+  for (let i = allTextLines.length - 1; i > 0; i--) {
+    if (allTextLines[i]) {
+      let current = parseFloat(allTextLines[i].split(';')[selectors.total].slice(1, -1));
       if (current < tempLowest)  { tempLowest  = current; }
       if (current > tempHighest) { tempHighest = current; }
     }
@@ -198,10 +198,10 @@ function updateMaxHeightAround() {
   lowest = 1000000.0;
   highest = 0;
   //starts at 1 to ignore first row
-  for (let i = 1; i <= pastEvents && i < cutTextLines.length - 1; i++) {
-    let entries = cutTextLines[i].split(';');
+  for (let i = 1; i < allTextLines.length && i < allTextLines.length - 1; i++) {
+    let entries = allTextLines[i].split(';');
     const current = parseFloat(entries[selectors.total].slice(1, -1));
-    if (i > pastEventsOffset) {
+    if (i > 1) {
       if (current < lowest)  { lowest  = current; }
       if (current > highest) { highest = current; }
     }

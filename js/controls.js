@@ -59,6 +59,34 @@ function initControls() {
   initRangeSlider0();
   initRangeSlider1();
   initRangeSlider2();
+  document.getElementById('date-range-start').value = startDateCap;
+}
+
+function handleDateInput(event) {
+  if (event.key === 'Enter') {
+    let selected = false;
+    const inputStart = document.getElementById('date-range-start');
+    if (inputStart.value.length >= 8) {
+      startDateCap = inputStart.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
+      selected = true;
+      inputStart.classList.add('active');
+    } else {
+      startDateCap = '';
+      inputStart.classList.remove('active');
+    }
+
+    const inputEnd = document.getElementById('date-range-end');
+    if (inputEnd.value.length >= 8) {
+      endDateCap = inputEnd.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
+      selected = true;
+      inputEnd.classList.add('active');
+    } else {
+      endDateCap = '';
+      inputEnd.classList.remove('active');
+    }
+
+    handleRefreshButton();
+  }
 }
 
 function handleRefreshButton() {
@@ -127,12 +155,6 @@ function handleKeyDown(event) {
       pastEventsOffset = 0;
     }
 
-    if (pastEvents + totalChange < cutTextLines.length) {
-      pastEvents += totalChange;
-    } else {
-      pastEvents = cutTextLines.length - 1;
-    }
-
     initDrawing();
   }
 
@@ -142,12 +164,6 @@ function handleKeyDown(event) {
     if (pastEventsOffset - totalChange/2 > 0) {
       pastEventsOffset -= parseInt(totalChange/2);
       totalChange -= parseInt(totalChange/2);
-    }
-
-    if (pastEvents + totalChange < cutTextLines.length) {
-      pastEvents += totalChange;
-    } else {
-      pastEvents = cutTextLines.length - 2;
     }
 
     initDrawing();
@@ -536,30 +552,48 @@ function initRangeSlider0() {
 }
 
 function initRangeSlider1() {
-  let totalLength = allTextLines.length - 2;
+  const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() + 7);
+  const currentDateString = addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2);
+  const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString)
+  let startNumberOfDays = differenceInDays(startDateCap, currentDateString);
+  console.log(startNumberOfDays, startDateCap, currentDateString)
+  if (startDateCap.length < 8) {
+    startNumberOfDays = 0;
+  }
 
+  let endNumberOfDays = differenceInDays(endDateCap, currentDateString);
+  if (endDateCap.length < 8) {
+    endNumberOfDays = 0;
+  }
+
+  console.log(totalNumberOfDays, startNumberOfDays, endNumberOfDays);
   $(function() {
     $('#range-slider-1').slider({
       range: true,
       min: 0,
-      max: totalLength,
-      values: [totalLength - pastEvents, totalLength - pastEventsOffset],
+      max: totalNumberOfDays,
+      values: [totalNumberOfDays - startNumberOfDays, totalNumberOfDays - endNumberOfDays],
       change: function( event ) {
+        /*
         setTimeout(function() {
           let value1 = $( '#range-slider-1' ).slider( 'values', 0 );
           let value2 = $( '#range-slider-1' ).slider( 'values', 1 );
           console.log('!', value1, value2);
           if (event.eventPhase > 0 && (pastEvents !== parseInt(value2) - parseInt(value1))) {
             pastEvents = parseInt(value2) - parseInt(value1);
-            pastEventsOffset = totalLength - parseInt(value2);
+            pastEventsOffset = globallyLastDay - parseInt(value2);
             console.log(pastEvents, pastEventsOffset);
 
             sessionStorage.setItem('pastEvents', pastEvents);
             sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
             initTextLines();
             initDrawing();
+            document.getElementById('dataset-range-input-past-events').value = pastEvents;
+            document.getElementById('dataset-range-input-past-events-offset').value = pastEventsOffset;
           }
         }, 100);
+        */
       }
     });
   });
