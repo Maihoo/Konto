@@ -206,9 +206,6 @@ function updateMaxHeightAround() {
       if (current > highest) { highest = current; }
     }
 
-    if (i === 1) { endDate = entries[1].slice(1, -1); }
-
-    startDate = entries[1].slice(1, -1);
     endbudget = current;
   }
 }

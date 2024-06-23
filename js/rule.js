@@ -38,7 +38,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"100";"EUR";""'
 ];
 
 const selectors= {
@@ -97,9 +97,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDateCap = '01.01.24';
-let endDateCap = '';
-let startDate = '';
+let startDate = '01.01.24';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -176,9 +174,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDateCap = '01.01.24';
-  endDateCap = '';
-  startDate = '';
+  startDate = '01.01.24';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -612,10 +608,12 @@ function drawCanvas() {
     }
 
     // Push Path Points
-    let temp = [];
-    temp.push(lastTotalValue);
-    temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
-    path.push(temp);
+    if (i < allTextLines.length - 5) {
+      let temp = [];
+      temp.push(lastTotalValue);
+      temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
+      path.push(temp);
+    }
 
     // legend filling - Kategorien
     square.classList.add(category + '-background')

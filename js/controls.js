@@ -55,37 +55,48 @@ function initControls() {
   // zooming
   overflowrapper.onwheel = (event) => { handleZoomScroll(event.deltaY < 0); event.preventDefault(); }
 
+  // inputs
+  handleDateChange();
+
   // Range Slider
   initRangeSlider0();
   initRangeSlider1();
   initRangeSlider2();
-  document.getElementById('date-range-start').value = startDateCap;
+  document.getElementById('date-range-start').value = startDate;
+}
+
+function handleDateChange() {
+  const inputStart = document.getElementById('date-range-start');
+  if (inputStart.value.length >= 8) {
+    startDate = inputStart.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
+    selected = true;
+    inputStart.classList.add('active');
+  } else {
+    const firstDay = allTextLines[allTextLines.length - 1].split(';');
+    startDate = firstDay[selectors.date].slice(1, -1);
+    inputStart.classList.remove('active');
+  }
+
+  const inputEnd = document.getElementById('date-range-end');
+  if (inputEnd.value.length >= 8) {
+    endDate = inputEnd.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
+    selected = true;
+    inputEnd.classList.add('active');
+  } else {
+    const lastDay = allTextLines[1].split(';');
+    endDate = lastDay[selectors.date].slice(1, -1);
+    inputEnd.classList.remove('active');
+  }
+
+  sessionStorage.setItem('startDate', startDate);
+  sessionStorage.setItem('endDate', endDate);
+
+  handleRefreshButton();
 }
 
 function handleDateInput(event) {
   if (event.key === 'Enter') {
-    let selected = false;
-    const inputStart = document.getElementById('date-range-start');
-    if (inputStart.value.length >= 8) {
-      startDateCap = inputStart.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
-      selected = true;
-      inputStart.classList.add('active');
-    } else {
-      startDateCap = '';
-      inputStart.classList.remove('active');
-    }
-
-    const inputEnd = document.getElementById('date-range-end');
-    if (inputEnd.value.length >= 8) {
-      endDateCap = inputEnd.value.replace('.200', '.0').replace('.201', '.1').replace('.202', '.2').replace('.203', '.3').replace('.204', '.4').replace('.205', '.5');
-      selected = true;
-      inputEnd.classList.add('active');
-    } else {
-      endDateCap = '';
-      inputEnd.classList.remove('active');
-    }
-
-    handleRefreshButton();
+    handleDateChange();
   }
 }
 
@@ -555,19 +566,19 @@ function initRangeSlider1() {
   const currentDate = new Date();
   currentDate.setDate(currentDate.getDate() + 7);
   const currentDateString = addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2);
+  // console.log('am I the problem?', globallyLastDay, currentDateString);
+
   const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString)
-  let startNumberOfDays = differenceInDays(startDateCap, currentDateString);
-  console.log(startNumberOfDays, startDateCap, currentDateString)
-  if (startDateCap.length < 8) {
+  let startNumberOfDays = differenceInDays(startDate, currentDateString);
+  if (startDate.length < 8) {
     startNumberOfDays = 0;
   }
 
-  let endNumberOfDays = differenceInDays(endDateCap, currentDateString);
-  if (endDateCap.length < 8) {
+  let endNumberOfDays = differenceInDays(endDate, currentDateString);
+  if (endDate.length < 8) {
     endNumberOfDays = 0;
   }
 
-  console.log(totalNumberOfDays, startNumberOfDays, endNumberOfDays);
   $(function() {
     $('#range-slider-1').slider({
       range: true,

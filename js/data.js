@@ -74,11 +74,11 @@ function initTextLines() {
   globallyLastDay = lastLine[selectors.date].slice(1, -1);
 
   // apply date filter
-  if (startDateCap.length === 8) {
+  if (startDate.length === 8) {
     allTextLines = allTextLines.filter(function(item, index) {
       const itemEntries = item.split(';');
       if (index === 0) { return false; }
-      if (differenceInDays(startDateCap, itemEntries[selectors.date].slice(1, -1)) < 0) {
+      if (differenceInDays(startDate, itemEntries[selectors.date].slice(1, -1)) < 0) {
         return false;
       }
 
@@ -86,11 +86,11 @@ function initTextLines() {
     });
   }
 
-  if (endDateCap.length === 8) {
+  if (endDate.length === 8) {
     allTextLines = allTextLines.filter(function(item, index) {
       const itemEntries = item.split(';');
       if (index === 0) { return false; }
-      if (differenceInDays(endDateCap, itemEntries[selectors.date].slice(1, -1)) > 0) {
+      if (differenceInDays(endDate, itemEntries[selectors.date].slice(1, -1)) > 0) {
         return false;
       }
 
