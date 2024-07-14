@@ -13,6 +13,7 @@ $(document).ready(function () {
     success: function (data) {
       dataset = data;
       getFromSessionStorage();
+      handleDateChange();
       initTextLines();
       initControls();
       initDrawing();
@@ -21,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 20811.39;
+const STARTBUDGET = 21139.54;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
@@ -38,7 +39,8 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"100";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"380";"EUR";""',
+  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"100";"EUR";""'
 ];
 
 const selectors= {
@@ -97,7 +99,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.01.24';
+let startDate = '01.05.24';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -174,7 +176,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.01.24';
+  startDate = '01.05.24';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -489,7 +491,7 @@ function drawCanvas() {
   debtEntries = [];
   restEntries = [];
 
-  let lastDay = allTextLines[1].split(';')[selectors.date].slice(1, -1);
+  let lastDay = allTextLines[0].split(';')[selectors.date].slice(1, -1);
   let firstDay = allTextLines[allTextLines.length - 1].split(';')[selectors.date].slice(1, -1);
   let totalDays = differenceInDays(firstDay, lastDay) + 2;
   if (sortType === 'amount') {
@@ -517,9 +519,9 @@ function drawCanvas() {
     }
   }
 
-  for (let i = allTextLines.length - 2; i >= 1; i--) {
+  for (let i = allTextLines.length - 2; i >= 0; i--) {
     let entries = allTextLines[i].split(';');
-    const lastTotalValue = valueToMarginTop(allTextLines[i - 1].split(';')[selectors.total].slice(1, -1));
+    const lastTotalValue = valueToMarginTop(allTextLines[i - (i === 0 ? 0 : 1)].split(';')[selectors.total].slice(1, -1));
     const totalValue =     valueToMarginTop(entries[selectors.total].slice(1, -1));
     const nextTotalValue = valueToMarginTop(allTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
 
@@ -794,7 +796,7 @@ function drawTable() {
   let table = document.getElementById('table');
   table.innerHTML = '';
 
-  allTextLines[0] = firstLine;
+  allTextLines.splice(0, 0, firstLine);
 
   for (let i = 0; i < allTextLines.length; i++) {
     let entries = allTextLines[i].split(';');

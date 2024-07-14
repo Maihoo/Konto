@@ -263,7 +263,7 @@
           <div class="rangewrapper">
             <h2 class="range-headline date-range-headline">Date Range</h2>
             <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
-              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="14.01.2024" class="dataset-range-input active"/>
+              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.05.24" class="dataset-range-input active"/>
               -
               <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="dataset-range-input"/>
             </div>
@@ -274,12 +274,23 @@
     </div>
   </div>
 
+  <div id="table"></div>
+
+  <button id="scroll-to-top-button" onclick="scrollToTop()" class="visible">
+    <span class="scroll-to-top-button-content">
+      <i class="fa-solid fa-chevron-up"></i>
+    </span>
+    <span class="scroll-to-top-button-content">Scroll To Top</span>
+    <span class="scroll-to-top-button-content">
+      <i class="fa-solid fa-chevron-up"></i>
+    </span>
+  </button>
+
   <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
-
-  <div id="table"></div>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </body>
 
 </html>

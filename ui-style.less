@@ -24,8 +24,42 @@ body {
     &.cash { color: @cash-color; }
     &.gas     { color: @gas-color; }
   }
-}
 
+  #scroll-to-top-button {
+    display: flex;
+    position: fixed;
+    bottom: -3rem;
+    right: 48%;
+    z-index: 9999;
+    padding: 0 0.75rem 0 0.75rem;
+    margin-top: -1rem;
+    color: white;
+    height: 3rem;
+    border: none;
+    background: linear-gradient(to bottom, rgb(50, 50, 155), rgb(17, 17, 24));
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    transition: bottom 0.3s ease-out;
+
+    &.visible {
+      bottom: -1rem;
+      transition-delay: 0.3s;
+      transition-timing-function: ease-in;
+    }
+
+    .scroll-to-top-button-content {
+      padding-left: 0.3rem;
+      padding-right: 0.3rem;
+      font-weight: 400;
+      font-size: medium;
+      margin-top: 0.5rem;
+
+      .fa-solid {
+        font-size: small;
+      }
+    }
+  }
+}
 
 #graph-area-wrapper {
   display: inline-flex;

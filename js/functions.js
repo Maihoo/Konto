@@ -1,5 +1,9 @@
 
 function differenceInDays(input1, input2) {
+  if (!input1.split || !input2.split) {
+    return 0;
+  }
+
   let temp1 = input1.split('.');
   let temp2 = input2.split('.');
   let date1 = new Date('20' + temp1[2] + '-' + temp1[1] + '-' + temp1[0]);

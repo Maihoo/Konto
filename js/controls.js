@@ -55,14 +55,14 @@ function initControls() {
   // zooming
   overflowrapper.onwheel = (event) => { handleZoomScroll(event.deltaY < 0); event.preventDefault(); }
 
-  // inputs
-  handleDateChange();
-
   // Range Slider
   initRangeSlider0();
   initRangeSlider1();
   initRangeSlider2();
   document.getElementById('date-range-start').value = startDate;
+
+  // go to top
+  window.addEventListener('scroll', handleScroll);
 }
 
 function handleDateChange() {
@@ -83,20 +83,21 @@ function handleDateChange() {
     selected = true;
     inputEnd.classList.add('active');
   } else {
-    const lastDay = allTextLines[1].split(';');
-    endDate = lastDay[selectors.date].slice(1, -1);
-    inputEnd.classList.remove('active');
+    if (allTextLines.length > 0) {
+      const lastDay = allTextLines[1].split(';');
+      endDate = lastDay[selectors.date].slice(1, -1);
+      inputEnd.classList.remove('active');
+    }
   }
 
   sessionStorage.setItem('startDate', startDate);
   sessionStorage.setItem('endDate', endDate);
-
-  handleRefreshButton();
 }
 
 function handleDateInput(event) {
   if (event.key === 'Enter') {
     handleDateChange();
+    handleRefreshButton();
   }
 }
 
@@ -541,6 +542,24 @@ function handleDragMouseDown(event) {
   }
 }
 
+
+function handleScroll() {
+  const scrollToTopButton = document.getElementById('scroll-to-top-button');
+  if (window.scrollY > 200 && !scrollToTopButton.classList.contains('visible')) {
+    scrollToTopButton.classList.add('visible');
+  }
+  
+  if (window.scrollY <= 200 && scrollToTopButton.classList.contains('visible')) {
+    scrollToTopButton.classList.remove('visible');
+  }
+
+  scrollToTopButton.offsetHeight;
+}
+
+function scrollToTop() {
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
 function initRangeSlider0() {
   $(function() {
     $('#range-slider-0').slider({
@@ -566,8 +585,8 @@ function initRangeSlider1() {
   const currentDate = new Date();
   currentDate.setDate(currentDate.getDate() + 7);
   const currentDateString = addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2);
-  // console.log('am I the problem?', globallyLastDay, currentDateString);
 
+  console.log('hä', globallyLastDay, differenceInDays(globallyLastDay, currentDateString))
   const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString)
   let startNumberOfDays = differenceInDays(startDate, currentDateString);
   if (startDate.length < 8) {
@@ -579,32 +598,49 @@ function initRangeSlider1() {
     endNumberOfDays = 0;
   }
 
+  console.log('START', startNumberOfDays);
+
   $(function() {
     $('#range-slider-1').slider({
       range: true,
       min: 0,
       max: totalNumberOfDays,
       values: [totalNumberOfDays - startNumberOfDays, totalNumberOfDays - endNumberOfDays],
-      change: function( event ) {
-        /*
-        setTimeout(function() {
-          let value1 = $( '#range-slider-1' ).slider( 'values', 0 );
-          let value2 = $( '#range-slider-1' ).slider( 'values', 1 );
-          console.log('!', value1, value2);
-          if (event.eventPhase > 0 && (pastEvents !== parseInt(value2) - parseInt(value1))) {
-            pastEvents = parseInt(value2) - parseInt(value1);
-            pastEventsOffset = globallyLastDay - parseInt(value2);
-            console.log(pastEvents, pastEventsOffset);
+      change: function(event) {
+        if (event.button === 0) {
+          setTimeout(function() {
+            let value1 = $( '#range-slider-1' ).slider( 'values', 0 );
+            let value2 = $( '#range-slider-1' ).slider( 'values', 1 );
+            let tempDate = new Date();
+            tempDate.setDate(currentDate.getDate() + 100);
+            // find first day within bounds
+            let tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+            while (differenceInDays(tempDateString, currentDateString) < totalNumberOfDays - value1) {
+              tempDate.setDate(tempDate.getDate() - 1);
+              tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+            }
 
-            sessionStorage.setItem('pastEvents', pastEvents);
-            sessionStorage.setItem('pastEventsOffset', pastEventsOffset);
-            initTextLines();
-            initDrawing();
-            document.getElementById('dataset-range-input-past-events').value = pastEvents;
-            document.getElementById('dataset-range-input-past-events-offset').value = pastEventsOffset;
-          }
-        }, 100);
-        */
+            startDate = tempDateString;
+            document.getElementById('date-range-start').value = tempDateString;
+            // find last day within bounds
+            if (totalNumberOfDays - value2 !== 0) {
+              while (differenceInDays(tempDateString, currentDateString) >= totalNumberOfDays - value2) {
+                tempDate.setDate(tempDate.getDate() + 1);
+                tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+              }
+
+              endDate = tempDateString;
+              document.getElementById('date-range-end').value = tempDateString;
+            }
+
+            let event = new KeyboardEvent('keydown', {
+              bubbles: true,
+              key: 'Enter'
+            });
+
+            document.getElementById('date-range-start').dispatchEvent(event);
+          }, 100);
+        }
       }
     });
   });
