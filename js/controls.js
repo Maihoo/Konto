@@ -309,20 +309,30 @@ function toggleGroupByCategory() {
   initDrawing();
 }
 
-function toggleSpreadMonthlyIncome() {
-  spreadMonthlyIncome = !spreadMonthlyIncome;
-  sessionStorage.setItem('toggleSpreadMonthlyIncome', spreadMonthlyIncome);
-  document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
-  document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
-  document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
-  document.getElementById('toggle-takeout').setAttribute('checked', 'checked');
-  document.getElementById('toggle-food').setAttribute('checked', 'checked');
-  document.getElementById('toggle-cash').setAttribute('checked', 'checked');
-  document.getElementById('toggle-gas').setAttribute('checked', 'checked');
-  document.getElementById('toggle-others').setAttribute('checked', 'checked');
-  initTextLines();
-  initRangeSlider2();
-  initDrawing();
+function toggleSpreadMonthlyIncome(event) {
+  if (event instanceof KeyboardEvent && event.key === 'Enter') {
+    const value = parseInt(document.getElementById('spread-income-to').value);
+    if (!isNaN(value) && value > 0 && value < 100) {
+      spreadMonthlyIncomeTo = value;
+      document.getElementById('spread-income-to').classList.add('active');
+    } else {
+      spreadMonthlyIncomeTo = 0;
+      document.getElementById('spread-income-to').classList.remove('active');
+    }
+
+    sessionStorage.setItem('spreadMonthlyIncomeTo', spreadMonthlyIncomeTo);
+    document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
+    document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
+    document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
+    document.getElementById('toggle-takeout').setAttribute('checked', 'checked');
+    document.getElementById('toggle-food').setAttribute('checked', 'checked');
+    document.getElementById('toggle-cash').setAttribute('checked', 'checked');
+    document.getElementById('toggle-gas').setAttribute('checked', 'checked');
+    document.getElementById('toggle-others').setAttribute('checked', 'checked');
+    initTextLines();
+    initRangeSlider2();
+    initDrawing();
+  }
 }
 
 function toggleSquares() {

@@ -66,7 +66,7 @@ function initTextLines() {
   // pushing constant positions
   for (let i = 0; i < constantPositions.length; i++) {
     const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
-    totalBudget += 2 * parseInt(value); // has to be added twice, because it's removed once later
+    totalBudget += parseInt(value);
     allTextLines.splice(1, 0, constantPositions[i]);
   }
 
@@ -74,7 +74,7 @@ function initTextLines() {
   globallyLastDay = lastLine[selectors.date].slice(1, -1);
 
   // spreading monthly income onto every day
-  if (spreadMonthlyIncome) {
+  if (spreadMonthlyIncomeTo > 0) {
     spreadIncomeToDaysOfMonth(allTextLines);
   }
 
@@ -132,7 +132,7 @@ function initTextLines() {
     fixSortedArray(allTextLines, selectors.amount);
   } else {
     // sorting by date
-    if (spreadMonthlyIncome) {
+    if (spreadMonthlyIncomeTo > 0) {
       fixSortedArray(allTextLines, selectors.date);
     }
   }
@@ -185,7 +185,7 @@ function initTextLines() {
   }
 }
 
-function spreadIncomeToDaysOfYear() {
+function spreadIncomeToDaysOfMonth() {
   let removed = 0;
   let added = 0;
 
@@ -202,14 +202,15 @@ function spreadIncomeToDaysOfYear() {
         date = entries[selectors.date].slice(1, -1);
       }
 
-      if (paydayIndex >= 6) {
+      totalAmount += parseFloat(entries[selectors.amount].slice(1, -1));
+      removed += parseInt(entries[selectors.amount].slice(1, -1));
+      if (paydayIndex >= spreadMonthlyIncomeTo) {
         paydayIndex = 0;
         paydays.push([index, '"' + totalAmount + '"', date]);
         date = '';
-        removed += parseInt(entries[selectors.amount].slice(1, -1));
+        totalAmount = 0;
       } else {
         paydayIndex++;
-        totalAmount += parseFloat(entries[selectors.amount].slice(1, -1));
       }
 
       allTextLines[index] = allTextLines[index].replace(entries[selectors.amount].slice(1, -1), '0,00');
@@ -267,9 +268,10 @@ function spreadIncomeToDaysOfYear() {
       }
     }
   }
+  console.log(removed, added)
 }
 
-function spreadIncomeToDaysOfMonth() {
+function spreadIncomeToDaysOfMonth2() {
   let removed = 0;
   let added = 0;
 

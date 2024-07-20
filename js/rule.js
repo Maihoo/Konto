@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 21139.54;
+const STARTBUDGET = 20853.39;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'amazon', 'paypal', 'takeout', 'food', 'cash', 'gas', 'others'];
@@ -39,8 +39,8 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"380";"EUR";""',
-  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"100";"EUR";""'
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"210";"EUR";""',
+  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"160";"EUR";""'
 ];
 
 const selectors= {
@@ -75,7 +75,6 @@ let showShadow = true;
 let settingsExtended = false;
 let settingsVertical = false;
 let groupByCategory = false;
-let spreadMonthlyIncome = false;
 let oneRadioUnchecked = false;
 
 let dataset;
@@ -83,6 +82,7 @@ let dataset;
 let verticalScaleFactor = 1.0;
 let zoomLevel = 1.0;
 
+let spreadMonthlyIncomeTo = 0;
 let legendMultiplier = 100;
 let maxHeight = 500;
 let startHeight = 0.0;
@@ -153,10 +153,10 @@ function resetSettings() {
   settingsExtended = false;
   settingsVertical = false;
   groupByCategory = false;
-  spreadMonthlyIncome = false;
   oneRadioUnchecked = false;
 
   totalBudget = STARTBUDGET;
+  spreadMonthlyIncomeTo = 0;
   globallyLastDay = 0;
   verticalScaleFactor = 1.0;
   zoomLevel = 1.0;
@@ -662,7 +662,7 @@ function drawCanvas() {
 
     let popup = document.createElement('div');
     const dateParts = entries[selectors.date].slice(1, -1).split('.');
-    popup.innerHTML = '<p class="popupText">Index: ' + i + '</p>'
+    popup.innerHTML = '<p class="popupText">Index: ' + (i + 1) + '</p>'
                     + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
                     + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
                     + '<p class="popupText">Value: ' + numberToCurrency(entries[selectors.amount].slice(1, -1)) + '</p>'

@@ -8,7 +8,7 @@ function clearSessionStorage() {
   sessionStorage.setItem('settingsVertical', '');
   sessionStorage.setItem('sortType', '');
   sessionStorage.setItem('groupByCategory', '');
-  sessionStorage.setItem('spreadMonthlyIncome', '');
+  sessionStorage.setItem('spreadMonthlyIncomeTo', '');
   sessionStorage.setItem('verticalScaleFactor', '');
   sessionStorage.setItem('zoomLevel', '');
   sessionStorage.setItem('legendMultiplyer', '');
@@ -134,12 +134,16 @@ function getFromSessionStorage() {
     }
   }
 
-  sessionValue = sessionStorage.getItem('spreadMonthlyIncome');
-  if (sessionValue && sessionValue.length > 0) {
-    if (sessionValue === 'true') {
-      spreadMonthlyIncome = true;
+  sessionValue = sessionStorage.getItem('spreadMonthlyIncomeTo');
+  if (sessionValue && sessionValue.length > 0 && !isNaN(parseInt(sessionValue))) {
+    spreadMonthlyIncomeTo = parseInt(sessionValue);
+    const inputElement = document.getElementById('spread-income-to');
+    inputElement.value = spreadMonthlyIncomeTo;
+    if (spreadMonthlyIncomeTo > 0) {
+      inputElement.classList.add('active');
     } else {
-      spreadMonthlyIncome = false;
+      inputElement.classList.remove('active');
+      inputElement.value = '';
     }
   }
 }

@@ -121,6 +121,13 @@ body {
       #settings-content {
         .settings-button-collection {
           display: flex !important;
+          margin-top: -0.25rem;
+
+          &:first-child {
+            .settings-button-group:last-child {
+              margin-top: -1rem;
+            }
+          }
 
           .settings-button-group {
             display: flex;
@@ -466,6 +473,17 @@ h1 {
   font-weight: bold;
   color: @custom-ui-color;
 
+  &.extra-padding {
+    padding-top: 1.3rem;
+    font-size: small;
+    font-weight: 500;
+
+    span {
+      margin-top: 0.1rem;
+      font-weight: 600;
+    }
+  }
+
   .switch {
     margin: auto;
     margin-right: 0;
@@ -481,24 +499,32 @@ h1 {
 
   .dataset-range-wrapper {
     color: white;
+  }
+}
 
-    .dataset-range-input {
-      background-color: transparent;
-      border-radius: 0.25rem;
-      border: 1px solid black;
-      color: gray;
-      width: 6rem;
-      padding: 0.25rem 0.5rem;
-      margin: 0.5rem;
+.custom-input {
+  background-color: transparent;
+  border-radius: 0.25rem;
+  border: 1px solid black;
+  color: gray;
+  width: 6rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0.5rem;
 
-      &:first-of-type {
-        margin-left: 0;
-      }
+  &:first-of-type {
+    margin-left: 0;
+  }
 
-      &.active {
-        color: white;
-      }
-    }
+  &--small,
+  &--small:first-of-type {
+    width: 0.9rem;
+    margin: 0;
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  &.active {
+    color: white;
   }
 }
 

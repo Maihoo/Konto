@@ -206,12 +206,9 @@
                   <span class="switch-slider"></span>
                 </label>
               </div>
-              <div class="buttonwrapper">
-                <span>spread income</span>
-                <label class="switch">
-                  <input type="checkbox" onclick="toggleSpreadMonthlyIncome()">
-                  <span class="switch-slider"></span>
-                </label>
+              <div class="buttonwrapper extra-padding">
+                <span>spread income to</span>
+                <input id="spread-income-to" type="text" placeholder="⊘" class="custom-input custom-input--small" oninput="toggleSpreadMonthlyIncome(event)" onkeydown="toggleSpreadMonthlyIncome(event)">
               </div>
             </div>
             <div class="settings-button-group">
@@ -228,6 +225,9 @@
               </div>
               <div class="buttonwrapper">
                 <button onclick="resetSettings()" type="button" class="button">Reset</button>
+              </div>
+              <div class="buttonwrapper extra-padding">
+                Months
               </div>
             </div>
           </div>
@@ -263,9 +263,9 @@
           <div class="rangewrapper">
             <h2 class="range-headline date-range-headline">Date Range</h2>
             <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
-              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.05.24" class="dataset-range-input active"/>
+              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.05.24" class="custom-input active"/>
               -
-              <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="dataset-range-input"/>
+              <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="custom-input"/>
             </div>
             <div id="range-slider-1" class="range-slider"></div>
           </div>
