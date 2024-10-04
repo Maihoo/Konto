@@ -48,7 +48,12 @@ function initTextLines() {
   for (let i = 0; i < constantPositions.length; i++) {
     let positionParts = constantPositions[i].split(';');
     let temp = positionParts[0] + ';';
-    temp += currentDateString + ';' + currentDateString + ';';
+    if (positionParts[1] === '""') {
+      temp += currentDateString + ';' + currentDateString + ';';
+    } else {
+      temp += positionParts[1] + ';' + positionParts[1] + ';';
+    }
+
     for (let j = 3; j < positionParts.length; j++) {
       temp += positionParts[j] + ';';
     }
@@ -67,7 +72,18 @@ function initTextLines() {
   for (let i = 0; i < constantPositions.length; i++) {
     const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
     totalBudget += parseInt(value);
-    allTextLines.splice(1, 0, constantPositions[i]);
+    let positionParts = constantPositions[i].split(';');
+    if (positionParts[1] !== currentDateString) {
+      let index = 1;
+      while (differenceInDays(positionParts[1].slice(1, -1), allTextLines[index].split(';')[selectors.date].slice(1, -1)) > 0) {
+        index++;
+      }
+      // insert into correct position
+      allTextLines.splice(index, 0, constantPositions[i]);
+    } else {
+      // insert as last
+      allTextLines.splice(1, 0, constantPositions[i]);
+    }
   }
 
   const lastLine = allTextLines[allTextLines.length - 1].split(';');
@@ -108,11 +124,12 @@ function initTextLines() {
     const itemEntries = item.split(';');
     // if (index === 0) { return false; }
     if (document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked' && getEntrieCategorie(itemEntries) === 'monthly') { return false; }
+    if (document.getElementById('toggle-income').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'income')  { return false; }
+    if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked' && getEntrieCategorie(itemEntries) === 'cash')    { return false; }
     if (document.getElementById('toggle-amazon').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'amazon')  { return false; }
     if (document.getElementById('toggle-paypal').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'paypal')  { return false; }
     if (document.getElementById('toggle-takeout').getAttribute('checked') !== 'checked' && getEntrieCategorie(itemEntries) === 'takeout') { return false; }
     if (document.getElementById('toggle-food').getAttribute('checked')    !== 'checked' && getEntrieCategorie(itemEntries) === 'food')    { return false; }
-    if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked' && getEntrieCategorie(itemEntries) === 'cash')    { return false; }
     if (document.getElementById('toggle-gas').getAttribute('checked')     !== 'checked' && getEntrieCategorie(itemEntries) === 'gas')     { return false; }
     if (document.getElementById('toggle-others').getAttribute('checked')  !== 'checked' && getEntrieCategorie(itemEntries) === 'others')  { return false; }
     return true;

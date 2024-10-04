@@ -15,60 +15,69 @@ function getEntrieCategorie(entryParts) {
   const beneficiary = entryParts[selectors.beneficiary]
   const purpose = entryParts[selectors.purpose]
 
-  if (beneficiary.includes('ADAC') ||
-      beneficiary.includes('klarmobil') ||
-      beneficiary.includes('Mecklenburgische') ||
-      beneficiary.includes('Bundeskasse DO Kiel') ||
-      beneficiary.includes('WG Union') ||
-      beneficiary.includes('Landeszentralkasse') ||
-      purpose.includes('Netflix') ||
-      purpose.includes('Spotify') ||
-      purpose.includes('123-reg') ||
-      purpose.includes('Miete')) {
+  if (beneficiary.toLowerCase().includes('adac') ||
+      beneficiary.toLowerCase().includes('klarmobil') ||
+      beneficiary.toLowerCase().includes('mecklenburgische') ||
+      beneficiary.toLowerCase().includes('bundeskasse do kiel') ||
+      beneficiary.toLowerCase().includes('wg union') ||
+      beneficiary.toLowerCase().includes('landeszentralkasse') ||
+      purpose.toLowerCase().includes('netflix') ||
+      purpose.toLowerCase().includes('spotify') ||
+      purpose.toLowerCase().includes('123-reg') ||
+      purpose.toLowerCase().includes('miete')) {
     return 'monthly';
   }
 
-  if (beneficiary.includes('AMAZON')) {
+  if (beneficiary.toLowerCase().includes('amazon')) {
     return 'amazon';
   }
 
-  if (purpose.includes('Takeaway.com') ||
+  if (purpose.toLowerCase().includes('lohn/gehalt')) {
+    return 'income';
+  }
+
+  if (purpose.toLowerCase().includes('takeaway.com') ||
       beneficiary.toLowerCase().includes('hot chickeria')) {
     return 'takeout';
   }
 
-  if (beneficiary.includes('PayPal') ||
-      beneficiary.includes('OTTO Payments')) {
+  if (beneficiary.toLowerCase().includes('paypal') ||
+      beneficiary.toLowerCase().includes('otto payments')) {
     return 'paypal';
   }
 
-  if (beneficiary.includes('REWE') ||
-      beneficiary.includes('EDEKA') ||
-      beneficiary.toLowerCase().includes('netto') ||
-      beneficiary.includes('LIDL') ||
-      beneficiary.includes('ALDI') ||
-      beneficiary.includes('GLOBUS') ||
-      beneficiary.includes('PENNY') ||
-      beneficiary.includes('Kaufland') ||
-      beneficiary.includes('Tabak') ||
-      beneficiary.includes('BAECKEREI')) {
-    return 'food';
-  }
-
-  if (beneficiary.includes('OstseeSparkasse')) {
+  if (beneficiary.toLowerCase().includes('ostseesparkasse') ||
+      purpose.toLowerCase().includes('bargeldausz')) {
     return 'cash';
   }
 
-  if (beneficiary.includes('Tankstelle') ||
-      beneficiary.includes('SHELL') ||
-      beneficiary.includes('ARAL') ||
-      beneficiary.includes('TOTAL') ||
-      beneficiary.includes('famila tank') ||
-      beneficiary.includes('ESSO')) {
+  if (beneficiary.toLowerCase().includes('rewe') ||
+      beneficiary.toLowerCase().includes('edeka') ||
+      beneficiary.toLowerCase().includes('netto') ||
+      beneficiary.toLowerCase().includes('lidl') ||
+      beneficiary.toLowerCase().includes('aldi') ||
+      beneficiary.toLowerCase().includes('globus') ||
+      beneficiary.toLowerCase().includes('prenny') ||
+      beneficiary.toLowerCase().includes('kaufland') ||
+      beneficiary.toLowerCase().includes('tabak') ||
+      beneficiary.toLowerCase().includes('baeckerei')) {
+    return 'food';
+  }
+
+
+  if (beneficiary.toLowerCase().includes('tankstelle') ||
+      beneficiary.toLowerCase().includes('avia') ||
+      beneficiary.toLowerCase().includes('shell') ||
+      beneficiary.toLowerCase().includes('aral') ||
+      beneficiary.toLowerCase().includes('total') ||
+      beneficiary.toLowerCase().includes('famila tank') ||
+      beneficiary.toLowerCase().includes('esso') || 
+      beneficiary.toLowerCase().includes('warnowquerung') ||
+      purpose.toLowerCase().includes('kfz-kauf')) {
     return 'gas';
   }
 
-  if (purpose.includes('SCHULDEN')) {
+  if (purpose.toLowerCase().includes('schulden')) {
     return 'debt';
   }
 

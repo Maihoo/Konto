@@ -3,11 +3,12 @@ function resetControls() {
 
   //toggles
   replace('toggle-monthly'),
+  replace('toggle-income'),
+  replace('toggle-cash'),
   replace('toggle-amazon'),
   replace('toggle-paypal'),
-  replace('toggle-takeout'),
   replace('toggle-food'),
-  replace('toggle-cash'),
+  replace('toggle-takeout'),
   replace('toggle-gas'),
   replace('toggle-others'),
 
@@ -40,11 +41,12 @@ function initControls() {
 
   // toggles
   document.getElementById('toggle-monthly').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-income').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-cash').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-amazon').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-paypal').addEventListener('mousedown', handleToggleClick);
-  document.getElementById('toggle-takeout').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-food').addEventListener('mousedown', handleToggleClick);
-  document.getElementById('toggle-cash').addEventListener('mousedown', handleToggleClick);
+  document.getElementById('toggle-takeout').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-gas').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-others').addEventListener('mousedown', handleToggleClick);
 
@@ -212,13 +214,14 @@ function updateActiveCategories() {
 
   activeCategories = {
     'monthly':  allValues[0],
-    'amazon':   allValues[1],
-    'paypal':   allValues[2],
-    'takeout':  allValues[3],
-    'food':     allValues[4],
-    'cash':     allValues[5],
-    'gas':      allValues[6],
-    'others':   allValues[7]
+    'income':   allValues[1],
+    'cash':     allValues[2],
+    'amazon':   allValues[3],
+    'paypal':   allValues[4],
+    'food':     allValues[5],
+    'takeout':  allValues[6],
+    'gas':      allValues[7],
+    'others':   allValues[8]
   };
 }
 
@@ -322,11 +325,12 @@ function toggleSpreadMonthlyIncome(event) {
 
     sessionStorage.setItem('spreadMonthlyIncomeTo', spreadMonthlyIncomeTo);
     document.getElementById('toggle-monthly').setAttribute('checked', 'checked');
+    document.getElementById('toggle-income').setAttribute('checked', 'checked');
+    document.getElementById('toggle-cash').setAttribute('checked', 'checked');
     document.getElementById('toggle-amazon').setAttribute('checked', 'checked');
     document.getElementById('toggle-paypal').setAttribute('checked', 'checked');
     document.getElementById('toggle-takeout').setAttribute('checked', 'checked');
     document.getElementById('toggle-food').setAttribute('checked', 'checked');
-    document.getElementById('toggle-cash').setAttribute('checked', 'checked');
     document.getElementById('toggle-gas').setAttribute('checked', 'checked');
     document.getElementById('toggle-others').setAttribute('checked', 'checked');
     initTextLines();

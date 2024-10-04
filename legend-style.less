@@ -145,6 +145,13 @@
       &[checked="checked"] .checkmark { background-color: @my-color; }
     }
 
+    &.income {
+      @my-color: @income-color;
+      color: @my-color;
+      .checkmark { border: 4px solid @my-color; }
+      &[checked="checked"] .checkmark { background-color: @my-color; }
+    }
+
     &.cash {
       @my-color: @cash-color;
       color: @my-color;
