@@ -612,8 +612,6 @@ function initRangeSlider1() {
     endNumberOfDays = 0;
   }
 
-  console.log('START', startNumberOfDays);
-
   $(function() {
     $('#range-slider-1').slider({
       range: true,

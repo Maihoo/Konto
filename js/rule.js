@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const STARTBUDGET = 16231.90;
+const STARTBUDGET = 16546.13;
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 const categories = ['monthly', 'income', 'cash', 'amazon', 'paypal', 'food', 'takeout', 'gas', 'others'];
@@ -42,7 +42,7 @@ let activeCategories = {
 const constantPositions = [
   '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
-  '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
+  '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"996,31";"EUR";""',
   '"DE45150505001101110771";"27.09.24";"27.09.24";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"1000";"EUR";""'
 ];
 
@@ -102,7 +102,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.05.24';
+let startDate = '01.08.24';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -180,7 +180,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.05.24';
+  startDate = '01.08.24';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -282,23 +282,28 @@ function initDrawing() {
 
     clearCanvases();
 
-    requestAnimationFrame(() => {
-      drawLegends();
-      drawCanvas();
+    const ts = Date.now();
+
+    drawCanvas();
+
+    requestIdleCallback(() => {
       drawPath();         // draws 2px solid line
       drawBlurPath();     // draws opaque background below path
       hidePathBlurTop();  // caps blurred paths above path
 
       setAmounts();
       setDates();
+      console.log('canvas', Date.now() - ts);
     });
 
-    requestAnimationFrame(() => {
+    requestIdleCallback(() => {
       drawLegends();
+      console.log('legend', Date.now() - ts);
     });
 
-    requestAnimationFrame(() => {
+    requestIdleCallback(() => {
       drawTable();
+      console.log('table', Date.now() - ts);
     });
 
     document.getElementById('spinner-element').style.display = 'none';
@@ -487,10 +492,9 @@ function setDates() {
 }
 
 function drawCanvas() {
-  console.log('drawCanvas');
   path = [];
   dateLines = [];
-  let paddingLeft = 980 + moveOffsetX;
+  const paddingLeft = 980 + moveOffsetX;
   let lastDayDiff = 0;
   let fgOffset = 0;
   let evenFgOffset = 100;
@@ -508,16 +512,11 @@ function drawCanvas() {
 
   let lastDay = allTextLines[0].split(';')[selectors.date].slice(1, -1);
   let firstDay = allTextLines[allTextLines.length - 1].split(';')[selectors.date].slice(1, -1);
-  let totalDays = differenceInDays(firstDay, lastDay) + 2;
-  if (sortType === 'amount') {
-    totalDays = allTextLines.length;
-  }
+  let totalDays = (sortType === 'amount') ? allTextLines.length : Math.abs(differenceInDays(firstDay, lastDay) + 2);
+  let dayWidth = 875 / totalDays;
+  let foregroundOffset = dayWidth / 4;
 
-  totalDays = Math.abs(totalDays);
-  let dayWidth = 875 / Math.abs(totalDays);
-  let foregroundoffset = dayWidth/4;
-
-  // pushing date lines
+  // Pushing date lines
   for (let year = 0; year < 30; year++) {
     for (let month = 1; month <= 12; month++) {
       dateLines.push('' + parseInt(paddingLeft + (differenceInDays(lastDay, '1.' + month + '.' + (19 + year)) * dayWidth)) + 'px');
@@ -534,57 +533,58 @@ function drawCanvas() {
     }
   }
 
+  const fragment = document.createDocumentFragment();
+
   for (let i = allTextLines.length - 2; i >= 0; i--) {
     let entries = allTextLines[i].split(';');
     const lastTotalValue = valueToMarginTop(allTextLines[i - (i === 0 ? 0 : 1)].split(';')[selectors.total].slice(1, -1));
-    const totalValue =     valueToMarginTop(entries[selectors.total].slice(1, -1));
+    const totalValue = valueToMarginTop(entries[selectors.total].slice(1, -1));
     const nextTotalValue = valueToMarginTop(allTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
 
-    let decided = false;
-    let value = valueToPx(entries[selectors.amount].slice(1, -1));
+    const amountValue = entries[selectors.amount].slice(1, -1);
+    let value = valueToPx(amountValue);
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
-    if (i > allTextLines.length) {
+    if (diffDays < 0) {
       diffDays = 2;
     }
 
     let sharedDates = 0;
-    for (let j = i - 1; j > 0 + 1; j--) {
-      let comparison = allTextLines[j].split(';');
-      if (comparison[1] === entries[selectors.date]) {
+    const dateKey = entries[selectors.date];
+    for (let j = 0; j < allTextLines.length; j++) {
+      if (j !== i && allTextLines[j].split(';')[selectors.date] === dateKey) {
         sharedDates++;
       }
     }
 
-    for (let l = i + 1; l < allTextLines.length - 1; l++) {
-      let comparison = allTextLines[l].split(';');
-      if (comparison[1] === entries[selectors.date]) {
-        sharedDates++;
-      }
-    }
+    let evenForegroundOffset = dayWidth / (sharedDates || 1);
 
-    let evenForegroundOffset = dayWidth / sharedDates;
+    const square = document.createElement('div');
+    const marginTopValue = (amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue;
 
-    let square = document.createElement('div');
+    // Assign styles to the square
+    Object.assign(square.style, {
+      height: `${Math.abs(value)}px`,
+      width: `${dayWidth - 2}px`,
+      marginTop: `${marginTopValue}px`,
+      marginLeft: `${paddingLeft - (lastDayDiff * dayWidth)}px`
+    });
+
     square.className = 'square';
-    square.category = 'Einzahlung';
-    square.style.height = '' + Math.abs(value) + 'px';
-    square.style.width = '' + (dayWidth - 2) + 'px';
-
-    if (diffDays > 0) { square.id = 'linePoint' + i * 2; }
-    if (entries[selectors.amount].charAt(1) !== '-') { square.style.marginTop = (totalValue) + 'px'; }
-    else { square.style.marginTop = (nextTotalValue) + 'px'; }
+    if (diffDays > 0) { square.id = `linePoint${i * 2}`; }
 
     // Fill empty days
     const category = getEntrieCategorie(entries);
     if (diffDays > 1 && sortType !== 'amount') {
-      let placeholder = document.createElement('div');
+      const placeholder = document.createElement('div');
       placeholder.className = 'square';
-      placeholder.classList.add(category + '-background');
-      placeholder.style.height = '1px';
-      placeholder.style.width = '' + ((diffDays - 1) * dayWidth) + 'px';
-      placeholder.style.marginTop = (nextTotalValue) + 'px'
-      placeholder.style.marginLeft = (paddingLeft - ((lastDayDiff - 1) * dayWidth)) + 'px';
-      canvas.appendChild(placeholder);
+      placeholder.classList.add(`${category}-background`);
+      Object.assign(placeholder.style, {
+        height: '1px',
+        width: `${(diffDays - 1) * dayWidth}px`,
+        marginTop: `${nextTotalValue}px`,
+        marginLeft: `${paddingLeft - ((lastDayDiff - 1) * dayWidth)}px`
+      });
+      fragment.appendChild(placeholder);
     }
 
     lastDayDiff = differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
@@ -592,10 +592,8 @@ function drawCanvas() {
       lastDayDiff = i;
     }
 
-    square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth)) + 'px';
-
-    // Differenciate negative Events
-    if (entries[selectors.amount].charAt(1) === '-') {
+    // Differentiate negative Events
+    if (amountValue.charAt(1) === '-') {
       square.classList.add('negative-background');
       square.category = 'Sonstige Abbuchung';
     }
@@ -608,17 +606,15 @@ function drawCanvas() {
       evenFgOffset += evenForegroundOffset;
     }
 
-    let pastNegative = false;
-    if (allTextLines[i+1] !== null && allTextLines[i+1].split(';')[selectors.amount] !== null) {
-      pastNegative = allTextLines[i+1].split(';')[selectors.amount].charAt(1) === '-';
+    let pastNegative = allTextLines[i + 1]?.split(';')[selectors.amount]?.charAt(1) === '-';
+
+    if (diffDays === 0 && ((amountValue.charAt(1) === '-' && !pastNegative) || (amountValue.charAt(1) !== '-' && pastNegative))) {
+      fgOffset += foregroundOffset;
     }
 
-    if (diffDays === 0 && ((entries[selectors.amount].charAt(1) === '-' && !pastNegative) || (entries[selectors.amount].charAt(1) !== '-' && pastNegative))) {
-      fgOffset += foregroundoffset;
-    }
-
-    square.style.width =      (         -2 + (              dayWidth) - fgOffset) + 'px';
-    square.style.marginLeft = (paddingLeft - (lastDayDiff * dayWidth) + fgOffset) + 'px';
+    // Adjust width and marginLeft after fgOffset
+    square.style.width = `${-2 + dayWidth - fgOffset}px`;
+    square.style.marginLeft = `${paddingLeft - (lastDayDiff * dayWidth) + fgOffset}px`;
 
     if (entries[0].charAt(0) === '_') {
       square.style.opacity = '50%';
@@ -626,81 +622,77 @@ function drawCanvas() {
 
     // Push Path Points
     if (i < allTextLines.length - 5) {
-      let temp = [];
-      temp.push(lastTotalValue);
-      temp.push(paddingLeft - (lastDayDiff * dayWidth) + evenFgOffset);
-      path.push(temp);
+      path.push([lastTotalValue, paddingLeft - (lastDayDiff * dayWidth)]);
     }
 
-    // legend filling - Kategorien
-    square.classList.add(category + '-background')
+    // Legend filling - Kategorien
+    square.classList.add(`${category}-background`);
     square.category = category;
-    decided = category !== 'others';
-
-    if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'income') { incomeEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'food') { foodEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(allTextLines[i]); }
-    if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(allTextLines[i]); }
-
-    if (!decided) {
-      restEntries.push(allTextLines[i]);
-    }
+    categorizeEntries(entries, category !== 'others', i); // Pass index 'i' as argument
 
     // Adding Popups
     square.index = i;
-    square.hovered = '0';
-    square.onmouseover = function(event) {
-      let pop = document.getElementById('popup' + this.index);
-      pop.classList.add('fade');
-      this.hovered = '1';
-      pop.style.top = (event.clientY + window.scrollY - 100) + 'px';
-      pop.style.left = (event.clientX + 5) + 'px';
-    };
+    setupHover(square);
+    fragment.appendChild(square);
+  }
 
-    square.onmousemove = function(event) {
-      let pop = document.getElementById('popup' + this.index);
-      if (this.hovered === '1') {
-        pop.style.top = (event.clientY - uiPopup.getBoundingClientRect().y) + 'px';
-        pop.style.left = (event.clientX + 5) + 'px';
-      }
-    };
+  canvas.appendChild(fragment);
+}
 
-    square.onmouseout = function() {
-      let pop = document.getElementById('popup' + this.index);
-      pop.classList.remove('fade');
-      this.hovered = '0';
-    };
+function categorizeEntries(entries, decided, index) {
+  if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'income') { incomeEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'food') { foodEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(allTextLines[index]); }
+  if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(allTextLines[index]); }
 
-    let popup = document.createElement('div');
-    const dateParts = entries[selectors.date].slice(1, -1).split('.');
-    popup.innerHTML = '<p class="popupText">Index: ' + (i + 1) + '</p>'
-                    + '<p class="popupText">Date: ' + entries[selectors.date].slice(1, -1) + '</p>'
-                    + '<p class="popupText">Day: ' + getDayOfWeek(dateParts[0], dateParts[1], dateParts[2]) + '</p>'
-                    + '<p class="popupText">Value: ' + numberToCurrency(entries[selectors.amount].slice(1, -1)) + '</p>'
-                    + '<p class="popupText">Total: ' + numberToCurrency(parseFloat(entries[selectors.total].slice(1, -1))) + '</p>'
-                    + '<p class="popupText">Calculated Total: ' + numberToCurrency(parseFloat(pxToValue(square.style.marginTop))) + '</p>'
-                    + '<p class="popupText">Category: ' + square.category + '</p>';
-    popup.id = 'popup' + i;
-    popup.className = 'popup';
-    popup.style.position = 'absolute';
-    popup.style.marginTop = '0';
-    popup.style.marginLeft = '0';
-
-    uiPopup.appendChild(popup);
-    canvas.appendChild(square);
+  if (!decided) {
+    restEntries.push(allTextLines[index]);
   }
 }
 
+function setupHover(square) {
+  square.hovered = '0';
+  square.onmouseover = function(event) {
+    const popup = document.getElementById('singlePopup'); // Get the single popup element
+    popup.classList.add('fade');
+    popup.style.top = `${event.clientY + window.scrollY - 100}px`;
+    popup.style.left = `${event.clientX + 5}px`;
+
+    // Update popup content
+    const dateParts = allTextLines[this.index].split(';')[selectors.date].slice(1, -1).split('.');
+    popup.innerHTML = `
+      <p class="popupText">Index: ${this.index + 1}</p>
+      <p class="popupText">Date: ${allTextLines[this.index].split(';')[selectors.date].slice(1, -1)}</p>
+      <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
+      <p class="popupText">Value: ${numberToCurrency(allTextLines[this.index].split(';')[selectors.amount].slice(1, -1))}</p>
+      <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[this.index].split(';')[selectors.total].slice(1, -1)))}</p>
+      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.style.marginTop)))}</p>
+      <p class="popupText">Category: ${square.category}</p>
+    `;
+  };
+
+  square.onmousemove = function(event) {
+    let popup = document.getElementById('singlePopup');
+    popup.style.top = `${event.clientY - uiPopup.getBoundingClientRect().y}px`;
+    popup.style.left = `${event.clientX + 5}px`;
+  };
+
+  square.onmouseout = function() {
+    let popup = document.getElementById('singlePopup');
+    popup.classList.remove('fade');
+  };
+}
+
 function drawLegends() {
-  let legendSquareHolders = document.getElementsByClassName('legend-square-holder');
-  for (let i = 0; i < legendSquareHolders.length; i++) {
-    legendSquareHolders[i].innerHTML = '';
-  }
+  const legendSquareHolders = document.getElementsByClassName('legend-square-holder');
+  Array.from(legendSquareHolders).forEach(holder => {
+    holder.innerHTML = '';
+  });
 
   let positiveTotal = 0;
   positiveTotal += getTotal(monthlyEntries, true);
@@ -761,73 +753,58 @@ function drawLegends() {
 }
 
 function drawTotalLegend(total, input, groupname) {
-  let totalAmount = getTotal(input, false) - getTotal(input, true);
-  totalAmount *= -1;
+  const totalAmount = Math.abs(getTotal(input, false) - getTotal(input, true));
+  const legendId = totalAmount > 0 ? 'legend-total-positive' : 'legend-total-negative';
+  const legend = document.getElementById(legendId);
 
-  let legend = document.getElementById('legend-total-negative');
-
-  if (totalAmount > 0) {
-    legend = document.getElementById('legend-total-positive');
-  }
-
-  let legendSquare = document.createElement('div');
-  legendSquare.className = 'legendsquare';
-  legendSquare.classList.add(groupname + '-background');
-  let value = Math.abs(legendMultiplier * parseFloat(totalAmount) / (total));
-  legendSquare.style.height = '' + (value) + 'px';
+  const legendSquare = document.createElement('div');
+  legendSquare.className = `legendsquare ${groupname}-background`;
+  legendSquare.style.height = `${legendMultiplier * totalAmount / total}px`;
   if (groupname === 'negative') {
-    legendSquare.classList.remove(groupname + '-background');
-    legendSquare.classList.add('positive' + '-background');
+    legendSquare.classList.replace(`${groupname}-background`, 'positive-background');
   }
 
   legend.appendChild(legendSquare);
 }
 
-function drawNegativeLegend(total, input, groupname) {
-  let legend = document.getElementById('legend-' + groupname + '-negative');
-  for (let i = 0; i < input.length; i++) {
-    let entries = input[i].split(';');
-    if (entries[selectors.amount].charAt(1) === '-') {
-      let legendSquare = document.createElement('div');
-      legendSquare.className = 'legendsquare';
-      legendSquare.classList.add(groupname + '-background');
-      let value = Math.abs(legendMultiplier * parseFloat(entries[selectors.amount].slice(1, -1)) / (total));
-      legendSquare.style.height = '' + (value) + 'px';
+function drawLegend(total, input, groupname, isPositive) {
+  const legend = document.getElementById(`legend-${groupname}-${isPositive ? 'positive' : 'negative'}`);
+  input.forEach(entry => {
+    const entries = entry.split(';');
+    const amount = parseFloat(entries[selectors.amount].slice(1, -1));
+    if ((isPositive && entries[selectors.amount].charAt(1) !== '-') || 
+        (!isPositive && entries[selectors.amount].charAt(1) === '-')) {
+      const legendSquare = document.createElement('div');
+      legendSquare.className = 'legendsquare ' + groupname + '-background';
+      legendSquare.style.height = `${legendMultiplier * Math.abs(amount) / total}px`;
       legend.appendChild(legendSquare);
     }
-  }
+  });
+}
+
+function drawNegativeLegend(total, input, groupname) {
+  drawLegend(total, input, groupname, false);
 }
 
 function drawPositiveLegend(total, input, groupname) {
-  let legend = document.getElementById('legend-' + groupname + '-positive');
-  for (let i = 0; i < input.length; i++) {
-    let entries = input[i].split(';');
-    if (entries[selectors.amount].charAt(1) !== '-') {
-      let legendSquare = document.createElement('div');
-      legendSquare.className = 'legendsquare';
-      legendSquare.classList.add(groupname + '-background');
-      let value = Math.abs(legendMultiplier * parseFloat(entries[selectors.amount].slice(1, -1)) / (total));
-      legendSquare.style.height = '' + (value) + 'px';
-      legend.appendChild(legendSquare);
-    }
-  }
+  drawLegend(total, input, groupname, true);
 }
 
 function drawTable() {
-  let table = document.getElementById('table');
+  const table = document.getElementById('table');
   table.innerHTML = '';
 
   allTextLines.splice(0, 0, firstLine);
 
   for (let i = 0; i < allTextLines.length; i++) {
-    let entries = allTextLines[i].split(';');
-    let row = document.createElement('div');
+    const entries = allTextLines[i].split(';');
+    const row = document.createElement('div');
 
-    row.id = 'row' + i;
+    row.id = `row${i}`;
     row.className = 'row';
     row.style.display = 'inline-flex';
 
-    // Header Row
+    // Header Row Styles
     if (i === 0) {
       row.style.paddingTop = '0.8vh';
       row.style.fontSize = 'medium';
@@ -835,87 +812,46 @@ function drawTable() {
       row.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
     }
 
-    for (let j = 0; j < entries.length; j++) {
-      let entrie = entries[j];
-      let cell = document.createElement('p');
-      cell.innerHTML = entrie.slice(1, -1);
-      cell.title = cell.innerHTML;
+    // Create and append cells in the specified order
+    const cellConfigs = [
+      { index: 0, width: '2.5vw', align: 'end', isIndex: true },
+      { index: selectors.date, width: '7vw', align: 'end' },
+      { index: selectors.content, width: '10vw' },
+      { index: selectors.purpose, width: '32vw' },
+      { index: selectors.beneficiary, width: '26vw' },
+      { index: selectors.category, width: '4vw' },
+      { index: selectors.total, width: '4vw', align: 'end' },
+      { index: selectors.amount, width: '4vw', align: 'end' },
+    ];
+
+    cellConfigs.forEach(({ index, width, align, isIndex }) => {
+      const cell = document.createElement('p');
+      cell.innerHTML = isIndex ? (i === 0 ? 'Index' : `${i}`) : entries[index].slice(1, -1);
       cell.className = 'cell';
+      cell.style.width = width;
+      if (align) cell.style.textAlign = align;
 
-      if (j === 0) {
-        let cell = document.createElement('p');
-        if (i === 0) { cell.innerHTML = 'Index'; }
-        else         { cell.innerHTML = '' + i; }
-        cell.className = 'cell';
-        cell.style.textAlign = 'end';
-        cell.style.width = '2.5vw';
-        row.appendChild(cell);
+      // Add conditional styles for amount
+      if (index === selectors.amount) {
+        const amountValue = entries[index];
+        cell.classList.add(amountValue.charAt(1) !== '-' ? 'positive-background' : 'negative-background');
       }
 
-      if (j === selectors.date) { cell.style.width = '7vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
-      if (j === selectors.content) { cell.style.width = '10vw'; row.appendChild(cell); }
-      if (j === selectors.purpose) { cell.style.width = '32vw'; row.appendChild(cell); }
-      if (j === selectors.beneficiary) { cell.style.width = '26vw'; row.appendChild(cell); }
-      if (j === selectors.category) { cell.style.width = '4vw'; row.appendChild(cell); }
-      if (j === selectors.total) { cell.style.width = '4vw'; cell.style.textAlign = 'end'; row.appendChild(cell); }
-      if (j === selectors.amount) {
-        cell.style.width = '4vw';
-        cell.style.textAlign = 'end';
-        row.appendChild(cell);
-        if (entries[selectors.amount].charAt(1) !== '-') { cell.classList.add('positive-background'); }
-        if (entries[selectors.amount].charAt(1) === '-') { cell.classList.add('negative-background'); }
-      }
+      row.appendChild(cell);
+    });
 
-      if (i === 0) {
-        cell.classList.remove('positive-background');
-        cell.classList.remove('negative-background');
-      }
+    // Apply category-specific styles
+    const category = entries[selectors.category]?.slice(1, -1);
+    if (category) {
+      const categoryClass = `${category}-background-transparent`;
+      row.classList.add(categoryClass);
     }
 
-    // Kategorien
-    if (entries[selectors.category]) {
-      if (entries[selectors.category].slice(1, -1) === 'monthly') {
-        row.classList.add('monthly-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'income') {
-        row.classList.add('income-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'cash') {
-        row.classList.add('cash-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'amazon') {
-        row.classList.add('amazon-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'paypal') {
-        row.classList.add('paypal-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'food') {
-        row.classList.add('food-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'takeout') {
-        row.classList.add('takeout-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'gas') {
-        row.classList.add('gas-background-transparent');
-      }
-
-      if (entries[selectors.category].slice(1, -1) === 'debt') {
-        row.classList.add('debt-background-transparent');
-      }
-    }
-
-    let rowHolder = document.createElement('div');
+    const rowHolder = document.createElement('div');
     rowHolder.style.display = 'block';
     rowHolder.style.paddingBottom = '1px';
 
-    rowHolder.appendChild(row)
+    rowHolder.appendChild(row);
     table.appendChild(rowHolder);
   }
 }
