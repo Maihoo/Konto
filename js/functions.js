@@ -109,7 +109,7 @@ function valueToPx(value) {
 }
 
 function valueToMarginTop(value) {
-  let pixel = ((parseFloat(value) * verticalScaleFactor) - lowest) * 500 / (maxHeight);
+  let pixel = (parseFloat(value) - lowest) * verticalScaleFactor * 500 / (maxHeight);
   return 550 - pixel;
 }
 

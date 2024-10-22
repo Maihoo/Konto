@@ -130,7 +130,7 @@ function processPage(content) {
                 }
 
                 totalAmount += parseFloat(amount);
-                if (!isNaN(parseFloat(amount))) {
+                if (!isNaN(parseFloat(amount)) && !purpose.includes('Kontostandam')) {
                   //                                        date              text                          purpose                             beneficiary                     amount
                   dataset += '"DE45150505001101110771";"' + date + '";"";"' + allLines[j + k - 3] + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j + 3] + '";"";"";"' + parseFloat(amount) + '";"EUR";""\n';
                 }

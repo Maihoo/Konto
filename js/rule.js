@@ -510,11 +510,32 @@ function drawCanvas() {
   debtEntries = [];
   restEntries = [];
 
-  let lastDay = allTextLines[0].split(';')[selectors.date].slice(1, -1);
-  let firstDay = allTextLines[allTextLines.length - 1].split(';')[selectors.date].slice(1, -1);
-  let totalDays = (sortType === 'amount') ? allTextLines.length : Math.abs(differenceInDays(firstDay, lastDay) + 2);
-  let dayWidth = 875 / totalDays;
-  let foregroundOffset = dayWidth / 4;
+  // Remove last line if total is invalid
+  if (!parseInt(allTextLines[allTextLines.length - 1][selectors.total].slice(1, -1))) {
+    allTextLines.shift();
+  }
+
+  // Pre-compute date values
+  const dates = allTextLines.map(line => {
+    const entry = line.split(';');
+    return {
+      date: entry[selectors.date].slice(1, -1),
+      total: entry[selectors.total].slice(1, -1),
+      amount: entry[selectors.amount].slice(1, -1)
+    };
+  });
+
+  const lastDay = dates[0].date;
+  const firstDay = dates[dates.length - 1].date;
+  const totalDays = (sortType === 'amount') ? dates.length : Math.abs(differenceInDays(firstDay, lastDay) + 2);
+  const dayWidth = 875 / totalDays;
+  const foregroundOffset = dayWidth / 4;
+
+  // Precompute shared dates using a hashmap
+  const sharedDateCount = {};
+  for (const entry of dates) {
+    sharedDateCount[entry.date] = (sharedDateCount[entry.date] || 0) + 1;
+  }
 
   // Pushing date lines
   for (let year = 0; year < 30; year++) {
@@ -535,12 +556,12 @@ function drawCanvas() {
 
   const fragment = document.createDocumentFragment();
 
-  for (let i = allTextLines.length - 2; i >= 0; i--) {
+  for (let i = dates.length - 1; i >= 0; i--) {
     let entries = allTextLines[i].split(';');
-    const lastTotalValue = valueToMarginTop(allTextLines[i - (i === 0 ? 0 : 1)].split(';')[selectors.total].slice(1, -1));
-    const totalValue = valueToMarginTop(entries[selectors.total].slice(1, -1));
-    const nextTotalValue = valueToMarginTop(allTextLines[i + 1].split(';')[selectors.total].slice(1, -1));
-
+    const entry = dates[i];
+    const lastTotalValue = valueToMarginTop(dates[i - (i === 0 ? 0 : 1)].total);
+    const totalValue = valueToMarginTop(entry.total);
+    const nextTotalValue = valueToMarginTop(dates[i + 1]?.total);
     const amountValue = entries[selectors.amount].slice(1, -1);
     let value = valueToPx(amountValue);
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
@@ -559,14 +580,9 @@ function drawCanvas() {
     let evenForegroundOffset = dayWidth / (sharedDates || 1);
 
     const square = document.createElement('div');
-    const marginTopValue = (amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue;
-
-    // Assign styles to the square
     Object.assign(square.style, {
       height: `${Math.abs(value)}px`,
-      width: `${dayWidth - 2}px`,
-      marginTop: `${marginTopValue}px`,
-      marginLeft: `${paddingLeft - (lastDayDiff * dayWidth)}px`
+      marginTop: `${(amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue}px`
     });
 
     square.className = 'square';
@@ -587,7 +603,7 @@ function drawCanvas() {
       fragment.appendChild(placeholder);
     }
 
-    lastDayDiff = differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
+    lastDayDiff = differenceInDays(entry.date, lastDay);
     if (sortType === 'amount') {
       lastDayDiff = i;
     }
@@ -607,8 +623,7 @@ function drawCanvas() {
     }
 
     let pastNegative = allTextLines[i + 1]?.split(';')[selectors.amount]?.charAt(1) === '-';
-
-    if (diffDays === 0 && ((amountValue.charAt(1) === '-' && !pastNegative) || (amountValue.charAt(1) !== '-' && pastNegative))) {
+    if (diffDays === 0 && ((amountValue.charAt(0) === '-' && !pastNegative) || (amountValue.charAt(0) !== '-' && pastNegative))) {
       fgOffset += foregroundOffset;
     }
 
@@ -616,12 +631,12 @@ function drawCanvas() {
     square.style.width = `${-2 + dayWidth - fgOffset}px`;
     square.style.marginLeft = `${paddingLeft - (lastDayDiff * dayWidth) + fgOffset}px`;
 
-    if (entries[0].charAt(0) === '_') {
+    if (entry.date.charAt(0) === '_') {
       square.style.opacity = '50%';
     }
 
     // Push Path Points
-    if (i < allTextLines.length - 5) {
+    if (i < dates.length - 5) {
       path.push([lastTotalValue, paddingLeft - (lastDayDiff * dayWidth)]);
     }
 
@@ -632,7 +647,7 @@ function drawCanvas() {
 
     // Adding Popups
     square.index = i;
-    setupHover(square);
+    setupHover(square, amountValue, entry.date);
     fragment.appendChild(square);
   }
 
@@ -655,7 +670,7 @@ function categorizeEntries(entries, decided, index) {
   }
 }
 
-function setupHover(square) {
+function setupHover(square, amountValue, date) {
   square.hovered = '0';
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
@@ -666,12 +681,12 @@ function setupHover(square) {
     // Update popup content
     const dateParts = allTextLines[this.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
-      <p class="popupText">Index: ${this.index + 1}</p>
-      <p class="popupText">Date: ${allTextLines[this.index].split(';')[selectors.date].slice(1, -1)}</p>
+      <p class="popupText">Index: ${square.index + 1}</p>
+      <p class="popupText">Date: ${date}</p>
       <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
-      <p class="popupText">Value: ${numberToCurrency(allTextLines[this.index].split(';')[selectors.amount].slice(1, -1))}</p>
+      <p class="popupText">Value: ${amountValue}</p>
       <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[this.index].split(';')[selectors.total].slice(1, -1)))}</p>
-      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.style.marginTop)))}</p>
+      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.style.marginTop)) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</p>
       <p class="popupText">Category: ${square.category}</p>
     `;
   };

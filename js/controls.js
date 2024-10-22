@@ -582,12 +582,11 @@ function initRangeSlider0() {
       min: 0,
       max: 200,
       value: verticalScaleFactor * 100,
-      change: function( event ) {
+      change: function() {
         let value = $('#range-slider-0').slider('value');
         if (verticalScaleFactor !== (value) / 100) {
           verticalScaleFactor = (value) / 100;
           sessionStorage.setItem('verticalScaleFactor', verticalScaleFactor);
-          resetHTML();
           initDrawing();
         }
       }
@@ -600,7 +599,6 @@ function initRangeSlider1() {
   currentDate.setDate(currentDate.getDate() + 7);
   const currentDateString = addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2);
 
-  console.log('hä', globallyLastDay, differenceInDays(globallyLastDay, currentDateString))
   const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString)
   let startNumberOfDays = differenceInDays(startDate, currentDateString);
   if (startDate.length < 8) {
