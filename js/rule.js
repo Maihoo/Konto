@@ -497,7 +497,6 @@ function drawCanvas() {
   const paddingLeft = 980 + moveOffsetX;
   let lastDayDiff = 0;
   let fgOffset = 0;
-  let evenFgOffset = 100;
 
   monthlyEntries = [];
   incomeEntries = [];
@@ -561,23 +560,17 @@ function drawCanvas() {
     const entry = dates[i];
     const lastTotalValue = valueToMarginTop(dates[i - (i === 0 ? 0 : 1)].total);
     const totalValue = valueToMarginTop(entry.total);
-    const nextTotalValue = valueToMarginTop(dates[i + 1]?.total);
+    let nextTotalValue = valueToMarginTop(dates[i + 1]?.total);
+    if (!nextTotalValue) {
+      nextTotalValue = totalValue;
+    }
+
     const amountValue = entries[selectors.amount].slice(1, -1);
     let value = valueToPx(amountValue);
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     if (diffDays < 0) {
       diffDays = 2;
     }
-
-    let sharedDates = 0;
-    const dateKey = entries[selectors.date];
-    for (let j = 0; j < allTextLines.length; j++) {
-      if (j !== i && allTextLines[j].split(';')[selectors.date] === dateKey) {
-        sharedDates++;
-      }
-    }
-
-    let evenForegroundOffset = dayWidth / (sharedDates || 1);
 
     const square = document.createElement('div');
     Object.assign(square.style, {
@@ -617,9 +610,6 @@ function drawCanvas() {
     // Make foreground squares smaller
     if (diffDays > 0) {
       fgOffset = 0;
-      evenFgOffset = 0;
-    } else {
-      evenFgOffset += evenForegroundOffset;
     }
 
     let pastNegative = allTextLines[i + 1]?.split(';')[selectors.amount]?.charAt(1) === '-';
@@ -675,8 +665,8 @@ function setupHover(square, amountValue, date) {
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
-    popup.style.top = `${event.clientY + window.scrollY - 100}px`;
-    popup.style.left = `${event.clientX + 5}px`;
+    popup.style.top = `${event.clientY - moveOffsetY - 50}px`;
+    popup.style.left = `${event.clientX - moveOffsetX + 5}px`;
 
     // Update popup content
     const dateParts = allTextLines[this.index].split(';')[selectors.date].slice(1, -1).split('.');
@@ -693,8 +683,8 @@ function setupHover(square, amountValue, date) {
 
   square.onmousemove = function(event) {
     let popup = document.getElementById('singlePopup');
-    popup.style.top = `${event.clientY - uiPopup.getBoundingClientRect().y}px`;
-    popup.style.left = `${event.clientX + 5}px`;
+    popup.style.top = `${event.clientY - moveOffsetY - 50}px`;
+    popup.style.left = `${event.clientX - moveOffsetX + 5}px`;
   };
 
   square.onmouseout = function() {
@@ -809,22 +799,18 @@ function drawTable() {
   const table = document.getElementById('table');
   table.innerHTML = '';
 
-  allTextLines.splice(0, 0, firstLine);
-
-  for (let i = 0; i < allTextLines.length; i++) {
-    const entries = allTextLines[i].split(';');
+  const fragment = document.createDocumentFragment();
+  const lines = [firstLine, ...allTextLines];
+  lines.forEach((line, i) => {
+    const entries = line.split(';');
     const row = document.createElement('div');
 
     row.id = `row${i}`;
     row.className = 'row';
-    row.style.display = 'inline-flex';
 
     // Header Row Styles
     if (i === 0) {
-      row.style.paddingTop = '0.8vh';
-      row.style.fontSize = 'medium';
-      row.style.fontWeight = 'bolder';
-      row.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      row.classList.add('header-row');
     }
 
     // Create and append cells in the specified order
@@ -832,22 +818,23 @@ function drawTable() {
       { index: 0, width: '2.5vw', align: 'end', isIndex: true },
       { index: selectors.date, width: '7vw', align: 'end' },
       { index: selectors.content, width: '10vw' },
-      { index: selectors.purpose, width: '32vw' },
+      { index: selectors.purpose, width: '30vw' },
       { index: selectors.beneficiary, width: '26vw' },
       { index: selectors.category, width: '4vw' },
       { index: selectors.total, width: '4vw', align: 'end' },
-      { index: selectors.amount, width: '4vw', align: 'end' },
+      { index: selectors.amount, width: 'auto', align: 'end' }
     ];
 
     cellConfigs.forEach(({ index, width, align, isIndex }) => {
       const cell = document.createElement('p');
       cell.innerHTML = isIndex ? (i === 0 ? 'Index' : `${i}`) : entries[index].slice(1, -1);
       cell.className = 'cell';
-      cell.style.width = width;
+      if (width) cell.style.width = width;
       if (align) cell.style.textAlign = align;
 
       // Add conditional styles for amount
-      if (index === selectors.amount) {
+      if (index === selectors.amount && i !== 0) {
+        cell.style.flexGrow = '1';
         const amountValue = entries[index];
         cell.classList.add(amountValue.charAt(1) !== '-' ? 'positive-background' : 'negative-background');
       }
@@ -867,6 +854,8 @@ function drawTable() {
     rowHolder.style.paddingBottom = '1px';
 
     rowHolder.appendChild(row);
-    table.appendChild(rowHolder);
-  }
+    fragment.appendChild(rowHolder);
+  });
+
+  table.appendChild(fragment);
 }

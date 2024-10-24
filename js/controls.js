@@ -540,17 +540,17 @@ function handleDragMouseDown(event) {
       let clientY = event.clientY;
       let diffX = dragstartX - clientX;
       let diffY = dragstartY - clientY;
+      dragstartX = clientX;
+      dragstartY = clientY;
       diffX /= zoomLevel;
       diffY /= zoomLevel;
       moveOffsetX -= diffX;
       moveOffsetY -= diffY;
-      dragstartX = clientX;
-      dragstartY = clientY;
 
       // move canvases
       const movingWrapper = document.getElementById('movingWrapper');
-      movingWrapper.style.marginLeft = '' + (movingWrapper.style.marginLeft.slice(0, -2) -diffX) + 'px';
-      movingWrapper.style.marginTop = '' + (movingWrapper.style.marginTop.slice(0, -2) -diffY) + 'px';
+      movingWrapper.style.marginLeft = '' + (movingWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
+      movingWrapper.style.marginTop = '' + (movingWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
       uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
     }
   }
