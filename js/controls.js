@@ -298,6 +298,15 @@ function toggleSettingsOrientation() {
   }
 }
 
+function toggleShowInvestments () {
+  showInvestments = !showInvestments;
+  sessionStorage.setItem('showInvestments', showInvestments);
+
+  initTextLines();
+  initRangeSlider2();
+  initDrawing();
+}
+
 function toggleGroupByCategory() {
   groupByCategory = !groupByCategory;
   sessionStorage.setItem('groupByCategory', groupByCategory);

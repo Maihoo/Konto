@@ -1,11 +1,17 @@
 function initTextLines() {
   checkRadios();
+  // insert permanent replacements
+  for (let i = 0; i < permanentReplacements.length; i++) {
+    permanentReplacements[i]
+    dataset = dataset.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
+  }
+
   allTextLines = dataset.split(/\r\n|\n/);
   allTextLines = allTextLines.filter(function(item) {
     return item !== '' && item !== '.';
   });
 
-  firstLine = allTextLines[0] + ';"Category";"Total"';
+  firstLine = '"index";' + allTextLines[0] + ';"Category";"Total";"Amount"';
 
   // insert replacements
   for (let i = 0; i < replacements.length; i++) {
@@ -41,48 +47,51 @@ function initTextLines() {
     }
   }
 
-  // insert date into constant positions
-  const currentDate = new Date();
-  currentDate.setDate(currentDate.getDate() + 4);
-  const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
-  for (let i = 0; i < constantPositions.length; i++) {
-    let positionParts = constantPositions[i].split(';');
-    let temp = positionParts[0] + ';';
-    if (positionParts[1] === '""') {
-      temp += currentDateString + ';' + currentDateString + ';';
-    } else {
-      temp += positionParts[1] + ';' + positionParts[1] + ';';
-    }
-
-    for (let j = 3; j < positionParts.length; j++) {
-      temp += positionParts[j] + ';';
-    }
-
-    temp = temp.slice(0, -1);
-    constantPositions[i] = temp;
-  }
-
   if (oneRadioUnchecked) {
-    totalBudget = 0;
+    totalBudget = 10000;
   } else {
     totalBudget = STARTBUDGET;
   }
 
-  // pushing constant positions
-  for (let i = 0; i < constantPositions.length; i++) {
-    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
-    totalBudget += parseInt(value);
-    let positionParts = constantPositions[i].split(';');
-    if (positionParts[1] !== currentDateString) {
-      let index = 1;
-      while (differenceInDays(positionParts[1].slice(1, -1), allTextLines[index].split(';')[selectors.date].slice(1, -1)) > 0) {
-        index++;
+  const currentDate = new Date();
+  currentDate.setDate(currentDate.getDate() + 4);
+  const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
+  // insert date into constant positions
+  if (showInvestments) {
+    for (let i = 0; i < constantPositions.length; i++) {
+      let positionParts = constantPositions[i].split(';');
+      let temp = positionParts[0] + ';';
+      if (positionParts[1] === '""') {
+        temp += currentDateString + ';' + currentDateString + ';';
+      } else {
+        temp += positionParts[1] + ';' + positionParts[1] + ';';
       }
-      // insert into correct position
-      allTextLines.splice(index, 0, constantPositions[i]);
-    } else {
-      // insert as last
-      allTextLines.splice(1, 0, constantPositions[i]);
+
+      for (let j = 3; j < positionParts.length; j++) {
+        temp += positionParts[j] + ';';
+      }
+
+      temp = temp.slice(0, -1);
+      constantPositions[i] = temp;
+    }
+
+
+    // pushing constant positions
+    for (let i = 0; i < constantPositions.length; i++) {
+      const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
+      totalBudget += parseInt(value);
+      let positionParts = constantPositions[i].split(';');
+      if (positionParts[1] !== currentDateString) {
+        let index = 1;
+        while (differenceInDays(positionParts[1].slice(1, -1), allTextLines[index].split(';')[selectors.date].slice(1, -1)) > 0) {
+          index++;
+        }
+        // insert into correct position
+        allTextLines.splice(index, 0, constantPositions[i]);
+      } else {
+        // insert as last
+        allTextLines.splice(1, 0, constantPositions[i]);
+      }
     }
   }
 
@@ -247,9 +256,6 @@ function spreadIncomeToDaysOfMonth() {
     const lastDay = paydays[i + 1][2];
     const dayDiff = Math.abs(differenceInDays(firstDay, lastDay))
     const amountPerDay = amount / dayDiff;
-
-    console.log(index, nextIndex);
-    console.log(firstDay, lastDay);
 
     // each day until the next PayDay
     if (amountPerDay > 0 && amountPerDay < 10000) {

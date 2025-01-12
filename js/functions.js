@@ -15,9 +15,13 @@ function getEntrieCategorie(entryParts) {
   const beneficiary = entryParts[selectors.beneficiary]
   const purpose = entryParts[selectors.purpose]
 
+  if (purpose.toLowerCase().includes('lohn/gehalt') ||
+      purpose.toLowerCase().includes('bafoeg')) {
+    return 'income';
+  }
+
   if (beneficiary.toLowerCase().includes('adac') ||
       beneficiary.toLowerCase().includes('klarmobil') ||
-      beneficiary.toLowerCase().includes('mecklenburgische') ||
       beneficiary.toLowerCase().includes('bundeskasse do kiel') ||
       beneficiary.toLowerCase().includes('wg union') ||
       beneficiary.toLowerCase().includes('landeszentralkasse') ||
@@ -30,10 +34,6 @@ function getEntrieCategorie(entryParts) {
 
   if (beneficiary.toLowerCase().includes('amazon')) {
     return 'amazon';
-  }
-
-  if (purpose.toLowerCase().includes('lohn/gehalt')) {
-    return 'income';
   }
 
   if (purpose.toLowerCase().includes('takeaway.com') ||
@@ -64,8 +64,8 @@ function getEntrieCategorie(entryParts) {
     return 'food';
   }
 
-
   if (beneficiary.toLowerCase().includes('tankstelle') ||
+      beneficiary.toLowerCase().includes('classic') ||
       beneficiary.toLowerCase().includes('avia') ||
       beneficiary.toLowerCase().includes('shell') ||
       beneficiary.toLowerCase().includes('aral') ||
@@ -73,6 +73,7 @@ function getEntrieCategorie(entryParts) {
       beneficiary.toLowerCase().includes('famila tank') ||
       beneficiary.toLowerCase().includes('esso') || 
       beneficiary.toLowerCase().includes('warnowquerung') ||
+      beneficiary.toLowerCase().includes('mecklenburgische') ||
       purpose.toLowerCase().includes('kfz-kauf')) {
     return 'gas';
   }

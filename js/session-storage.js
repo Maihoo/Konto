@@ -8,6 +8,7 @@ function clearSessionStorage() {
   sessionStorage.setItem('settingsVertical', '');
   sessionStorage.setItem('sortType', '');
   sessionStorage.setItem('groupByCategory', '');
+  sessionStorage.setItem('showInvestments', '');
   sessionStorage.setItem('spreadMonthlyIncomeTo', '');
   sessionStorage.setItem('verticalScaleFactor', '');
   sessionStorage.setItem('zoomLevel', '');
@@ -131,6 +132,17 @@ function getFromSessionStorage() {
     } else {
       groupByCategory = false;
       document.getElementById('group-category-input').removeAttribute('checked');
+    }
+  }
+
+  sessionValue = sessionStorage.getItem('showInvestments');
+  if (sessionValue && sessionValue.length > 0) {
+    if (sessionValue === 'true') {
+      showInvestments = true;
+      document.getElementById('show-investments-input').setAttribute('checked', 'checked');
+    } else {
+      showInvestments = false;
+      document.getElementById('show-investments-input').removeAttribute('checked');
     }
   }
 

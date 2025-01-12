@@ -216,6 +216,13 @@
                   <span class="switch-slider"></span>
                 </label>
               </div>
+              <div class="buttonwrapper">
+                <span>show investment</span>
+                <label class="switch">
+                  <input id="show-investments-input" type="checkbox" checked="checked" onclick="toggleShowInvestments()">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
               <div class="buttonwrapper extra-padding">
                 <span>spread income to</span>
                 <input id="spread-income-to" type="text" placeholder="⊘" class="custom-input custom-input--small" oninput="toggleSpreadMonthlyIncome(event)" onkeydown="toggleSpreadMonthlyIncome(event)">
@@ -236,7 +243,7 @@
               <div class="buttonwrapper">
                 <button onclick="resetSettings()" type="button" class="button">Reset</button>
               </div>
-              <div class="buttonwrapper extra-padding">
+              <div class="buttonwrapper special-padding">
                 Months
               </div>
             </div>
