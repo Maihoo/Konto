@@ -15,7 +15,7 @@ function clearSessionStorage() {
   sessionStorage.setItem('legendMultiplyer', '');
 
   for (let i = 0; i < categories.length; i++) {
-    sessionStorage.setItem('toggle-' + categories[i], false);
+    sessionStorage.setItem('toggle-' + categories[i], 'true');
   }
 }
 
@@ -83,11 +83,11 @@ function getFromSessionStorage() {
 
   let allValues = [];
   for (let i = 0; i < categories.length; i++) {
-    allValues.push(sessionStorage.getItem('toggle-' + categories[i]) !== 'true');
+    allValues.push(sessionStorage.getItem('toggle-' + categories[i]) === 'false');
     if (allValues[allValues.length - 1]) {
-      document.getElementById('toggle-' + categories[i]).setAttribute('checked', 'checked');
-    } else {
       document.getElementById('toggle-' + categories[i]).removeAttribute('checked');
+    } else {
+      document.getElementById('toggle-' + categories[i]).setAttribute('checked', 'checked');
     }
   }
 

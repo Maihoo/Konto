@@ -22,10 +22,12 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "13.895,29";
+const startbudgetString = "14.171,84";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 700;
 const categories = ['monthly', 'income', 'cash', 'amazon', 'paypal', 'food', 'takeout', 'gas', 'others'];
 
 let activeCategories = {
@@ -43,7 +45,7 @@ let activeCategories = {
 const constantPositions = [
   '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
-  '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"5000";"EUR";""',
+  '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"5214";"EUR";""',
   '"DE45150505001101110771";"21.10.24";"21.10.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
   '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"27.09.24";"27.09.24";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""'
@@ -64,13 +66,16 @@ const replacements = [
 ]
 
 const permanentReplacements = [
-  ['"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"',
-   '"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-6000,00";"EUR";"Umsatz gebucht"'
+  ['"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-6000,00";"EUR";"Umsatz gebucht"'
   ],
   ['"DE45150505001101110771";"23.09.24";"23.09.24";"BARGELDAUSZAHLUNG";"2024-09-23T11:46 Debitk.4 2028-12 ";"";"";"00002008424076230924114638";"";"";"";"OSPA ROST.//OstseeSparkasse Rostock/DE";"DE30130500009000481403";"NOLADE21ROS";"-1000,00";"EUR";"Umsatz gebucht"'
   ],
-  ['"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"1190,00";"EUR";"Umsatz gebucht"',
-   '"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"190,00";"EUR";"Umsatz gebucht"'
+  ['"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"1190,00";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"190,00";"EUR";"Umsatz gebucht"'
+  ],
+  ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-1189,98";"EUR";"Umsatz gebucht"'],
+  ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-289,98";"EUR";"Umsatz gebucht"'
   ],
   ['"DE45150505001101110771";"01.10.24";"01.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung DATUM 01.10.2024, 15.31 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"02.10.24";"02.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (2/5) DATUM 02.10.2024, 11.45 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
@@ -78,20 +83,23 @@ const permanentReplacements = [
   ['"DE45150505001101110771";"07.10.24";"07.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (4/5) DATUM 05.10.2024, 18.48 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"08.10.24";"08.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (5/5) DATUM 08.10.2024, 08.39 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'
   ],
+  ['"DE45150505001101110771";"06.11.24";"06.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 900,00 EU R vom 05.11 15:48 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000160051124154817000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"900,00";"EUR";"Umsatz gebucht"'
+  ],
   ['"DE45150505001101110771";"21.11.24";"21.11.24";"ONLINE-UEBERWEISUNG";"XA5TDUCRU5F8IBBHY3MD2AQSXB, CHOSAY UG haftungsbeschrae nkt, rfptC1iGNDTSJBT2yo6MTd ee8 DATUM 20.11.2024, 23.00 UHR ";"";"";"";"";"";"";"Klarna Bank AB (publ)";"DE61100103009269215519";"KLRNDEBEXXX";"-630,00";"EUR";"Umsatz gebucht"'
   ],
-  ['"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"640,00";"EUR";"Umsatz gebucht"',
-   '"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"10,00";"EUR";"Umsatz gebucht"'
+  ['"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"640,00";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"10,00";"EUR";"Umsatz gebucht"'
   ],
-  ['"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-651,93";"EUR";"Umsatz gebucht"',
-   '"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-1,93";"EUR";"Umsatz gebucht"'
+  ['"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-651,93";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-1,93";"EUR";"Umsatz gebucht"'
   ],
   ['"DE45150505001101110771";"02.12.24";"02.12.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 650,00 EU R vom 01.12 21:41 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000213011224214138000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"650,00";"EUR";"Umsatz gebucht"'
   ],
-  ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-1189,98";"EUR";"Umsatz gebucht"'],
-  ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-289,98";"EUR";"Umsatz gebucht"'
-  ]  ,
-  ['"DE45150505001101110771";"06.11.24";"06.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 900,00 EU R vom 05.11 15:48 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000160051124154817000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"900,00";"EUR";"Umsatz gebucht"']
+  ['"DE45150505001101110771";"20.02.25";"20.02.25";"KARTENZAHLUNG";"2025-02-19T10:43 Debitk.4 2028-12 ";"";"";"60375330001812190225104355";"";"";"";"SHELL-AUTOSERVICE//Rostock/DE";"DE49130500000205030602";"NOLADE21ROS";"-1593,73";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"20.02.25";"20.02.25";"KARTENZAHLUNG";"2025-02-19T10:43 Debitk.4 2028-12 ";"";"";"60375330001812190225104355";"";"";"";"SHELL-AUTOSERVICE//Rostock/DE";"DE49130500000205030602";"NOLADE21ROS";"-1004,93";"EUR";"Umsatz gebucht"'
+  ],
+  ['"DE45150505001101110771";"25.02.25";"24.02.25";"ECHTZEIT-GUTSCHRIFT";"INSTANT TRANSFER ";"";"";"25022422504892454";"";"";"";"PAYPAL";"LU947510261215211218";"PPLXLUL2XXX";"588,80";"EUR";"Umsatz gebucht"'
+  ]
 ]
 
 // path drawing
@@ -262,6 +270,13 @@ function resetHTML() {
   zoomingWrapper = document.getElementById('zoomingWrapper');
   settingsElement = document.getElementById('settings');
 
+  document.getElementById('overflowrapper').style.width = CANVAS_WIDTH + 'px';
+  document.getElementById('overflowrapper').style.height = CANVAS_HEIGHT + 'px';
+  document.getElementById('zoomingWrapper').style.width = CANVAS_WIDTH + 'px';
+  document.getElementById('zoomingWrapper').style.height = CANVAS_HEIGHT + 'px';
+  document.getElementById('movingWrapper').style.width = CANVAS_WIDTH + 'px';
+  document.getElementById('movingWrapper').style.height = CANVAS_HEIGHT + 'px';
+
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
   pathBlurCanvas.style.opacity = '0%';
@@ -283,16 +298,29 @@ function resetHTML() {
   pathCanvas.style.marginLeft = '';
   pathBlurCanvas.style.marginTop = '';
   pathBlurCanvas.style.marginLeft = '';
-  uiCanvasVertical.style.marginTop = '';
   uiCanvasVertical.style.marginLeft = '';
   uiCanvasHorizontal.style.marginTop = '';
   uiCanvasHorizontal.style.marginLeft = '';
 
+  uiPopup.style.marginTop = - CANVAS_HEIGHT + 'px';
+  uiCanvasVertical.style.marginTop = CANVAS_WIDTH + 'px';
+  pathCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
+  pathCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
+  pathBlurCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
+  pathBlurCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
   uiline.style.marginLeft = '';
-  uiline.style.marginTop = '-600px';
+  uiline.style.width = (2 * CANVAS_WIDTH) + 'px';
+  uiline.style.height = (2 * CANVAS_HEIGHT) + 'px';
+  uiline.style.marginTop = - CANVAS_HEIGHT + 'px';
+  uiline.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
+  uiline.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
   uilinetemp.style.marginLeft = '';
-  uilinetemp.style.marginTop = '-600px';
-  uiCanvasVertical.style.marginTop = '-600px';
+  uilinetemp.style.marginTop = '-700px';
+  uilinetemp.style.width = (2 * CANVAS_WIDTH) + 'px';
+  uilinetemp.style.height = (2 * CANVAS_HEIGHT) + 'px';
+  uilinetemp.style.marginTop = - CANVAS_HEIGHT + 'px';
+  uilinetemp.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
+  uilinetemp.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
 
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend-' + categories[i] + '-negative').innerHTML = '';
@@ -329,17 +357,14 @@ function initDrawing() {
 
       setAmounts();
       setDates();
-      console.log('canvas', Date.now() - ts);
     });
 
     requestIdleCallback(() => {
       drawLegends();
-      console.log('legend', Date.now() - ts);
     });
 
     requestIdleCallback(() => {
       drawTable();
-      console.log('table', Date.now() - ts);
     });
 
     document.getElementById('spinner-element').style.display = 'none';
@@ -411,7 +436,7 @@ function hidePathBlurTop() {
 
 function setAmounts() {
   const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  uiCanvasVertical.style.marginTop = -(EXTRAAREA + 600) + 'px';
+  uiCanvasVertical.style.marginTop = -(EXTRAAREA + CANVAS_HEIGHT) + 'px';
   let valueTop = document.createElement('p');
   valueTop.id = 'ui-element-value-top';
   valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
@@ -591,13 +616,14 @@ function drawCanvas() {
 
   const fragment = document.createDocumentFragment();
 
+  const performanceMode = dates.length > 1000;
   for (let i = dates.length - 1; i >= 0; i--) {
     let entries = allTextLines[i].split(';');
     const entry = dates[i];
-    const lastTotalValue = valueToMarginTop(dates[i - (i === 0 ? 0 : 1)].total);
+    const lastTotalValue = valueToMarginTop(dates[(i === 0 ? 0 : i - 1)].total);
     const totalValue = valueToMarginTop(entry.total);
     let nextTotalValue = valueToMarginTop(dates[i + 1]?.total);
-    if (!nextTotalValue) {
+    if (!nextTotalValue || isNaN(nextTotalValue)) {
       nextTotalValue = totalValue;
     }
 
@@ -609,24 +635,42 @@ function drawCanvas() {
     }
 
     const square = document.createElement('div');
-    Object.assign(square.style, {
-      height: `${Math.abs(value)}px`,
-      marginTop: `${(amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue}px`
-    });
-
     square.className = 'square';
-    if (diffDays > 0) { square.id = `linePoint${i * 2}`; }
-
-    // Fill empty days
     const category = getEntrieCategorie(entries);
+    if (diffDays > 0) {
+      square.id = `linePoint${i * 2}`;
+    }
+
+    if (performanceMode) {
+      square.classList.add('square-relative')
+      const amountSign = amountValue.charAt(0) === '-' ? -1 : 1;
+      const xPosition = paddingLeft - (lastDayDiff * dayWidth) + fgOffset;
+      Object.assign(square.style, {
+        height: `${Math.abs(value).toFixed(2)}px`,
+        width: `${(dayWidth - fgOffset).toFixed(2)}px`,
+        marginLeft: `${(xPosition - dayWidth).toFixed(2)}px`,
+        marginTop: `${parseFloat((-value * (amountSign + 1)).toFixed(2)) + 0.02}px`,
+        transform: `translateY(${(amountSign > 0 ? Math.abs(value) : 0).toFixed(2)}px)`
+      });
+      // set correct height to the "first" square
+      if (i === dates.length - 1) {
+        square.style.marginTop = `${valueToMarginTop(dates[dates.length - 1].total)}px`;
+      }
+    } else {
+      Object.assign(square.style, {
+        height: `${Math.abs(value)}px`,
+        marginTop: `${(amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue}px`
+      });
+    }
+    // Fill empty days
     if (diffDays > 1 && sortType !== 'amount' && i < dates.length - 1) {
       const placeholder = document.createElement('div');
-      placeholder.className = 'square';
+      placeholder.className = 'square placeholder';
       placeholder.classList.add(`${category}-background`);
       Object.assign(placeholder.style, {
         height: '1px',
         width: `${(diffDays - 1) * dayWidth}px`,
-        marginTop: `${nextTotalValue}px`,
+        marginTop: `${performanceMode ? 0 : nextTotalValue}px`,
         marginLeft: `${paddingLeft - ((lastDayDiff - 1) * dayWidth)}px`
       });
       fragment.appendChild(placeholder);
@@ -703,6 +747,7 @@ function setupHover(square, amountValue, date) {
     popup.classList.add('fade');
     popup.style.top = `${event.clientY - moveOffsetY - 50}px`;
     popup.style.left = `${event.clientX - moveOffsetX + 5}px`;
+    popup.style.marginTop =  `${window.scrollY}px`;
 
     // Update popup content
     const dateParts = allTextLines[this.index].split(';')[selectors.date].slice(1, -1).split('.');
@@ -712,7 +757,7 @@ function setupHover(square, amountValue, date) {
       <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
       <p class="popupText">Value: ${amountValue}</p>
       <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[this.index].split(';')[selectors.total].slice(1, -1)))}</p>
-      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.style.marginTop)) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</p>
+      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</p>
       <p class="popupText">Category: ${square.category}</p>
     `;
   };
@@ -837,61 +882,60 @@ function drawTable() {
 
   const fragment = document.createDocumentFragment();
   const lines = [firstLine, ...allTextLines];
-  lines.forEach((line, i) => {
-    const entries = line.split(';');
-    const row = document.createElement('div');
 
-    row.id = `row${i}`;
-    row.className = 'row';
-
-    // Header Row Styles
-    if (i === 0) {
-      row.classList.add('header-row');
-    }
+  // Cache CSS classes and properties
+  const rowHolder = document.createElement('div');
+  rowHolder.className = 'row-holder';
 
     // Create and append cells in the specified order
-    const cellConfigs = [
-      { index: 0, width: '2.5vw', align: 'end', isIndex: true },
-      { index: selectors.date, width: '7vw', align: 'end' },
-      { index: selectors.content, width: '10vw' },
-      { index: selectors.purpose, width: '30vw' },
-      { index: selectors.beneficiary, width: '26vw' },
-      { index: selectors.category, width: '4vw' },
-      { index: selectors.total, width: '4vw', align: 'end' },
-      { index: selectors.amount, width: 'auto', align: 'end' }
-    ];
+  const cellConfigs = [
+    { index: 0, width: '2.5vw', align: 'end', isIndex: true },
+    { index: selectors.date, width: '7vw', align: 'end' },
+    { index: selectors.content, width: '10vw' },
+    { index: selectors.purpose, width: '30vw' },
+    { index: selectors.beneficiary, width: '24vw' },
+    { index: selectors.category, width: '4vw' },
+    { index: selectors.amount, width: 'auto', align: 'end' },
+    { index: selectors.total, width: '4vw', align: 'end' }
+  ];
 
-    cellConfigs.forEach(({ index, width, align, isIndex }) => {
+  // Main table construction
+  for (let i = 0; i < lines.length; i++) {
+    const entries = lines[i].split(';');
+    const row = document.createElement('div');
+    const isHeader = i === 0;
+    // Row setup
+    row.id = `row${i}`;
+    row.className = `row${isHeader ? ' header-row' : ''}`;
+    // Create cells
+    for (const config of cellConfigs) {
       const cell = document.createElement('p');
-      cell.innerHTML = isIndex ? (i === 0 ? 'Index' : `${i}`) : entries[index].slice(1, -1);
       cell.className = 'cell';
-      if (width) cell.style.width = width;
-      if (align) cell.style.textAlign = align;
-
-      // Add conditional styles for amount
-      if (index === selectors.amount && i !== 0) {
+      // Cell content
+      cell.textContent = config.isIndex ? (isHeader ? 'Index' : `${i}`) : (entries[config.index]?.slice(1, -1) || '');
+      // Cell styling
+      let style = '';
+      if (config.width) style += `width:${config.width};`;
+      if (config.align) style += `text-align:${config.align};`;
+      cell.style.cssText = style;
+      // Special amount handling
+      if (config.index === selectors.amount && !isHeader) {
         cell.style.flexGrow = '1';
-        const amountValue = entries[index];
-        cell.classList.add(amountValue.charAt(1) !== '-' ? 'positive-background' : 'negative-background');
+        const amount = entries[config.index] || '';
+        cell.classList.add(amount.charAt(1) !== '-' ? 'positive-background' : 'negative-background');
       }
 
       row.appendChild(cell);
-    });
-
-    // Apply category-specific styles
-    const category = entries[selectors.category]?.slice(1, -1);
-    if (category) {
-      const categoryClass = `${category}-background-transparent`;
-      row.classList.add(categoryClass);
     }
+    // Category styling
+    const category = entries[selectors.category]?.slice(1, -1);
+    if (category) row.classList.add(`${category}-background-transparent`);
 
-    const rowHolder = document.createElement('div');
-    rowHolder.style.display = 'block';
-    rowHolder.style.paddingBottom = '1px';
-
-    rowHolder.appendChild(row);
-    fragment.appendChild(rowHolder);
-  });
+    // Add to fragment
+    const clone = rowHolder.cloneNode();
+    clone.appendChild(row);
+    fragment.appendChild(clone);
+  }
 
   table.appendChild(fragment);
 }

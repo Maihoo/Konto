@@ -11,7 +11,7 @@ function initTextLines() {
     return item !== '' && item !== '.';
   });
 
-  firstLine = '"index";' + allTextLines[0] + ';"Category";"Total";"Amount"';
+  firstLine = allTextLines[0] + ';"Category";"Total";"Amount"';
 
   // insert replacements
   for (let i = 0; i < replacements.length; i++) {

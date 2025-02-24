@@ -452,7 +452,7 @@ function handleDragClick(event) {
     circle.hovered = '0';
     circle.className = 'circle'
     circle.id = 'circle' + (uiLine.index + 0);
-    circle.style.top = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - 600) + 'px';
+    circle.style.top = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - CANVAS_HEIGHT) + 'px';
     circle.style.left = parseInt(event.clientX - $('#uiline').offset().left - 6) + 'px';
 
     circle.onmouseover = function(e) {
