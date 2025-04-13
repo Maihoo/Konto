@@ -12,6 +12,7 @@ function resetControls() {
   replace('toggle-gas'),
   replace('toggle-others'),
 
+  zoomLevel = 1.0;
   handleZoomScroll(true);
   handleZoomScroll(false);
 }
@@ -26,7 +27,7 @@ function replace(id) {
 
 function initControls() {
   resetControls();
-  let overflowrapper = document.getElementById('overflowrapper');
+  let overflowWrapper = document.getElementById('overflowWrapper');
 
   // disable scrolling while in legend window
   document.getElementById('legend').addEventListener('scroll', (event) => {
@@ -51,11 +52,11 @@ function initControls() {
   document.getElementById('toggle-others').addEventListener('mousedown', handleToggleClick);
 
   // drag move
-  overflowrapper.onclick = handleDragClick;
-  overflowrapper.onmousedown = handleDragMouseDown;
+  overflowWrapper.onclick = handleDragClick;
+  overflowWrapper.onmousedown = handleDragMouseDown;
 
   // zooming
-  overflowrapper.onwheel = (event) => { handleZoomScroll(event.deltaY < 0); event.preventDefault(); }
+  overflowWrapper.onwheel = (event) => { handleZoomScroll(event.deltaY < 0); event.preventDefault(); }
 
   // Range Slider
   initRangeSlider0();
@@ -259,7 +260,7 @@ function initColorPickers() {
 
 function updateBackgroundColor(color) {
   sessionStorage.setItem('backgroundColor', color);
-  document.getElementById('overflowrapper').style.backgroundColor = color;
+  document.getElementById('overflowWrapper').style.backgroundColor = color;
   document.getElementById('settings').style.backgroundColor = color;
   document.body.style.backgroundColor = color;
   less.modifyVars({'@custom-background-color': color});
@@ -387,11 +388,11 @@ function toggleGrid() {
 function handleEscape(event) {
   if (event.key === 'Escape') {
     linepoint = [];
-    overflowrapper.style.cursor = '';
-    let uiLine = document.getElementById('uiline');
-    let uilinetemp = document.getElementById('uilinetemp');
-    let uiltCtx = uilinetemp.getContext('2d');
-    uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+    overflowWrapper.style.cursor = '';
+    let uiLine = document.getElementById('uiLine');
+    let uiLineTemp = document.getElementById('uiLineTemp');
+    let uiltCtx = uiLineTemp.getContext('2d');
+    uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
     if (!uiLine.index) {
       uiLine.index = 0;
     }
@@ -407,80 +408,79 @@ function handleDragClick(event) {
     return;
   }
 
-  let uiLine = document.getElementById('uiline');
-  let uilinetemp = document.getElementById('uilinetemp');
+  let uiLine = document.getElementById('uiLine');
+  let uiLineTemp = document.getElementById('uiLineTemp');
 
   if (linepoint.length === 0) {
-    overflowrapper.style.cursor = 'crosshair';
-    linepoint.push(event.clientX);
-    linepoint.push(event.clientY + window.scrollY);
+    overflowWrapper.style.cursor = 'crosshair';
+    linepoint.push(cursorPosToMargin(event.clientX, 'left'));
+    linepoint.push(cursorPosToMargin(event.clientY, 'top'));
     document.onmousemove = (event) => handlePrediction(event);
     document.addEventListener('keydown', handleEscape);
   } else {
     // finish prediction line
-    let uiltCtx = uilinetemp.getContext('2d');
-    uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
-    drawLine( uiltCtx,
-              parseInt(linepoint[0] - $('#uiline').offset().left),
-              parseInt(linepoint[1] - $('#uiline').offset().top ),
-              parseInt(event.clientX - $('#uiline').offset().left),
-              parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
-              'rgba(255, 0, 0, 0.5)',
-              1);
+    let uiltCtx = uiLineTemp.getContext('2d');
+    uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
+    drawLine(uiltCtx,
+      parseInt(linepoint[0]),
+      parseInt(linepoint[1]),
+      cursorPosToMargin(event.clientX, 'left'),
+      cursorPosToMargin(event.clientY, 'top'),
+      'rgba(255, 0, 0, 0.5)'
+    );
 
-    overflowrapper.style.cursor = '';
-    uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+    overflowWrapper.style.cursor = '';
+    uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
     if (!uiLine.index) {
       uiLine.index = 0;
     }
 
     uiLine.index = parseInt(uiLine.index) + 1;
-    ctx = uiLine.getContext('2d');
-    drawLine( ctx,
-              parseInt(linepoint[0] - $('#uiline').offset().left),
-              parseInt(linepoint[1] - $('#uiline').offset().top ),
-              parseInt(event.clientX - $('#uiline').offset().left),
-              parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
-              'rgba(255, 0, 0, 0.5)',
-              2);
+    drawLine(uiLine.getContext('2d'),
+      parseInt(linepoint[0]),
+      parseInt(linepoint[1]),
+      cursorPosToMargin(event.clientX, 'left'),
+      cursorPosToMargin(event.clientY, 'top'),
+      'rgba(255, 0, 0, 0.5)',
+      2
+    );
     linepoint = [];
 
     document.onmousemove = () => {};
 
     // Adding Popups
     let circle = document.createElement('div');
-    circle.hovered = '0';
     circle.className = 'circle'
-    circle.id = 'circle' + (uiLine.index + 0);
-    circle.style.top = (parseInt(event.clientY - $('#uiline').offset().top  - 6 + window.scrollY) - CANVAS_HEIGHT) + 'px';
-    circle.style.left = parseInt(event.clientX - $('#uiline').offset().left - 6) + 'px';
+    circle.style.top = (cursorPosToMargin(event.clientY, 'top', '#canvas') - 6 - 0) + 'px';
+    circle.style.left = (cursorPosToMargin(event.clientX, 'left', '#canvas') - 6) + 'px';
 
-    circle.onmouseover = function(e) {
-      let pop = document.getElementById('popupCircle' + uiLine.index);
-      pop.style.top = (e.clientY + window.scrollY - 100) + 'px';
-      pop.style.left = (e.clientX + 5) + 'px';
-      pop.style.position = 'absolute';
-      pop.style.opacity = '100%';
-      pop.style.zIndex = '210';
-      this.hovered = '1';
+    circle.onmouseover = function(event) {
+      const popup = document.getElementById('singlePopup'); // Get the single popup element
+      popup.classList.add('fade');
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+      popup.style.marginTop = `${window.scrollY}px`;
+
+      // Update popup content
+      const dateParts = pxToDate(circle.style.left).split('.');
+      popup.innerHTML = `
+        <p class="popupText">Index: ${uiLine.index}</p>
+        <p class="popupText">Date: ${pxToDate(circle.style.left)}</p>
+        <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
+        <p class="popupText">Total: ${numberToCurrency(parseFloat(pxToValue(parseFloat(circle.style.top.slice(0, -2)) + 6 + 'px')))}</p>
+      `;
+    };
+
+    circle.onmousemove = function(event) {
+      let popup = document.getElementById('singlePopup');
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
     };
 
     circle.onmouseout = function() {
-      let pop = document.getElementById('popupCircle' + uiLine.index);
-      pop.style.opacity = '0%';
-      pop.style.zIndex = '-1';
-      this.hovered = '0';
+      document.getElementById('singlePopup').classList.remove('fade');
     };
 
-    let popup = document.createElement('div');
-    popup.innerHTML = '<p class="popupText">Index: ' + uiLine.index + '</p>'
-                    + '<p class="popupText">Date: ' + pxToDate(circle.style.left) + '</p>'
-                    + '<p class="popupText">Total: ' + numberToCurrency(pxToValue(circle.style.top)) + '</p>';
-    popup.id = 'popupCircle' + uiLine.index;
-    popup.className = 'popup';
-    popup.style.position = 'absolute';
-
-    uiPopup.appendChild(popup);
     canvas.appendChild(circle);
   }
 }
@@ -529,7 +529,7 @@ function toggleSort() {
 
 function handleDragMouseDown(event) {
   if (event.button !== 0) {
-    overflowrapper.onmousemove = undefined;
+    overflowWrapper.onmousemove = undefined;
     return;
   }
 
@@ -539,10 +539,10 @@ function handleDragMouseDown(event) {
   dragstartYstorage = event.clientY;
   ts1 = Date.now();
   document.onmouseup = function() {
-    overflowrapper.onmousemove = undefined;
+    overflowWrapper.onmousemove = undefined;
   }
 
-  overflowrapper.onmousemove = function(event) {
+  overflowWrapper.onmousemove = function(event) {
     if (Date.now() - ts2 > 20 && dragstartX !== event.clientX && dragstartY !== event.clientY) {
       ts2 = Date.now();
       let clientX = event.clientX;
@@ -720,14 +720,14 @@ function setColorUnset() {
 }
 
 function handlePrediction(event) {
-  let uilinetemp = document.getElementById('uilinetemp');
-  let uiltCtx = uilinetemp.getContext('2d');
-  uiltCtx.clearRect(0, 0, uilinetemp.width, uilinetemp.height);
+  let uiLineTemp = document.getElementById('uiLineTemp');
+  let uiltCtx = uiLineTemp.getContext('2d');
+  uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
   drawLine(uiltCtx,
-    parseInt(linepoint[0] - $('#uiline').offset().left),
-    parseInt(linepoint[1] - $('#uiline').offset().top ),
-    parseInt(event.clientX - $('#uiline').offset().left),
-    parseInt(event.clientY + window.scrollY - $('#uiline').offset().top ),
-    'rgba(255, 0, 0, 0.5)',
-    1);
+    parseInt(linepoint[0]),
+    parseInt(linepoint[1]),
+    cursorPosToMargin(event.clientX, 'left'),
+    cursorPosToMargin(event.clientY, 'top'),
+    'rgba(255, 0, 0, 0.5)'
+  );
 }

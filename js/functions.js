@@ -38,15 +38,18 @@ function getEntrieCategorie(entryParts) {
     return 'monthly';
   }
 
-  if (beneficiary.toLowerCase().includes('amazon')) {
+  if (beneficiary.toLowerCase().includes('amazon') ||
+      purpose.toLowerCase().includes('aliexpress') ||
+      purpose.toLowerCase().includes('temu.com')) {
     return 'amazon';
   }
-
+  
   if (beneficiary.toLowerCase().includes('hot chickeria') ||
       beneficiary.toLowerCase().includes('b sieben') ||
       beneficiary.toLowerCase().includes('mcdonalds') ||
       beneficiary.toLowerCase().includes('restaurant') ||
       beneficiary.toLowerCase().includes('pizza') ||
+      purpose.toLowerCase().includes('burgerme') ||
       purpose.toLowerCase().includes('takeaway.com')) {
     return 'takeout';
   }
@@ -128,6 +131,14 @@ function valueToMarginTop(value) {
   return 550 - pixel;
 }
 
+function cursorPosToMargin(cursorPos, orientation = 'top', parentSelector = '#uiLine') {
+  if (orientation === 'top') {
+    return parseInt((cursorPos - $(parentSelector).offset().top) / zoomLevel + window.scrollY );
+  } else {
+    return parseInt((cursorPos - $(parentSelector).offset().left) / zoomLevel);
+  }
+}
+
 function parseDate(dateString) {
   const parts = dateString.split('.');
   if (parts.length < 3) return null;
@@ -179,10 +190,10 @@ function formatNumber(number) {
   return formattedNumber;
 }
 
-function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1) {
+function drawLine(ctx, x1, y1, x2, y2, stroke = 'black', width = 1, zoomFactor = 1) {
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
+  ctx.moveTo(x1 / zoomFactor, y1 / zoomFactor);
+  ctx.lineTo(x2 / zoomFactor, y2 / zoomFactor);
   ctx.strokeStyle = stroke;
   ctx.lineWidth = width;
   ctx.stroke();
@@ -196,7 +207,7 @@ function getDayOfWeek(day, month, year) {
 }
 
 function clearLines() {
-  let uiLine = document.getElementById('uiline');
+  let uiLine = document.getElementById('uiLine');
   ctx = uiLine.getContext('2d');
   ctx.clearRect(0, 0, uiLine.width, uiLine.height);
   let circles = document.getElementsByClassName('circle');

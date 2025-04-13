@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "14.171,84";
+const startbudgetString = "9.302,85";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -43,12 +43,12 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""',
+  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
+  '"DE45150505001101110771";"04.03.25";"04.03.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"5214";"EUR";""',
   '"DE45150505001101110771";"21.10.24";"21.10.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
-  '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"27.09.24";"27.09.24";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Till";"";"";"0";"EUR";""'
+  '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""'
 ];
 
 const selectors= {
@@ -62,44 +62,63 @@ const selectors= {
 };
 
 const replacements = [
-  selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1400'
+  // selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1400'
 ]
 
 const permanentReplacements = [
+  // Autokauf Teil 1
   ['"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'
   ,'"DE45150505001101110771";"13.09.24";"13.09.24";"ONLINE-UEBERWEISUNG";"KFZ-Kauf DATUM 12.09.2024, 22.32 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-6000,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // ?
   ['"DE45150505001101110771";"23.09.24";"23.09.24";"BARGELDAUSZAHLUNG";"2024-09-23T11:46 Debitk.4 2028-12 ";"";"";"00002008424076230924114638";"";"";"";"OSPA ROST.//OstseeSparkasse Rostock/DE";"DE30130500009000481403";"NOLADE21ROS";"-1000,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an Till #1
   ['"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"1190,00";"EUR";"Umsatz gebucht"'
   ,'"DE45150505001101110771";"25.09.24";"25.09.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 1.190,00 EU R vom 24.09 17:07 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000134240924170735000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"190,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an Till #1 (Fahrrad) Teil 1
   ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-1189,98";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"27.09.24";"27.09.24";"FOLGELASTSCHRIFT";"P02-4824442-5224501 amzn.com/pmts 1EG1WI6EGXLES6VR ";"DE94ZZZ00000561653";".2(U+XKYH+Kr8:MAIgvW5rDWlF0Z:1";"1EG1WI6EGXLES6VR";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-289,98";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Autokauf Teil 2
   ['"DE45150505001101110771";"01.10.24";"01.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung DATUM 01.10.2024, 15.31 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"02.10.24";"02.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (2/5) DATUM 02.10.2024, 11.45 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"04.10.24";"04.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (3/5) DATUM 04.10.2024, 13.54 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"07.10.24";"07.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (4/5) DATUM 05.10.2024, 18.48 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'],
   ['"DE45150505001101110771";"08.10.24";"08.10.24";"ONLINE-UEBERWEISUNG";"Darlehnsrückzahlung (5/5) DATUM 08.10.2024, 08.39 UHR ";"";"";"";"";"";"";"Jens Stadtaus";"DE50200300000096928606";"HYVEDEMM300";"-1000,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an Till #1 (Fahrrad) Teil 2
   ['"DE45150505001101110771";"06.11.24";"06.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 900,00 EU R vom 05.11 15:48 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000160051124154817000000";"";"";"";"OstseeSparkasse Rostock";"DE08130500009000481411";"NOLADE21ROS";"900,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an Till #2 Teil 1
   ['"DE45150505001101110771";"21.11.24";"21.11.24";"ONLINE-UEBERWEISUNG";"XA5TDUCRU5F8IBBHY3MD2AQSXB, CHOSAY UG haftungsbeschrae nkt, rfptC1iGNDTSJBT2yo6MTd ee8 DATUM 20.11.2024, 23.00 UHR ";"";"";"";"";"";"";"Klarna Bank AB (publ)";"DE61100103009269215519";"KLRNDEBEXXX";"-630,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an Till #2 Teil 2
   ['"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"640,00";"EUR";"Umsatz gebucht"'
   ,'"DE45150505001101110771";"25.11.24";"25.11.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 640,00 EU R vom 22.11 17:27 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000322221124172741000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"10,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an TIll #3 Teil 1
   ['"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-651,93";"EUR";"Umsatz gebucht"'
   ,'"DE45150505001101110771";"04.12.24";"04.12.24";"FOLGELASTSCHRIFT";"1038640074592/PP.4616.PP/. QASHCONCEPTS, Ihr Einkauf bei QASHCONCEPTS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1038640074592";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-1,93";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Leihung an TIll #3 Teil 2
   ['"DE45150505001101110771";"02.12.24";"02.12.24";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 650,00 EU R vom 01.12 21:41 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000213011224214138000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"650,00";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Auto Reparatur Teil 1
   ['"DE45150505001101110771";"20.02.25";"20.02.25";"KARTENZAHLUNG";"2025-02-19T10:43 Debitk.4 2028-12 ";"";"";"60375330001812190225104355";"";"";"";"SHELL-AUTOSERVICE//Rostock/DE";"DE49130500000205030602";"NOLADE21ROS";"-1593,73";"EUR";"Umsatz gebucht"'
   ,'"DE45150505001101110771";"20.02.25";"20.02.25";"KARTENZAHLUNG";"2025-02-19T10:43 Debitk.4 2028-12 ";"";"";"60375330001812190225104355";"";"";"";"SHELL-AUTOSERVICE//Rostock/DE";"DE49130500000205030602";"NOLADE21ROS";"-1004,93";"EUR";"Umsatz gebucht"'
-  ],
+  ], // Auto Reparatur Teil 2
   ['"DE45150505001101110771";"25.02.25";"24.02.25";"ECHTZEIT-GUTSCHRIFT";"INSTANT TRANSFER ";"";"";"25022422504892454";"";"";"";"PAYPAL";"LU947510261215211218";"PPLXLUL2XXX";"588,80";"EUR";"Umsatz gebucht"'
-  ]
+  ], // Leihung Till #4 (Macbook & Synth) Teil 1
+  ['"DE45150505001101110771";"03.03.25";"03.03.25";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 2.730,00 EU R vom 28.02 19:10 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000761280225191059000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"2730,00";"EUR";"Umsatz gebucht"'
+  ,'"DE45150505001101110771";"03.03.25";"03.03.25";"BARGELDEINZAHLUNG SB";"SB-Einzahlung 2.730,00 EU R vom 28.02 19:10 / OSPA RO ST. GA 13050000 2320 Karte 1101110771 / 2812 / 0 / 4 ABWA+ OstseeSparkasse Rostock / /Rostock 180 57 ";"";"";"EIN00002320000761280225191059000000";"";"";"";"OstseeSparkasse Rostock";"DE30130500009000481403";"NOLADE21ROS";"193,51";"EUR";"Umsatz gebucht"'
+  ], // Leihung Till #4 (Synth) Teil 2
+  ['"DE45150505001101110771";"04.03.25";"04.03.25";"FOLGELASTSCHRIFT";"1040579923866/. Thomann GmbH, Ihr Einkauf bei Thomann GmbH ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1040579923866";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-399,00";"EUR";"Umsatz gebucht"'
+  ], // Leihung Till #4 (Macbook) Teil 3
+  ['"DE45150505001101110771";"04.03.25";"04.03.25";"FOLGELASTSCHRIFT";"1040579707249 . Jung SAS, Ihr Einkauf bei Jung SAS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1040579707249  PAYPAL";"";"";"";"PayPal (Europe) S.a r.l. et Cie, S.C.A.";"DE88500700100175526303";"DEUTDEFFXXX";"-2137,49";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (Kaution)
+  ['"DE45150505001101110771";"19.02.25";"19.02.25";"ONLINE-UEBERWEISUNG";"Finn Ole Stadtaus (Mietkaution) DATUM 19.02.2025, 11.34 UHR ";"";"";"";"";"";"";"Dammstuecken GbR";"DE12230510300511357782";"NOLADE21SHO";"-3075,00";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (IKEA)
+  ['"DE45150505001101110771";"17.03.25";"17.03.25";"KARTENZAHLUNG";"2025-03-15T19:52 Debitk.4 2028-12 ";"";"";"65437184144563150325195244";"";"";"";"IKEA DEUTSCHLAND GM//HAMBURG SCHNELSEN/DE";"DE74302201900042935573";"HYVEDEMM414";"-511,53";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (Waschmaschine)
+  ['"DE45150505001101110771";"25.03.25";"25.03.25";"ONLINE-UEBERWEISUNG";"CAZ-CTG-ZDK-W5E DATUM 25.03.2025, 08.42 UHR ";"";"";"";"";"";"";"OTTO Payments";"DE12201207003100990333";"HSTBDEHHXXX";"-358,94";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (Action 1)
+  ['"DE45150505001101110771";"18.03.25";"18.03.25";"KARTENZAHLUNG";"2025-03-15T16:13 Debitk.4 2028-12 ";"";"";"50742014069358150325151358";"";"";"";"Action 3366/Rathausallee 1/Norderstedt/DE";"DE29300600100005021573";"GENODEDDXXX";"-42,11";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (Action 2)
+  ['"DE45150505001101110771";"28.03.25";"28.03.25";"KARTENZAHLUNG";"2025-03-26T20:06 Debitk.4 2028-12 ";"";"";"50752879217407260325190649";"";"";"";"Action 3213/Gutenbergstrasse 5c/Henstedt-Ulzb/DE";"DE29300600100005021573";"GENODEDDXXX";"-98,41";"EUR";"Umsatz gebucht"'
+  ], // TEMP UMZUG ZEUG (Amazon)
+  ['"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE CBJ3IC3JUB9HUP8Z ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"CBJ3IC3JUB9HUP8Z";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-33,98";"EUR";"Umsatz gebucht"\n"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE 114JWS13U1HZ50V3 ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"114JWS13U1HZ50V3";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-109,99";"EUR";"Umsatz gebucht"\n"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE 2IDS63PGVON0EDD2 ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"2IDS63PGVON0EDD2";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-106,41";"EUR";"Umsatz gebucht"']
 ]
 
 // path drawing
@@ -182,11 +201,10 @@ let originalLeft;
 let canvas = document.getElementById('canvas');
 let pathCanvas = document.getElementById('pathCanvas');
 let pathBlurCanvas = document.getElementById('pathBlurCanvas');
-let uiline = document.getElementById('uiline');
+let uiLine = document.getElementById('uiLine');
 let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
-let uiPopup = document.getElementById('uiPopup');
 let zoomingWrapper = document.getElementById('zoomingWrapper');
 let settingsElement = document.getElementById('settings');
 
@@ -262,28 +280,28 @@ function resetHTML() {
   canvas = document.getElementById('canvas');
   pathCanvas = document.getElementById('pathCanvas');
   pathBlurCanvas = document.getElementById('pathBlurCanvas');
-  uiline = document.getElementById('uiline');
+  uiLine = document.getElementById('uiLine');
   uiCanvas = document.getElementById('uiCanvas');
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
-  uiPopup = document.getElementById('uiPopup');
+  movingWrapper = document.getElementById('movingWrapper');
+  overflowWrapper = document.getElementById('overflowWrapper');
   zoomingWrapper = document.getElementById('zoomingWrapper');
   settingsElement = document.getElementById('settings');
 
-  document.getElementById('overflowrapper').style.width = CANVAS_WIDTH + 'px';
-  document.getElementById('overflowrapper').style.height = CANVAS_HEIGHT + 'px';
-  document.getElementById('zoomingWrapper').style.width = CANVAS_WIDTH + 'px';
-  document.getElementById('zoomingWrapper').style.height = CANVAS_HEIGHT + 'px';
-  document.getElementById('movingWrapper').style.width = CANVAS_WIDTH + 'px';
-  document.getElementById('movingWrapper').style.height = CANVAS_HEIGHT + 'px';
+  overflowWrapper.style.width = CANVAS_WIDTH + 'px';
+  overflowWrapper.style.height = CANVAS_HEIGHT + 'px';
+  zoomingWrapper.style.width = CANVAS_WIDTH + 'px';
+  zoomingWrapper.style.height = CANVAS_HEIGHT + 'px';
+  movingWrapper.style.width = CANVAS_WIDTH + 'px';
+  movingWrapper.style.height = CANVAS_HEIGHT + 'px';
 
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
   pathBlurCanvas.style.opacity = '0%';
 
   canvas.innerHTML = '';
-  uiline.innerHTML = '';
-  uiPopup.innerHTML = '';
+  uiLine.innerHTML = '';
   uiCanvas.innerHTML = '';
   pathCanvas.innerHTML = '';
   pathBlurCanvas.innerHTML = '';
@@ -302,25 +320,24 @@ function resetHTML() {
   uiCanvasHorizontal.style.marginTop = '';
   uiCanvasHorizontal.style.marginLeft = '';
 
-  uiPopup.style.marginTop = - CANVAS_HEIGHT + 'px';
   uiCanvasVertical.style.marginTop = CANVAS_WIDTH + 'px';
   pathCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
   pathCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
   pathBlurCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
   pathBlurCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
-  uiline.style.marginLeft = '';
-  uiline.style.width = (2 * CANVAS_WIDTH) + 'px';
-  uiline.style.height = (2 * CANVAS_HEIGHT) + 'px';
-  uiline.style.marginTop = - CANVAS_HEIGHT + 'px';
-  uiline.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
-  uiline.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
-  uilinetemp.style.marginLeft = '';
-  uilinetemp.style.marginTop = '-700px';
-  uilinetemp.style.width = (2 * CANVAS_WIDTH) + 'px';
-  uilinetemp.style.height = (2 * CANVAS_HEIGHT) + 'px';
-  uilinetemp.style.marginTop = - CANVAS_HEIGHT + 'px';
-  uilinetemp.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
-  uilinetemp.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
+  uiLine.style.marginLeft = '';
+  uiLine.style.width = (2 * CANVAS_WIDTH) + 'px';
+  uiLine.style.height = (2 * CANVAS_HEIGHT) + 'px';
+  uiLine.style.marginTop = - CANVAS_HEIGHT + 'px';
+  uiLine.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
+  uiLine.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
+  uiLineTemp.style.marginLeft = '';
+  uiLineTemp.style.marginTop = '-700px';
+  uiLineTemp.style.width = (2 * CANVAS_WIDTH) + 'px';
+  uiLineTemp.style.height = (2 * CANVAS_HEIGHT) + 'px';
+  uiLineTemp.style.marginTop = - CANVAS_HEIGHT + 'px';
+  uiLineTemp.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
+  uiLineTemp.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
 
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend-' + categories[i] + '-negative').innerHTML = '';
@@ -741,22 +758,21 @@ function categorizeEntries(entries, decided, index) {
 }
 
 function setupHover(square, amountValue, date) {
-  square.hovered = '0';
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
-    popup.style.top = `${event.clientY - moveOffsetY - 50}px`;
-    popup.style.left = `${event.clientX - moveOffsetX + 5}px`;
-    popup.style.marginTop =  `${window.scrollY}px`;
+    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+    popup.style.marginTop = `${window.scrollY}px`;
 
     // Update popup content
-    const dateParts = allTextLines[this.index].split(';')[selectors.date].slice(1, -1).split('.');
+    const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
       <p class="popupText">Index: ${square.index + 1}</p>
       <p class="popupText">Date: ${date}</p>
       <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
       <p class="popupText">Value: ${amountValue}</p>
-      <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[this.index].split(';')[selectors.total].slice(1, -1)))}</p>
+      <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</p>
       <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</p>
       <p class="popupText">Category: ${square.category}</p>
     `;
@@ -764,13 +780,12 @@ function setupHover(square, amountValue, date) {
 
   square.onmousemove = function(event) {
     let popup = document.getElementById('singlePopup');
-    popup.style.top = `${event.clientY - moveOffsetY - 50}px`;
-    popup.style.left = `${event.clientX - moveOffsetX + 5}px`;
+    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
   };
 
   square.onmouseout = function() {
-    let popup = document.getElementById('singlePopup');
-    popup.classList.remove('fade');
+    document.getElementById('singlePopup').classList.remove('fade');
   };
 }
 

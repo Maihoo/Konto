@@ -34,10 +34,10 @@ function getFromSessionStorage() {
   if (sessionValue && sessionValue.length > 0) {
     backgroundColor = sessionValue;
     less.modifyVars({'@custom-background-color': backgroundColor});
-    document.getElementById('overflowrapper').style.backgroundColor = sessionValue;
+    document.getElementById('overflowWrapper').style.backgroundColor = sessionValue;
     document.getElementById('color-picker-background').value = rgbToHex(sessionValue);
 
-    document.getElementById('overflowrapper').style.backgroundColor = backgroundColor;
+    document.getElementById('overflowWrapper').style.backgroundColor = backgroundColor;
     document.getElementById('settings').style.backgroundColor = backgroundColor;
     document.body.style.backgroundColor = backgroundColor;
   }
