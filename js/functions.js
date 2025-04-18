@@ -156,17 +156,23 @@ function numberToCurrency(number) {
 }
 
 function pxToDate(xPixel) {
-  xPixel = xPixel.slice(0, -2);
+  const squares = canvas.querySelectorAll('.square:not(.placeholder)');
+  const paddingLeft = squares[0].style.marginLeft.slice(0, -2);
+  const lastSquareIndex = squares.length >= allTextLines.length ? allTextLines.length - 1 : squares.length - 1;
+  const paddingRight = squares[lastSquareIndex].style.marginLeft.slice(0, -2);
+  const marginDiffBetweenFirstAndLast = paddingRight - paddingLeft;
+  xPixel = parseInt(xPixel.slice(0, -2));
+  xPixel = xPixel - paddingLeft;
   let firstDayVisible = allTextLines[allTextLines.length - 1].split(';')[1].slice(1, -1);
   let lastDayVisible = allTextLines[1].split(';')[1].slice(1, -1);
   let totalDaysVisible = differenceInDays(firstDayVisible, lastDayVisible) + 2;
-  let distancePerDay = 1000 / totalDaysVisible;
-  let daysDiff = parseInt(parseInt((xPixel) + moveOffsetX) / distancePerDay);
+  let distancePerDay = marginDiffBetweenFirstAndLast / totalDaysVisible;
+  let daysDiff = parseInt(xPixel / distancePerDay);
   let temp = firstDayVisible.split('.');
   let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
   date = date.addDays(daysDiff);
   let dateParts = date.toISOString().split('T')[0].split('-');
-  return dateParts[2] + '.' + dateParts[1] + '.' + dateParts[0];
+  return dateParts[2] + '.' + dateParts[1] + ('.' + dateParts[0]).replace('20', '');
 }
 
 function getTotal(input, positive) {

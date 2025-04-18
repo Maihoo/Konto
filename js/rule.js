@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "9.302,85";
+const startbudgetString = "13.875,32";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -46,7 +46,7 @@ const constantPositions = [
   '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"04.03.25";"04.03.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"5214";"EUR";""',
+  '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"4000";"EUR";""',
   '"DE45150505001101110771";"21.10.24";"21.10.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
   '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""'
 ];
@@ -107,18 +107,7 @@ const permanentReplacements = [
   ['"DE45150505001101110771";"04.03.25";"04.03.25";"FOLGELASTSCHRIFT";"1040579923866/. Thomann GmbH, Ihr Einkauf bei Thomann GmbH ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1040579923866";"";"";"";"PayPal Europe S.a.r.l. et Cie S.C.A                                   22-24 Boulevard Royal, 2449 Luxembourg";"LU89751000135104200E";"PPLXLUL2";"-399,00";"EUR";"Umsatz gebucht"'
   ], // Leihung Till #4 (Macbook) Teil 3
   ['"DE45150505001101110771";"04.03.25";"04.03.25";"FOLGELASTSCHRIFT";"1040579707249 . Jung SAS, Ihr Einkauf bei Jung SAS ";"LU96ZZZ0000000000000000058";"42YJ224RQFXDN";"1040579707249  PAYPAL";"";"";"";"PayPal (Europe) S.a r.l. et Cie, S.C.A.";"DE88500700100175526303";"DEUTDEFFXXX";"-2137,49";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (Kaution)
-  ['"DE45150505001101110771";"19.02.25";"19.02.25";"ONLINE-UEBERWEISUNG";"Finn Ole Stadtaus (Mietkaution) DATUM 19.02.2025, 11.34 UHR ";"";"";"";"";"";"";"Dammstuecken GbR";"DE12230510300511357782";"NOLADE21SHO";"-3075,00";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (IKEA)
-  ['"DE45150505001101110771";"17.03.25";"17.03.25";"KARTENZAHLUNG";"2025-03-15T19:52 Debitk.4 2028-12 ";"";"";"65437184144563150325195244";"";"";"";"IKEA DEUTSCHLAND GM//HAMBURG SCHNELSEN/DE";"DE74302201900042935573";"HYVEDEMM414";"-511,53";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (Waschmaschine)
-  ['"DE45150505001101110771";"25.03.25";"25.03.25";"ONLINE-UEBERWEISUNG";"CAZ-CTG-ZDK-W5E DATUM 25.03.2025, 08.42 UHR ";"";"";"";"";"";"";"OTTO Payments";"DE12201207003100990333";"HSTBDEHHXXX";"-358,94";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (Action 1)
-  ['"DE45150505001101110771";"18.03.25";"18.03.25";"KARTENZAHLUNG";"2025-03-15T16:13 Debitk.4 2028-12 ";"";"";"50742014069358150325151358";"";"";"";"Action 3366/Rathausallee 1/Norderstedt/DE";"DE29300600100005021573";"GENODEDDXXX";"-42,11";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (Action 2)
-  ['"DE45150505001101110771";"28.03.25";"28.03.25";"KARTENZAHLUNG";"2025-03-26T20:06 Debitk.4 2028-12 ";"";"";"50752879217407260325190649";"";"";"";"Action 3213/Gutenbergstrasse 5c/Henstedt-Ulzb/DE";"DE29300600100005021573";"GENODEDDXXX";"-98,41";"EUR";"Umsatz gebucht"'
-  ], // TEMP UMZUG ZEUG (Amazon)
-  ['"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE CBJ3IC3JUB9HUP8Z ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"CBJ3IC3JUB9HUP8Z";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-33,98";"EUR";"Umsatz gebucht"\n"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE 114JWS13U1HZ50V3 ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"114JWS13U1HZ50V3";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-109,99";"EUR";"Umsatz gebucht"\n"DE45150505001101110771";"25.03.25";"25.03.25";"FOLGELASTSCHRIFT";"028-6987850-7587507 AMZN Mktp DE 2IDS63PGVON0EDD2 ";"DE94ZZZ00000561653";"1dnbNNd72MfH:MJ)p,OfXsCIDll:Iy";"2IDS63PGVON0EDD2";"";"";"";"AMAZON PAYMENTS EUROPE S.C.A.";"DE87300308801908262006";"TUBDDEDD";"-106,41";"EUR";"Umsatz gebucht"']
+  ]
 ]
 
 // path drawing
@@ -177,7 +166,7 @@ let pdfImportedLines = [];
 let allTextLines = [];
 let dateLines = [];
 let path = [];
-let linepoint = [];
+let linepoints = [];
 
 let monthlyEntries = [];
 let incomeEntries = [];
@@ -264,7 +253,7 @@ function resetSettings() {
 function resetHTML() {
   dateLines = [];
   path = [];
-  linepoint = [];
+  linepoints = [];
   monthlyEntries = [];
   incomeEntries = [];
   cashEntries = [];
@@ -768,13 +757,21 @@ function setupHover(square, amountValue, date) {
     // Update popup content
     const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
-      <p class="popupText">Index: ${square.index + 1}</p>
-      <p class="popupText">Date: ${date}</p>
-      <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
-      <p class="popupText">Value: ${amountValue}</p>
-      <p class="popupText">Total: ${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</p>
-      <p class="popupText">Calculated Total: ${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</p>
-      <p class="popupText">Category: ${square.category}</p>
+      <div class="grid-wrapper">
+        <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
+        <hr></hr><hr></hr>
+        <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
+        <span class="popup-text">Value                  </span><span class="popup-text">${amountValue} €</span>
+        <hr></hr><hr></hr>
+        <span class="popup-text">Total                  </span><span class="popup-text">${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</span>
+        <span class="popup-text">Category               </span><span class="popup-text">${square.category}</span>
+        <hr></hr><hr></hr>
+        <span class="popup-text-small">Margin-Top       </span><span class="popup-text-small">${square.style.marginTop}</span>
+        <span class="popup-text-small">Margin-Left      </span><span class="popup-text-small">${square.style.marginLeft}</span>
+        <span class="popup-text-small">Calculated Total </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</span>
+        <span class="popup-text-small">Calculated Date  </span><span class="popup-text-small">${pxToDate(square.style.marginLeft)}</span>
+        <span class="popup-text-small">Day of Week      </span><span class="popup-text-small">${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</span>
+        </div>
     `;
   };
 

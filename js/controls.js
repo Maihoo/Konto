@@ -153,7 +153,6 @@ function handleToggleClick() {
   }
 }
 
-// TODO: fix maybe
 function handleKeyDown(event) {
   // reset
   if (event.keyCode === 46) {
@@ -387,7 +386,7 @@ function toggleGrid() {
 
 function handleEscape(event) {
   if (event.key === 'Escape') {
-    linepoint = [];
+    linepoints[linepoints.length - 1] = [];
     overflowWrapper.style.cursor = '';
     let uiLine = document.getElementById('uiLine');
     let uiLineTemp = document.getElementById('uiLineTemp');
@@ -404,26 +403,36 @@ function handleEscape(event) {
 function handleDragClick(event) {
   if (event.button !== 0 || ((dragstartXstorage !== event.clientX || dragstartYstorage !== event.clientY) && ts1 - Date.now() < 50) ) {
     document.onmousemove = () => {};
-    linepoint = [];
+    linepoints[linepoints.length - 1] = [];
     return;
   }
 
   let uiLine = document.getElementById('uiLine');
   let uiLineTemp = document.getElementById('uiLineTemp');
+  if (!uiLine.index) {
+    uiLine.index = 0;
+  }
 
-  if (linepoint.length === 0) {
+  if (linepoints.length === 0 || linepoints[linepoints.length - 1].length === 0) {
     overflowWrapper.style.cursor = 'crosshair';
-    linepoint.push(cursorPosToMargin(event.clientX, 'left'));
-    linepoint.push(cursorPosToMargin(event.clientY, 'top'));
-    document.onmousemove = (event) => handlePrediction(event);
+    linepoints[linepoints.length] = [
+      cursorPosToMargin(event.clientX, 'left'),
+      cursorPosToMargin(event.clientY, 'top'),
+      event.clientX - overflowWrapper.offsetLeft,
+      cursorPosToMargin(event.clientY, 'top', '#canvas')
+    ];
+
+    const debouncedMouseMove = throttle(handlePrediction, 10);
+    document.onmousemove = debouncedMouseMove;
+
     document.addEventListener('keydown', handleEscape);
   } else {
     // finish prediction line
     let uiltCtx = uiLineTemp.getContext('2d');
     uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
     drawLine(uiltCtx,
-      parseInt(linepoint[0]),
-      parseInt(linepoint[1]),
+      parseInt(linepoints[linepoints.length - 1][0]),
+      parseInt(linepoints[linepoints.length - 1][1]),
       cursorPosToMargin(event.clientX, 'left'),
       cursorPosToMargin(event.clientY, 'top'),
       'rgba(255, 0, 0, 0.5)'
@@ -431,26 +440,24 @@ function handleDragClick(event) {
 
     overflowWrapper.style.cursor = '';
     uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
-    if (!uiLine.index) {
-      uiLine.index = 0;
-    }
 
     uiLine.index = parseInt(uiLine.index) + 1;
     drawLine(uiLine.getContext('2d'),
-      parseInt(linepoint[0]),
-      parseInt(linepoint[1]),
+      parseInt(linepoints[linepoints.length - 1][0]),
+      parseInt(linepoints[linepoints.length - 1][1]),
       cursorPosToMargin(event.clientX, 'left'),
       cursorPosToMargin(event.clientY, 'top'),
       'rgba(255, 0, 0, 0.5)',
       2
     );
-    linepoint = [];
 
     document.onmousemove = () => {};
 
     // Adding Popups
     let circle = document.createElement('div');
     circle.className = 'circle'
+    circle.index = linepoints.length - 1;
+    circle.id = linepoints.length - 1;
     circle.style.top = (cursorPosToMargin(event.clientY, 'top', '#canvas') - 6 - 0) + 'px';
     circle.style.left = (cursorPosToMargin(event.clientX, 'left', '#canvas') - 6) + 'px';
 
@@ -464,10 +471,19 @@ function handleDragClick(event) {
       // Update popup content
       const dateParts = pxToDate(circle.style.left).split('.');
       popup.innerHTML = `
-        <p class="popupText">Index: ${uiLine.index}</p>
-        <p class="popupText">Date: ${pxToDate(circle.style.left)}</p>
-        <p class="popupText">Day: ${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</p>
-        <p class="popupText">Total: ${numberToCurrency(parseFloat(pxToValue(parseFloat(circle.style.top.slice(0, -2)) + 6 + 'px')))}</p>
+        <div class="grid-wrapper">
+          <span class="popup-text">Index:             </span><span class="popup-text">${circle.index + 1}</span>
+          <hr></hr><hr></hr>
+          <span class="popup-text-small">Date (from)  </span><span class="popup-text-small">${pxToDate(parseInt(linepoints[circle.index][2]) + 'px')}</span>
+          <span class="popup-text">Date (to)          </span><span class="popup-text">${pxToDate(circle.style.left + 'px')}</span>
+          <hr></hr><hr></hr>
+          <span class="popup-text-small">Total (from) </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(linepoints[circle.index][3] - 2 + 'px')))}</span>
+          <span class="popup-text">Total (to)         </span><span class="popup-text">${numberToCurrency(parseFloat(pxToValue(parseFloat(circle.style.top.slice(0, -2)) + 6 + 'px')))}</span>
+          <hr></hr><hr></hr>
+          <span class="popup-text-small">Margin-Top   </span><span class="popup-text-small">${parseInt(circle.style.top.slice(0, -2))}</span>
+          <span class="popup-text-small">Margin-Left  </span><span class="popup-text-small">${parseInt(circle.style.left.slice(0, -2))}</span>
+          <span class="popup-text-small">Day of Week  </span><span class="popup-text-small">${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</span>
+        </div>
       `;
     };
 
@@ -482,6 +498,7 @@ function handleDragClick(event) {
     };
 
     canvas.appendChild(circle);
+    linepoints.push([]);
   }
 }
 
@@ -720,14 +737,106 @@ function setColorUnset() {
 }
 
 function handlePrediction(event) {
+  const firstPointLeft = parseInt(linepoints[linepoints.length - 1][0]);
+  const firstPointTop = parseInt(linepoints[linepoints.length - 1][1]);
+  const secondPointLeft = cursorPosToMargin(event.clientX, 'left');
+  const secondPointTop = cursorPosToMargin(event.clientY, 'top');
+
   let uiLineTemp = document.getElementById('uiLineTemp');
   let uiltCtx = uiLineTemp.getContext('2d');
   uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
   drawLine(uiltCtx,
-    parseInt(linepoint[0]),
-    parseInt(linepoint[1]),
-    cursorPosToMargin(event.clientX, 'left'),
-    cursorPosToMargin(event.clientY, 'top'),
+    firstPointLeft,
+    firstPointTop,
+    secondPointLeft,
+    secondPointTop,
     'rgba(255, 0, 0, 0.5)'
   );
+
+  drawLine(uiltCtx, firstPointLeft, firstPointTop, secondPointLeft, firstPointTop, 'rgba(255, 255, 255, 0.25)', 1);
+  drawLine(uiltCtx, firstPointLeft, firstPointTop, firstPointLeft, secondPointTop, 'rgba(255, 255, 255, 0.25)', 1);
+
+  drawLine(uiltCtx, secondPointLeft, secondPointTop, firstPointLeft, secondPointTop, 'rgba(255, 255, 255, 0.5)', 1);
+  drawLine(uiltCtx, secondPointLeft, secondPointTop, secondPointLeft, firstPointTop, 'rgba(255, 255, 255, 0.5)', 1);
+
+  let dateFrom = document.getElementById('prediction-date-from');
+  if (!dateFrom) {
+    dateFrom = document.createElement('span');
+    dateFrom.id = 'prediction-date-from';
+    dateFrom.classList.add('prediction-text');
+    canvas.appendChild(dateFrom);
+  }
+
+  let dateTo = document.getElementById('prediction-date-to');
+  if (!dateTo) {
+    dateTo = document.createElement('span');
+    dateTo.id = 'prediction-date-to';
+    dateTo.classList.add('prediction-text');
+    canvas.appendChild(dateTo);
+  }
+
+  dateFrom.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px';
+  dateTo.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px'; 
+
+  const heightOffset = firstPointTop - secondPointTop > 0 ? 10 : -20;
+  dateFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3]) + heightOffset) - 5 + 'px';
+  dateTo.style.top = cursorPosToMargin(event.clientY, 'top', '#canvas') - heightOffset - 15 + 'px';
+
+  if (firstPointLeft - secondPointLeft < 0) {
+    dateTo.style.marginLeft = secondPointLeft - firstPointLeft - dateTo.offsetWidth + 10 + 'px';
+    dateFrom.style.marginLeft = '';
+  } else {
+    dateFrom.style.marginLeft = -dateFrom.offsetWidth + 15 + 'px';
+    dateTo.style.marginLeft = secondPointLeft - firstPointLeft + 'px';
+  }
+
+  dateFrom.innerHTML = pxToDate(parseInt(linepoints[linepoints.length - 1][2]) + 'px')
+  dateTo.innerHTML = pxToDate(event.clientX + 'px')
+
+
+
+  let valueFrom = document.getElementById('prediction-value-from');
+  if (!valueFrom) {
+    valueFrom = document.createElement('span');
+    valueFrom.id = 'prediction-value-from';
+    valueFrom.classList.add('prediction-text');
+    canvas.appendChild(valueFrom);
+  }
+
+  let valueTo = document.getElementById('prediction-value-to');
+  if (!valueTo) {
+    valueTo = document.createElement('span');
+    valueTo.id = 'prediction-value-to';
+    valueTo.classList.add('prediction-text');
+    canvas.appendChild(valueTo);
+  }
+
+  const widthOffset = firstPointLeft - secondPointLeft > 0 ? 10 : -20;
+  valueFrom.style.left = (parseInt(linepoints[linepoints.length - 1][2]) + widthOffset) + 'px';
+  valueTo.style.left = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px'; 
+
+  valueFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3])) + 'px';
+  valueTo.style.top = cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + 'px';
+
+  if (firstPointLeft - secondPointLeft < 0) {
+    valueFrom.style.marginLeft = - valueFrom.offsetWidth + 25 + 'px';
+    valueTo.style.marginLeft = secondPointLeft - firstPointLeft - 5 + 'px';
+  } else {
+    valueFrom.style.marginLeft = '';
+    valueTo.style.marginLeft = secondPointLeft - firstPointLeft - valueTo.offsetWidth + 7 + 'px';
+  }
+
+  valueFrom.innerHTML = numberToCurrency(parseFloat(pxToValue(linepoints[linepoints.length - 1][3] - 2 + 'px')))
+  valueTo.innerHTML = numberToCurrency(parseFloat(pxToValue(cursorPosToMargin(event.clientY, 'top', '#canvas') + 'px')));
+}
+
+function throttle(func, delay) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall >= delay) {
+      lastCall = now;
+      func.apply(this, args);
+    }
+  };
 }
