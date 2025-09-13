@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "13.875,32";
+const startbudgetString = "8.764,04";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -45,6 +45,9 @@ let activeCategories = {
 const constantPositions = [
   '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
+  '"DE45150505001101110771";"01.09.25";"01.09.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
+  '"DE45150505001101110771";"07.07.25";"07.07.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
+  '"DE45150505001101110771";"04.06.25";"04.06.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"04.03.25";"04.03.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"4000";"EUR";""',
   '"DE45150505001101110771";"21.10.24";"21.10.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
@@ -59,6 +62,14 @@ const selectors= {
   'amount': 14,
   'category': 17,
   'total': 18
+};
+
+const foodSelectors= {
+  'date': 0,
+  'store': 1,
+  'productName': 2,
+  'price': 3,
+  'quantity': 4
 };
 
 const replacements = [
@@ -129,9 +140,11 @@ let settingsExtended = false;
 let settingsVertical = false;
 let groupByCategory = false;
 let showInvestments = true;
+let showFoodExpenses = false;
 let oneRadioUnchecked = false;
 
 let dataset;
+let foodDataset;
 
 let verticalScaleFactor = 1.0;
 let zoomLevel = 1.0;
@@ -153,7 +166,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.08.24';
+let startDate = '01.03.25';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -164,6 +177,7 @@ let uiColor = '255, 255, 255';
 
 let pdfImportedLines = [];
 let allTextLines = [];
+let foodTextLines = [];
 let dateLines = [];
 let path = [];
 let linepoints = [];
@@ -178,6 +192,8 @@ let takeoutEntries = [];
 let gasEntries = [];
 let debtEntries = [];
 let restEntries = [];
+
+let groceriesEntries = [];
 
 // zooming
 let originalWidth;
@@ -194,8 +210,11 @@ let uiLine = document.getElementById('uiLine');
 let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
+let overflowWrapper = document.getElementById('overflowWrapper');
 let zoomingWrapper = document.getElementById('zoomingWrapper');
+let movingWrapper = document.getElementById('movingWrapper');
 let settingsElement = document.getElementById('settings');
+let foodCanvas = document.getElementById('food-canvas');
 
 function resetSettings() {
   zoomInPressed = false;
@@ -208,6 +227,7 @@ function resetSettings() {
   settingsVertical = false;
   groupByCategory = false;
   showInvestments = true;
+  showFoodExpenses = true;
   oneRadioUnchecked = false;
 
   totalBudget = STARTBUDGET;
@@ -231,7 +251,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.08.24';
+  startDate = '01.03.25';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -273,10 +293,11 @@ function resetHTML() {
   uiCanvas = document.getElementById('uiCanvas');
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
-  movingWrapper = document.getElementById('movingWrapper');
   overflowWrapper = document.getElementById('overflowWrapper');
   zoomingWrapper = document.getElementById('zoomingWrapper');
+  movingWrapper = document.getElementById('movingWrapper');
   settingsElement = document.getElementById('settings');
+  foodCanvas = document.getElementById('food-canvas');
 
   overflowWrapper.style.width = CANVAS_WIDTH + 'px';
   overflowWrapper.style.height = CANVAS_HEIGHT + 'px';
@@ -351,8 +372,6 @@ function initDrawing() {
     updateMaxHeightAround();
 
     clearCanvases();
-
-    const ts = Date.now();
 
     drawCanvas();
 
@@ -754,6 +773,7 @@ function setupHover(square, amountValue, date) {
     popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
     popup.style.marginTop = `${window.scrollY}px`;
 
+    const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
     const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
@@ -761,17 +781,17 @@ function setupHover(square, amountValue, date) {
         <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
         <hr></hr><hr></hr>
         <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
-        <span class="popup-text">Value                  </span><span class="popup-text">${amountValue} €</span>
+        <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(amountValue)}</span>
         <hr></hr><hr></hr>
         <span class="popup-text">Total                  </span><span class="popup-text">${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</span>
         <span class="popup-text">Category               </span><span class="popup-text">${square.category}</span>
         <hr></hr><hr></hr>
         <span class="popup-text-small">Margin-Top       </span><span class="popup-text-small">${square.style.marginTop}</span>
-        <span class="popup-text-small">Margin-Left      </span><span class="popup-text-small">${square.style.marginLeft}</span>
+        <span class="popup-text-small">Margin-Left      </span><span class="popup-text-small">${marginLeft}</span>
         <span class="popup-text-small">Calculated Total </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</span>
-        <span class="popup-text-small">Calculated Date  </span><span class="popup-text-small">${pxToDate(square.style.marginLeft)}</span>
+        <span class="popup-text-small">Calculated Date  </span><span class="popup-text-small">${pxToDate(marginLeft)}</span>
         <span class="popup-text-small">Day of Week      </span><span class="popup-text-small">${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</span>
-        </div>
+      </div>
     `;
   };
 

@@ -73,7 +73,23 @@ body {
   }
 }
 
-#graph-area-wrapper {
+.layer {
+  display: none !important;
+  position: fixed;
+  top: 100px;
+  left: 100px;
+  width: 1000px;
+  height: 500px;
+  background-color: @custom-background-color;
+  padding: 1rem;
+  z-index: 300;
+
+  &.layer--open {
+    display: block !important;
+  }
+}
+
+.graph-area-wrapper {
   display: inline-flex;
   border: solid 1px black;
   border-radius: 0.5rem;

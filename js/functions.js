@@ -31,6 +31,7 @@ function getEntrieCategorie(entryParts) {
       beneficiary.toLowerCase().includes('landeszentralkasse') ||
       beneficiary.toLowerCase().includes('techniker krankenkasse') ||
       beneficiary.toLowerCase().includes('wg union') ||
+      beneficiary.toLowerCase().includes('mecklenburgische') ||
       purpose.toLowerCase().includes('123-reg') ||
       purpose.toLowerCase().includes('netflix') ||
       purpose.toLowerCase().includes('miete') ||
@@ -72,9 +73,9 @@ function getEntrieCategorie(entryParts) {
       beneficiary.toLowerCase().includes('jet dankt') ||
       beneficiary.toLowerCase().includes('mecklenburgische') ||
       beneficiary.toLowerCase().includes('sb tank') ||
-      beneficiary.toLowerCase().includes('shell') ||
+      (beneficiary.toLowerCase().includes('shell') && !beneficiary.toLowerCase().includes('shell-autoservice')) ||
       beneficiary.toLowerCase().includes('tankstelle') ||
-      beneficiary.toLowerCase().includes('total') || 
+      beneficiary.toLowerCase().includes('total') ||
       beneficiary.toLowerCase().includes('warnowquerung') ||
       purpose.toLowerCase().includes('kfz-kauf')) {
     return 'gas';
@@ -117,17 +118,17 @@ Date.prototype.addDays = function(days) {
   return date;
 }
 
-function pxToValue(yPixel) {
+function pxToValue(yPixel, maximumHeight = maxHeight) {
   let pixel = 550 - parseInt(yPixel.slice(0, -2));
-  return parseInt((pixel * (maxHeight / 500) + lowest) / verticalScaleFactor);
+  return parseInt((pixel * (maximumHeight / 500) + lowest) / verticalScaleFactor);
 }
 
-function valueToPx(value) {
-  return parseFloat(value) * verticalScaleFactor * (500 / maxHeight);
+function valueToPx(value, maximumHeight = maxHeight) {
+  return parseFloat(value) * verticalScaleFactor * (500 / maximumHeight);
 }
 
-function valueToMarginTop(value) {
-  let pixel = (parseFloat(value) - lowest) * verticalScaleFactor * 500 / (maxHeight);
+function valueToMarginTop(value, maximumHeight = maxHeight) {
+  let pixel = (parseFloat(value) - lowest) * verticalScaleFactor * 500 / (maximumHeight);
   return 550 - pixel;
 }
 

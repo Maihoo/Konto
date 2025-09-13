@@ -103,84 +103,84 @@ function isValidValue(value) {
 function processPage(content) {
   let totalAmount = 0;
   return new Promise(resolve => {
-      // Extract text from the PDF page
-      let allLines = [];
-      for (let j = content.items.length - 1; j >= 0; j--) {
-        let itemString = content.items[j].str;
-        itemString = itemString.replace(/\n/g, ''); // replace breaks
-        itemString = itemString.replace(/\t/g, ''); // replace tabs
-        itemString = itemString.replace(/ /g, '');  // replace spaces
-        allLines.push(itemString);
+    // Extract text from the PDF page
+    let allLines = [];
+    for (let j = content.items.length - 1; j >= 0; j--) {
+      let itemString = content.items[j].str;
+      itemString = itemString.replace(/\n/g, ''); // replace breaks
+      itemString = itemString.replace(/\t/g, ''); // replace tabs
+      itemString = itemString.replace(/ /g, '');  // replace spaces
+      allLines.push(itemString);
+    }
+    // clear empty lines
+    allLines = allLines.filter(function(item) {
+      return item !== ' ' && item !== '.' && item !== '';
+    });
+
+    for (let j = 0; j < allLines.length; j++) {
+      if (allLines[j].charAt(2) === '.' && allLines[j].charAt(5) === '.' && allLines[j].length > (15)) {
+        const temp = allLines[j];
+        allLines[j] = temp.slice(10, 20);
+        allLines.splice(j, 0, temp.slice(0, 10));
       }
-      // clear empty lines
-      allLines = allLines.filter(function(item) {
-        return item !== ' ' && item !== '.' && item !== '';
-      });
 
-      for (let j = 0; j < allLines.length; j++) {
-        if (allLines[j].charAt(2) === '.' && allLines[j].charAt(5) === '.' && allLines[j].length > (15)) {
-          const temp = allLines[j];
-          allLines[j] = temp.slice(10, 20);
-          allLines.splice(j, 0, temp.slice(0, 10));
-        }
+      if (allLines[j].includes('Kontostandam')) {
+        const temp = allLines[j];
+        allLines[j] = temp.slice(12, 20);
+        allLines.splice(j, 0, temp.slice(0, 12));
+      }
 
-        if (allLines[j].includes('Kontostandam')) {
-          const temp = allLines[j];
-          allLines[j] = temp.slice(12, 20);
-          allLines.splice(j, 0, temp.slice(0, 12));
-        }
+      // new line starts at "Kontostandam" or when two following fields are dates, thus having 10 characters
+      if (isValidDate(allLines[j]) && allLines[j - 1] && isValidDate(allLines[j - 1])) {
+        for (let k = 0; k < 12; k++) {
+          let nextAmount = allLines[j - k];
+          if (isValidValue(nextAmount)) {
+            let dateParts = allLines[j].split('.');
+            if (dateParts.length >= 3) {
+              const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
 
-        // new line starts at "Kontostandam" or when two following fields are dates, thus having 10 characters
-        if (isValidDate(allLines[j]) && allLines[j - 1] && isValidDate(allLines[j - 1])) {
-          for (let k = 0; k < 12; k++) {
-            let nextAmount = allLines[j - k];
-            if (isValidValue(nextAmount)) {
-              let dateParts = allLines[j].split('.');
-              if (dateParts.length >= 3) {
-                const date = dateParts[0] + '.' + dateParts[1] + '.' + dateParts[2].slice(2);
+              let text = allLines[j - 3];
 
-                let text = allLines[j - 3];
-
-                if (k === 5) {
-                  text = allLines[j - 2]
-                }
-
-                if (isValidDate(text)) {
-                  text = allLines[j - 3]
-                }
-
-                if (isValidValue(text)) {
-                  text = allLines[j - 1]
-                }
-
-                let purpose = allLines[j - 2];
-                if (j - 2 !== j - k + 1) {
-                  purpose += ' ' + allLines[j - k + 1];
-                }
-
-                let amount = allLines[j - k];
-                if (amount.charAt(amount.length - 1) === '-') {
-                  amount = '-' + amount.slice(0, -1); // move "-"
-                } else {
-                  amount = amount.slice(0, -1); // remove "+"
-                }
-
-                let amountFloat = parseFloat(amount.replaceAll('.', '').replaceAll(',', '.'));
-                if (amountFloat === NaN) {
-                  amount = 0;
-                }
-
-                totalAmount += amountFloat;
-                //                                        date              text           purpose                             beneficiary                     amount
-                dataset += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
+              if (k === 5) {
+                text = allLines[j - 2]
               }
-              // break loop
-              k = 20;
+
+              if (isValidDate(text)) {
+                text = allLines[j - 3]
+              }
+
+              if (isValidValue(text)) {
+                text = allLines[j - 1]
+              }
+
+              let purpose = allLines[j - 2];
+              if (j - 2 !== j - k + 1) {
+                purpose += ' ' + allLines[j - k + 1];
+              }
+
+              let amount = allLines[j - k];
+              if (amount.charAt(amount.length - 1) === '-') {
+                amount = '-' + amount.slice(0, -1); // move "-"
+              } else {
+                amount = amount.slice(0, -1); // remove "+"
+              }
+
+              let amountFloat = parseFloat(amount.replaceAll('.', '').replaceAll(',', '.'));
+              if (amountFloat === NaN) {
+                amount = 0;
+              }
+
+              totalAmount += amountFloat;
+              //                                        date              text           purpose                             beneficiary                     amount
+              dataset += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
             }
+            // break loop
+            k = 20;
           }
         }
       }
+    }
 
-      resolve();
+    resolve();
   });
 }

@@ -27,7 +27,7 @@ function replace(id) {
 
 function initControls() {
   resetControls();
-  let overflowWrapper = document.getElementById('overflowWrapper');
+  overflowWrapper = document.getElementById('overflowWrapper');
 
   // disable scrolling while in legend window
   document.getElementById('legend').addEventListener('scroll', (event) => {
@@ -305,6 +305,18 @@ function toggleShowInvestments () {
   initTextLines();
   initRangeSlider2();
   initDrawing();
+}
+
+function toggleFoodExpenses() {
+  const foodExpensesLayer = document.getElementById('food-expenses-layer');
+  if (foodExpensesLayer instanceof HTMLElement) {
+    foodExpensesLayer.classList.toggle('layer--open');
+    if (foodExpensesLayer.classList.contains('layer--open')) {
+      initGroceries();
+    } else {
+      foodCanvas.innerHTML = '';
+    }
+  }
 }
 
 function toggleGroupByCategory() {

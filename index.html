@@ -9,20 +9,21 @@
   <link rel="stylesheet/less" href="style.less" type="text/css"/>
   <link rel="stylesheet/less" href="ui-style.less" type="text/css"/>
   <link rel="stylesheet/less" href="legend-style.less" type="text/css"/>
-  <script src="https://cdn.jsdelivr.net/npm/less" ></script>
-  <script src="js/rule.js" ></script>
-  <script src="js/data.js" ></script>
-  <script src="js/functions.js" ></script>
-  <script src="js/controls.js" ></script>
-  <script src="js/import.js" ></script>
-  <script src="js/session-storage.js" ></script>
+  <script src="https://cdn.jsdelivr.net/npm/less"></script>
+  <script src="js/rule.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/functions.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/import.js"></script>
+  <script src="js/session-storage.js"></script>
+  <script src="js/draw-groceries.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
 
 <body>
   <h2>Vertical Zoom</h2>
-  <div id="graph-area-wrapper" class="graph-area-wrapper-vertical">
+  <div id="graph-area-wrapper" class="graph-area-wrapper graph-area-wrapper-vertical">
     <div style="width: 35px; position: relative; border-right: solid 1px black;">
       <div id="range-slider-0" class="range-slider range-slider-vertical"></div>
     </div>
@@ -36,6 +37,10 @@
           <canvas id="uiLineTemp" style="position: absolute; z-index: 400; pointer-events: none;"></canvas>
           <div id="uiCanvas"></div>
           <div id="canvas" style="position: absolute; width: 100%; height: 100%;"></div>
+          <div id="food-expenses-layer" class="graph-area-wrapper layer">
+            <h2>Food Expanses</h2>
+            <div id="food-canvas" style="position: absolute; width: 100%; height: 100%;"></div>
+          </div>
           <div id="singlePopup" class="popup"></div>
         </div>
         <div id="uiCanvasHorizontal" style="margin-top: -100%;"></div>
@@ -222,6 +227,13 @@
                   <span class="switch-slider"></span>
                 </label>
               </div>
+              <div class="buttonwrapper">
+                <span>show groceries</span>
+                <label class="switch">
+                  <input id="show-food-expenses" type="checkbox" onclick="toggleFoodExpenses()">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
               <div class="buttonwrapper extra-padding">
                 <span>spread income to</span>
                 <input id="spread-income-to" type="text" placeholder="⊘" class="custom-input custom-input--small" oninput="toggleSpreadMonthlyIncome(event)" onkeydown="toggleSpreadMonthlyIncome(event)">
@@ -279,7 +291,7 @@
           <div class="rangewrapper">
             <h2 class="range-headline date-range-headline">Date Range</h2>
             <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
-              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.08.24" class="custom-input active"/>
+              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.03.25" class="custom-input active"/>
               -
               <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="custom-input"/>
             </div>
