@@ -75,7 +75,6 @@ function initTextLines() {
       constantPositions[i] = temp;
     }
 
-
     // pushing constant positions
     for (let i = 0; i < constantPositions.length; i++) {
       const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
@@ -244,7 +243,6 @@ function spreadIncomeToDaysOfMonth() {
   });
 
   paydays.push([allTextLines.length - 2, '0.0', allTextLines[allTextLines.length - 2].split(';')[selectors.date].slice(1, -1)]);
-  console.log(paydays);
 
   // each Month
   for (let i = 1; i < paydays.length - 1; i++) {
@@ -264,7 +262,6 @@ function spreadIncomeToDaysOfMonth() {
         let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
         date.setDate(date.getDate() + j - index);
         let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
-        // console.log(currentDateString, amountPerDay)
         let resultIndex = nextIndex - 20;
         let lastDifferenceInDays = 9999999;
 
@@ -285,13 +282,11 @@ function spreadIncomeToDaysOfMonth() {
           localLoop += amountPerDay;
           added += amountPerDay;
           const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
-          // console.log(currentDateString)
           allTextLines.splice(resultIndex + 1, 0, row);
         }
       }
     }
   }
-  console.log(removed, added)
 }
 
 function spreadIncomeToDaysOfMonth2() {
@@ -322,9 +317,6 @@ function spreadIncomeToDaysOfMonth2() {
     const dayDiff = Math.abs(differenceInDays(firstDay, lastDay))
     const amountPerDay = amount / dayDiff;
 
-    console.log(index, nextIndex);
-    console.log(firstDay, lastDay);
-
     // each day until the next PayDay
     if (amountPerDay > 0 && amountPerDay < 10000) {
       for (let j = index + dayDiff; j > index; j--) {
@@ -332,7 +324,6 @@ function spreadIncomeToDaysOfMonth2() {
         let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
         date.setDate(date.getDate() + j - index);
         let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
-        // console.log(currentDateString, amountPerDay)
         let resultIndex = nextIndex - 20;
         let lastDifferenceInDays = 9999999;
 
@@ -353,7 +344,6 @@ function spreadIncomeToDaysOfMonth2() {
           localLoop += amountPerDay;
           added += amountPerDay;
           const row = `DE45150505001101110771";"${currentDateString}";"${currentDateString}";"Monatsausgleich";"Monatsausgleich";"";"";"";"";"";"";"Monatsausgleich";"";"";"${(amountPerDay).toFixed(2)}";"EUR";""`;
-          // console.log(currentDateString)
           allTextLines.splice(resultIndex + 1, 0, row);
         }
       }

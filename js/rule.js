@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "8.764,04";
+const startbudgetString = "10.384,16";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -43,7 +43,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"0";"EUR";""',
+  '"DE45150505001101110771";"";"";"_Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
   '"DE45150505001101110771";"01.09.25";"01.09.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
   '"DE45150505001101110771";"07.07.25";"07.07.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
@@ -69,7 +69,8 @@ const foodSelectors= {
   'store': 1,
   'productName': 2,
   'price': 3,
-  'quantity': 4
+  'quantity': 4,
+  'category': 5
 };
 
 const replacements = [
@@ -214,7 +215,8 @@ let overflowWrapper = document.getElementById('overflowWrapper');
 let zoomingWrapper = document.getElementById('zoomingWrapper');
 let movingWrapper = document.getElementById('movingWrapper');
 let settingsElement = document.getElementById('settings');
-let foodCanvas = document.getElementById('food-canvas');
+let circleCanvas = document.getElementById('circleCanvas');
+let foodCanvas = document.getElementById('foodCanvas');
 
 function resetSettings() {
   zoomInPressed = false;
@@ -297,7 +299,8 @@ function resetHTML() {
   zoomingWrapper = document.getElementById('zoomingWrapper');
   movingWrapper = document.getElementById('movingWrapper');
   settingsElement = document.getElementById('settings');
-  foodCanvas = document.getElementById('food-canvas');
+  circleCanvas = document.getElementById('circleCanvas');
+  foodCanvas = document.getElementById('foodCanvas');
 
   overflowWrapper.style.width = CANVAS_WIDTH + 'px';
   overflowWrapper.style.height = CANVAS_HEIGHT + 'px';
@@ -534,8 +537,8 @@ function setDates() {
   dateLeft.innerHTML = tempLeft2[0] + '.' + tempLeft2[1] + '.' + '20' + tempLeft2[2];
   dateLeft.className = 'uiElement';
   dateLeft.style.position = 'absolute';
-  dateLeft.style.marginTop = '' + (560 + EXTRAAREA) + 'px';
-  dateLeft.style.marginLeft = '' + (10 + EXTRAAREA) + 'px';
+  dateLeft.style.marginTop = '' + (570 + EXTRAAREA) + 'px';
+  dateLeft.style.marginLeft = '' + (70 + EXTRAAREA) + 'px';
   dateLeft.style.visibility = 'visible';
   uiCanvas.appendChild(dateLeft);
 
@@ -545,7 +548,7 @@ function setDates() {
   dateRight.innerHTML = tempRight2[0] + '.' + tempRight2[1] + '.' + '20' + tempRight2[2];
   dateRight.className = 'uiElement';
   dateRight.style.position = 'absolute';
-  dateRight.style.marginTop =  '' + (560 + EXTRAAREA) + 'px';
+  dateRight.style.marginTop =  '' + (570 + EXTRAAREA) + 'px';
   dateRight.style.marginLeft = '' + (960 + EXTRAAREA) + 'px';
   uiCanvas.appendChild(dateRight);
 
@@ -652,8 +655,8 @@ function drawCanvas() {
       nextTotalValue = totalValue;
     }
 
-    const amountValue = entries[selectors.amount].slice(1, -1);
-    let value = valueToPx(amountValue);
+    const value = entries[selectors.amount].slice(1, -1);
+    let height = valueToPx(value);
     let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
     if (diffDays < 0) {
       diffDays = 2;
@@ -668,14 +671,14 @@ function drawCanvas() {
 
     if (performanceMode) {
       square.classList.add('square-relative')
-      const amountSign = amountValue.charAt(0) === '-' ? -1 : 1;
+      const amountSign = value.charAt(0) === '-' ? -1 : 1;
       const xPosition = paddingLeft - (lastDayDiff * dayWidth) + fgOffset;
       Object.assign(square.style, {
-        height: `${Math.abs(value).toFixed(2)}px`,
+        height: `${Math.abs(height).toFixed(2)}px`,
         width: `${(dayWidth - fgOffset).toFixed(2)}px`,
         marginLeft: `${(xPosition - dayWidth).toFixed(2)}px`,
-        marginTop: `${parseFloat((-value * (amountSign + 1)).toFixed(2)) + 0.02}px`,
-        transform: `translateY(${(amountSign > 0 ? Math.abs(value) : 0).toFixed(2)}px)`
+        marginTop: `${parseFloat((-height * (amountSign + 1)).toFixed(2)) + 0.02}px`,
+        transform: `translateY(${(amountSign > 0 ? Math.abs(height) : 0).toFixed(2)}px)`
       });
       // set correct height to the "first" square
       if (i === dates.length - 1) {
@@ -683,8 +686,8 @@ function drawCanvas() {
       }
     } else {
       Object.assign(square.style, {
-        height: `${Math.abs(value)}px`,
-        marginTop: `${(amountValue.charAt(0) !== '-') ? totalValue : nextTotalValue}px`
+        height: `${Math.abs(height)}px`,
+        marginTop: `${(value.charAt(0) !== '-') ? totalValue : nextTotalValue}px`
       });
     }
     // Fill empty days
@@ -707,7 +710,7 @@ function drawCanvas() {
     }
 
     // Differentiate negative Events
-    if (amountValue.charAt(1) === '-') {
+    if (value.charAt(1) === '-') {
       square.classList.add('negative-background');
       square.category = 'Sonstige Abbuchung';
     }
@@ -717,16 +720,16 @@ function drawCanvas() {
       fgOffset = 0;
     }
 
-    let pastNegative = allTextLines[i + 1]?.split(';')[selectors.amount]?.charAt(1) === '-';
-    if (diffDays === 0 && ((amountValue.charAt(0) === '-' && !pastNegative) || (amountValue.charAt(0) !== '-' && pastNegative))) {
+    const lastWasNegative = allTextLines[i + 1]?.split(';')[selectors.amount]?.charAt(1) === '-';
+    if (diffDays === 0 && ((value.charAt(0) === '-' && !lastWasNegative) || (value.charAt(0) !== '-' && lastWasNegative))) {
       fgOffset += foregroundOffset;
     }
 
     // Adjust width and marginLeft after fgOffset
-    square.style.width = `${-2 + dayWidth - fgOffset}px`;
+    square.style.width = `${dayWidth - 2 - fgOffset}px`;
     square.style.marginLeft = `${paddingLeft - (lastDayDiff * dayWidth) + fgOffset}px`;
 
-    if (entry.date.charAt(0) === '_') {
+    if (entries[selectors.content] && entries[selectors.content].charAt('1') === '_') {
       square.style.opacity = '50%';
     }
 
@@ -742,7 +745,7 @@ function drawCanvas() {
 
     // Adding Popups
     square.index = i;
-    setupHover(square, amountValue, entry.date);
+    setupHover(square, value, entry.date, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, '').replace(/-/g, ''));
     fragment.appendChild(square);
   }
 
@@ -765,30 +768,30 @@ function categorizeEntries(entries, decided, index) {
   }
 }
 
-function setupHover(square, amountValue, date) {
+function setupHover(square, value, date, content) {
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
     popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
     popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
     popup.style.marginTop = `${window.scrollY}px`;
-
     const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
     const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
       <div class="grid-wrapper">
         <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
+        <span class="popup-text-small">Content          </span><span class="popup-text-small marquee"><span>${content}</span></span>
         <hr></hr><hr></hr>
         <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
-        <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(amountValue)}</span>
+        <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(value)}</span>
         <hr></hr><hr></hr>
         <span class="popup-text">Total                  </span><span class="popup-text">${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</span>
         <span class="popup-text">Category               </span><span class="popup-text">${square.category}</span>
         <hr></hr><hr></hr>
         <span class="popup-text-small">Margin-Top       </span><span class="popup-text-small">${square.style.marginTop}</span>
         <span class="popup-text-small">Margin-Left      </span><span class="popup-text-small">${marginLeft}</span>
-        <span class="popup-text-small">Calculated Total </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(amountValue) < 0 ? parseFloat(amountValue) : 0))}</span>
+        <span class="popup-text-small">Calculated Total </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(value) < 0 ? parseFloat(value) : 0))}</span>
         <span class="popup-text-small">Calculated Date  </span><span class="popup-text-small">${pxToDate(marginLeft)}</span>
         <span class="popup-text-small">Day of Week      </span><span class="popup-text-small">${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</span>
       </div>

@@ -73,6 +73,13 @@
   }
 }
 
+.square-holder-bar {
+  position: relative;
+  z-index: 200;
+  height: 80%;
+  transform: rotate(180deg);
+}
+
 .circle {
   position: absolute;
   width: 12px;
@@ -86,12 +93,12 @@
 .negative-background { background-color: @negative-color !important; }
 
 .monthly-background { background-color: @monthly-color !important; }
-.income-background { background-color: @income-color !important; }
-.cash-background { background-color: @cash-color !important; }
-.amazon-background { background-color: @amazon-color !important; }
-.paypal-background { background-color: @paypal-color !important; }
+.income-background, .healthy-background { background-color: @income-color !important; }
+.cash-background, .drinks-background { background-color: @cash-color !important; }
+.amazon-background, .catfood-background { background-color: @amazon-color !important; }
+.paypal-background, .toiletries-background { background-color: @paypal-color !important; }
 .food-background { background-color: @food-color !important; }
-.takeout-background { background-color: @takeout-color !important; }
+.takeout-background, .sweets-background { background-color: @takeout-color !important; }
 .gas-background { background-color: @gas-color !important; }
 .debt-background { background-color: @debt-color !important; }
 
@@ -119,6 +126,32 @@
   opacity: 0;
   z-index: 400;
   pointer-events: none;
+
+  .marquee {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .marquee::after {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 30px;
+  }
+
+  .marquee span {
+    display: inline-block;
+    padding-left: 5%; /* sorgt dafür, dass Text von rechts reinfährt */
+    animation: marquee 5s ease-in infinite;
+  }
+
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
 
   .grid-wrapper {
     display: grid;
