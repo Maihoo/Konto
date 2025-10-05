@@ -478,7 +478,6 @@ function handleDragClick(event) {
       popup.classList.add('fade');
       popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
       popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
-      popup.style.marginTop = `${window.scrollY}px`;
 
       // Update popup content
       const dateParts = pxToDate(circle.style.left).split('.');
@@ -521,11 +520,13 @@ function handleZoomScroll(zoomIn) {
     zoomLevel /= 1.02;
   }
 
-  this.zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
-  this.zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
-  this.zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
-  this.zoomingWrapper.style.top = (originalTop - ((this.zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
-  this.zoomingWrapper.style.left = (originalLeft - ((this.zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+  zoomingWrapper.forEach(zWrapper => {
+    zWrapper.style.transform = 'scale(' + zoomLevel + ')';
+    zWrapper.style.width = (originalWidth / zoomLevel) + 'px';
+    zWrapper.style.height = (originalHeight / zoomLevel) + 'px';
+    zWrapper.style.top = (originalTop - ((zWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
+    zWrapper.style.left = (originalLeft - ((zWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+  });
 
   const top = document.getElementById('ui-element-value-top');
   if (top instanceof HTMLElement) {
@@ -586,9 +587,11 @@ function handleDragMouseDown(event) {
       moveOffsetY -= diffY;
 
       // move canvases
-      const movingWrapper = document.getElementById('movingWrapper');
-      movingWrapper.style.marginLeft = '' + (movingWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
-      movingWrapper.style.marginTop = '' + (movingWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
+      movingWrapper.forEach(mWrapper => {
+        mWrapper.style.marginLeft = '' + (mWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
+        mWrapper.style.marginTop = '' + (mWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
+      });
+
       uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
     }
   }

@@ -167,7 +167,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.03.25';
+let startDate = '01.08.25';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -212,11 +212,24 @@ let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
 let overflowWrapper = document.getElementById('overflowWrapper');
-let zoomingWrapper = document.getElementById('zoomingWrapper');
-let movingWrapper = document.getElementById('movingWrapper');
+let zoomingWrapper = document.querySelectorAll('[data-zoom]');
+let movingWrapper = document.querySelectorAll('[data-move]');
 let settingsElement = document.getElementById('settings');
 let circleCanvas = document.getElementById('circleCanvas');
 let foodCanvas = document.getElementById('foodCanvas');
+
+if (!zoomingWrapper.length || !movingWrapper.length) {
+  const observer = new MutationObserver(() => {
+    const zoomEl = document.querySelector('[data-zoom]');
+    if (zoomEl) {
+      zoomingWrapper = document.querySelectorAll('[data-zoom]');
+      movingWrapper = document.querySelectorAll('[data-move]');
+      observer.disconnect();
+    }
+  });
+
+  observer.observe(document, { childList: true, subtree: true });
+}
 
 function resetSettings() {
   zoomInPressed = false;
@@ -253,15 +266,17 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.03.25';
+  startDate = '01.08.25';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
 
-  zoomingWrapper.style.backgroundColor = backgroundColor;
   settingsElement.style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
+  zoomingWrapper.forEach(zWrapper => {
+    zWrapper.style.backgroundColor = backgroundColor;
+  });
 
   clearSessionStorage();
   clearLines();
@@ -296,18 +311,22 @@ function resetHTML() {
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
   overflowWrapper = document.getElementById('overflowWrapper');
-  zoomingWrapper = document.getElementById('zoomingWrapper');
-  movingWrapper = document.getElementById('movingWrapper');
+  zoomingWrapper = document.querySelectorAll('[data-zoom]');
+  movingWrapper = document.querySelectorAll('[data-move]');
   settingsElement = document.getElementById('settings');
   circleCanvas = document.getElementById('circleCanvas');
   foodCanvas = document.getElementById('foodCanvas');
 
   overflowWrapper.style.width = CANVAS_WIDTH + 'px';
   overflowWrapper.style.height = CANVAS_HEIGHT + 'px';
-  zoomingWrapper.style.width = CANVAS_WIDTH + 'px';
-  zoomingWrapper.style.height = CANVAS_HEIGHT + 'px';
-  movingWrapper.style.width = CANVAS_WIDTH + 'px';
-  movingWrapper.style.height = CANVAS_HEIGHT + 'px';
+  zoomingWrapper.forEach(zWrapper => {
+    zWrapper.style.width = CANVAS_WIDTH + 'px';
+    zWrapper.style.height = CANVAS_HEIGHT + 'px';
+  });
+  movingWrapper.forEach(mWrapper => {
+    mWrapper.style.width = CANVAS_WIDTH + 'px';
+    mWrapper.style.height = CANVAS_HEIGHT + 'px';
+  });
 
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
@@ -364,12 +383,12 @@ function initDrawing() {
   setTimeout(() => {
     resetHTML();
 
-    originalWidth = zoomingWrapper.offsetWidth;
-    originalHeight = zoomingWrapper.offsetHeight;
-    originalMarginTop = parseInt(zoomingWrapper.style.marginTop.slice('0, -2'));
-    originalMarginLeft = parseInt(zoomingWrapper.style.marginLeft.slice('0, -2'));
-    originalTop = zoomingWrapper.offsetTop;
-    originalLeft = zoomingWrapper.offsetLeft;
+    originalWidth = zoomingWrapper[0].offsetWidth;
+    originalHeight = zoomingWrapper[0].offsetHeight;
+    originalMarginTop = parseInt(zoomingWrapper[0].style.marginTop.slice('0, -2'));
+    originalMarginLeft = parseInt(zoomingWrapper[0].style.marginLeft.slice('0, -2'));
+    originalTop = zoomingWrapper[0].offsetTop;
+    originalLeft = zoomingWrapper[0].offsetLeft;
 
     maxHeight = getMaxPriceDiff();
     updateMaxHeightAround();
@@ -745,7 +764,7 @@ function drawCanvas() {
 
     // Adding Popups
     square.index = i;
-    setupHover(square, value, entry.date, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, '').replace(/-/g, ''));
+    setupHover(square, value, entry.date, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, ' ').replace(/-/g, ' ').replace(/\./g, ' ').replace(/  /g, ' ').replace(/ ,/g, '').replace(/ :/g, ''));
     fragment.appendChild(square);
   }
 
@@ -774,14 +793,13 @@ function setupHover(square, value, date, content) {
     popup.classList.add('fade');
     popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
     popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
-    popup.style.marginTop = `${window.scrollY}px`;
     const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
     const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
     popup.innerHTML = `
       <div class="grid-wrapper">
         <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
-        <span class="popup-text-small">Content          </span><span class="popup-text-small marquee"><span>${content}</span></span>
+        <span class="popup-text">Content                </span><span class="popup-text marquee"><span>${content}</span></span>
         <hr></hr><hr></hr>
         <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
         <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(value)}</span>

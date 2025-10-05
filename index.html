@@ -29,8 +29,8 @@
     </div>
 
     <div id="overflowWrapper" style="position: static; overflow: hidden;">
-      <div id="zoomingWrapper" style="position: relative; overflow: hidden;">
-        <div id="movingWrapper" style="position: relative;">
+      <div id="zoomingWrapper" data-zoom style="position: relative; overflow: hidden;">
+        <div id="movingWrapper" data-move style="position: relative;">
           <canvas id="pathCanvas" style="position: absolute; z-index: 50;"></canvas>
           <canvas id="pathBlurCanvas" style="position: absolute; z-index: 45;"></canvas>
           <canvas id="uiLine" style="position: absolute; z-index: 400; pointer-events: none;"></canvas>
@@ -42,10 +42,17 @@
             <div id="foodCanvas" class="drawing-canvas" style="display: flex;"></div>
             <canvas id="circleCanvas" width="300px" height="300px" style="position: absolute; z-index: 190; pointer-events: none;"></canvas>
           </div>
-          <div id="singlePopup" class="popup"></div>
         </div>
         <div id="uiCanvasHorizontal" style="margin-top: -100%;"></div>
         <div id="uiCanvasVertical"></div>
+      </div>
+    </div>
+
+    <div style="position: absolute; pointer-events: none; margin-left: 35px;">
+      <div data-zoom style="position: relative;">
+        <div data-move style="position: relative;">
+          <div id="singlePopup" class="popup"></div>
+        </div>
       </div>
     </div>
 
@@ -292,7 +299,7 @@
           <div class="rangewrapper">
             <h2 class="range-headline date-range-headline">Date Range</h2>
             <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
-              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.03.25" class="custom-input active"/>
+              <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.08.25" class="custom-input active"/>
               -
               <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="custom-input"/>
             </div>

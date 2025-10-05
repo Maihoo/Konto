@@ -124,7 +124,7 @@
   color: @custom-ui-color;
   transition: opacity 1s;
   opacity: 0;
-  z-index: 400;
+  z-index: 1200;
   pointer-events: none;
 
   .marquee {
@@ -133,6 +133,7 @@
     overflow: hidden;
     box-sizing: border-box;
     position: relative;
+    max-width: 150px;
   }
 
   .marquee::after {
@@ -156,8 +157,8 @@
   .grid-wrapper {
     display: grid;
     width: 100%;
-    column-gap: 10%;
-    grid-template-columns: 45% 45%;
+    column-gap: 1rem;
+    grid-template-columns: auto auto;
     white-space: nowrap;
     overflow: hidden;
 
