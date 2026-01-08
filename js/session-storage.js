@@ -1,5 +1,5 @@
 function clearSessionStorage() {
-  sessionStorage.setItem('startDate', '01.08.25');
+  sessionStorage.setItem('startDate', '01.11.25');
   sessionStorage.setItem('endDate', '');
   sessionStorage.setItem('backgroundColor', 'rgb(25, 25, 25)');
   sessionStorage.setItem('lineColor', 'rgb(255, 0, 0)');
@@ -34,9 +34,8 @@ function getFromSessionStorage() {
   if (sessionValue && sessionValue.length > 0) {
     backgroundColor = sessionValue;
     less.modifyVars({'@custom-background-color': backgroundColor});
-    document.getElementById('overflowWrapper').style.backgroundColor = sessionValue;
-    document.getElementById('color-picker-background').value = rgbToHex(sessionValue);
-
+    document.getElementById('overflowWrapper').style.backgroundColor = backgroundColor;
+    document.getElementById('color-picker-background').value = rgbToHex(backgroundColor);
     document.getElementById('overflowWrapper').style.backgroundColor = backgroundColor;
     document.getElementById('settings').style.backgroundColor = backgroundColor;
     document.body.style.backgroundColor = backgroundColor;

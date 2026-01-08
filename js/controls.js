@@ -249,11 +249,11 @@ function initColorPickers() {
     initDrawing();
   });
 
-  backgroundColor = '' + hexToRgb(backgroundColorPicker.value);
+  backgroundColor = '' + hexToRgb(backgroundColorPicker.getAttribute('value'));
   updateBackgroundColor(backgroundColor);
-  lineColor = hexToRgb(lineColorPicker.value);
+  lineColor = hexToRgb(lineColorPicker.getAttribute('value'));
   updateLineColor(lineColor);
-  uiColor = hexToRgb(uiColorPicker.value);
+  uiColor = hexToRgb(uiColorPicker.getAttribute('value'));
   updateUiColor(uiColor);
 }
 
@@ -790,25 +790,42 @@ function handlePrediction(event) {
     canvas.appendChild(dateTo);
   }
 
+  let dateDiff = document.getElementById('prediction-date-diff');
+  if (!dateDiff) {
+    dateDiff = document.createElement('span');
+    dateDiff.id = 'prediction-date-diff';
+    dateDiff.classList.add('prediction-text');
+    canvas.appendChild(dateDiff);
+  }
+
   dateFrom.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px';
-  dateTo.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px'; 
+  dateTo.style.left   = (parseInt(linepoints[linepoints.length - 1][2])) + 'px';
+  dateDiff.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px';
 
   const heightOffset = firstPointTop - secondPointTop > 0 ? 10 : -20;
   dateFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3]) + heightOffset) - 5 + 'px';
+  dateDiff.style.top = (parseInt(linepoints[linepoints.length - 1][3]) + heightOffset) - 5 + 'px';
   dateTo.style.top = cursorPosToMargin(event.clientY, 'top', '#canvas') - heightOffset - 15 + 'px';
 
+  let divisor = 1.5 - Math.abs(firstPointLeft - secondPointLeft) / 200;
+  divisor = divisor < 1.5 ? 1.5 : divisor;
+  divisor = divisor > 2.5 ? 2.5 : divisor;
+  console.log(divisor);
   if (firstPointLeft - secondPointLeft < 0) {
-    dateTo.style.marginLeft = secondPointLeft - firstPointLeft - dateTo.offsetWidth + 10 + 'px';
     dateFrom.style.marginLeft = '';
+    dateTo.style.marginLeft = secondPointLeft - firstPointLeft - dateTo.offsetWidth + 10 + 'px';
+    dateDiff.style.marginLeft = (secondPointLeft - firstPointLeft - dateTo.offsetWidth + 10) / divisor + 'px';
   } else {
-    dateFrom.style.marginLeft = -dateFrom.offsetWidth + 15 + 'px';
-    dateTo.style.marginLeft = secondPointLeft - firstPointLeft + 'px';
+    const dateValueFrom = -dateFrom.offsetWidth + 15;
+    const dateValueTo = secondPointLeft - firstPointLeft;
+    dateFrom.style.marginLeft = dateValueFrom + 'px';
+    dateTo.style.marginLeft = dateValueTo + 'px';
+    dateDiff.style.marginLeft = dateValueFrom + (dateValueTo - dateValueFrom) / divisor + 'px';
   }
 
-  dateFrom.innerHTML = pxToDate(parseInt(linepoints[linepoints.length - 1][2]) + 'px')
-  dateTo.innerHTML = pxToDate(event.clientX + 'px')
-
-
+  dateFrom.innerHTML = pxToDate(parseInt(linepoints[linepoints.length - 1][2]) + 'px');
+  dateTo.innerHTML = pxToDate(event.clientX + 'px');
+  dateDiff.innerHTML = 'Δ Days: ' + differenceInDays(pxToDate(parseInt(linepoints[linepoints.length - 1][2]) + 'px'), pxToDate(event.clientX + 'px'));
 
   let valueFrom = document.getElementById('prediction-value-from');
   if (!valueFrom) {
@@ -826,23 +843,41 @@ function handlePrediction(event) {
     canvas.appendChild(valueTo);
   }
 
+  let valueDiff = document.getElementById('prediction-value-diff');
+  if (!valueDiff) {
+    valueDiff = document.createElement('span');
+    valueDiff.id = 'prediction-value-diff';
+    valueDiff.classList.add('prediction-text');
+    canvas.appendChild(valueDiff);
+  }
+
   const widthOffset = firstPointLeft - secondPointLeft > 0 ? 10 : -20;
   valueFrom.style.left = (parseInt(linepoints[linepoints.length - 1][2]) + widthOffset) + 'px';
-  valueTo.style.left = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px'; 
+  valueTo.style.left   = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px';
+  valueDiff.style.left = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px';
 
+  const diff = (parseInt(linepoints[linepoints.length - 1][3])) - (cursorPosToMargin(event.clientY, 'top', '#canvas') - 10);
   valueFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3])) + 'px';
-  valueTo.style.top = cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + 'px';
+  valueTo.style.top   = cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + 'px';
+  valueDiff.style.top = (cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + (diff / 2)) + 'px';
 
   if (firstPointLeft - secondPointLeft < 0) {
     valueFrom.style.marginLeft = - valueFrom.offsetWidth + 25 + 'px';
     valueTo.style.marginLeft = secondPointLeft - firstPointLeft - 5 + 'px';
+    valueDiff.style.marginLeft = secondPointLeft - firstPointLeft - 5 + 'px';
   } else {
     valueFrom.style.marginLeft = '';
     valueTo.style.marginLeft = secondPointLeft - firstPointLeft - valueTo.offsetWidth + 7 + 'px';
+    valueDiff.style.marginLeft = secondPointLeft - firstPointLeft - valueTo.offsetWidth + 7 + 'px';
   }
 
-  valueFrom.innerHTML = numberToCurrency(parseFloat(pxToValue(linepoints[linepoints.length - 1][3] - 2 + 'px')))
-  valueTo.innerHTML = numberToCurrency(parseFloat(pxToValue(cursorPosToMargin(event.clientY, 'top', '#canvas') + 'px')));
+  const numberFrom = parseFloat(pxToValue(linepoints[linepoints.length - 1][3] - 2 + 'px'));
+  const numberTo = parseFloat(pxToValue(cursorPosToMargin(event.clientY, 'top', '#canvas') + 'px'));
+  const numberDiff = numberTo - numberFrom;
+
+  valueFrom.innerHTML = numberToCurrency(numberFrom);
+  valueDiff.innerHTML = 'Δ ' + numberToCurrency(numberDiff);
+  valueTo.innerHTML = numberToCurrency(numberTo);
 }
 
 function throttle(func, delay) {

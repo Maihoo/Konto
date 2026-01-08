@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "10.384,16";
+const startbudgetString = "8.616,46";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -43,15 +43,8 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"_Schulden";"mir gegenüber";"";"";"";"";"";"";"Name";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""',
-  '"DE45150505001101110771";"01.09.25";"01.09.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"07.07.25";"07.07.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"04.06.25";"04.06.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"04.03.25";"04.03.25";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""',
-  '"DE45150505001101110771";"20.11.24";"20.11.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"4000";"EUR";""',
-  '"DE45150505001101110771";"21.10.24";"21.10.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
-  '"DE45150505001101110771";"09.09.24";"09.09.24";"Cash";"Investments";"";"";"";"";"";"";"Ich";"";"";"1000";"EUR";""'
+  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"comdirect";"";"";"1100";"EUR";""',
+  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""'
 ];
 
 const selectors= {
@@ -74,7 +67,7 @@ const foodSelectors= {
 };
 
 const replacements = [
-  // selectors.purpose + ';Miete + Strom + Internet;' + selectors.amount + ';-1400'
+ // selectors.purpose + ';Finn Ole Stadtaus (Miete);' + selectors.amount + ';-1000'
 ]
 
 const permanentReplacements = [
@@ -126,6 +119,7 @@ const permanentReplacements = [
 const pathThickness = 2;
 const shadowLength = 100; // how large the shadow should be
 const shadowDistance = 4; // spacing between each blurred line
+const shadowCount = shadowLength / shadowDistance;
 
 // Variables
 let totalBudget = STARTBUDGET;
@@ -167,7 +161,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.08.25';
+let startDate = '01.11.25';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -266,7 +260,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.08.25';
+  startDate = '01.11.25';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -382,6 +376,7 @@ function initDrawing() {
 
   setTimeout(() => {
     resetHTML();
+    clearCanvases();
 
     originalWidth = zoomingWrapper[0].offsetWidth;
     originalHeight = zoomingWrapper[0].offsetHeight;
@@ -393,14 +388,11 @@ function initDrawing() {
     maxHeight = getMaxPriceDiff();
     updateMaxHeightAround();
 
-    clearCanvases();
-
-    drawCanvas();
 
     requestIdleCallback(() => {
-      drawPath();         // draws 2px solid line
-      drawBlurPath();     // draws opaque background below path
-      hidePathBlurTop();  // caps blurred paths above path
+      drawPath(pathCanvas, 1, 0); // draws 2px solid line
+      drawBlurPath();             // draws opaque background below path
+      hidePathBlurTop();          // caps blurred paths above path
 
       setAmounts();
       setDates();
@@ -414,52 +406,37 @@ function initDrawing() {
       drawTable();
     });
 
+    drawCanvas();
+
     document.getElementById('spinner-element').style.display = 'none';
   }, 2);
 }
 
 function clearCanvases() {
-
+  pathCanvas.getContext('2d').clearRect(0, 0, pathCanvas.width, pathCanvas.height);
+  pathBlurCanvas.getContext('2d').clearRect(0, 0, pathBlurCanvas.width, pathBlurCanvas.height);
 }
 
-function drawPath() {
-  ctx = pathCanvas.getContext('2d');
-  ctx.clearRect(0, 0, pathCanvas.width, pathCanvas.height);
-
-  const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
+function drawPath(cnvs, opacity, yOffset) {
+  ctx = cnvs.getContext('2d');
   for (let i = 0; i < path.length - 1; i++) {
     drawLine(ctx,
       parseInt(path[i][1]),
-      parseInt(path[i][0]),
+      parseInt(path[i][0] + yOffset),
       parseInt(path[i+1][1]),
-      parseInt(path[i+1][0]),
-      `rgb(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]})`,
+      parseInt(path[i+1][0] + yOffset),
+      `rgba(${removeRGB(lineColor)}, ${opacity})`,
       2);
   }
 }
 
 function drawBlurPath() {
-  ctx = pathBlurCanvas.getContext('2d');
-  ctx.clearRect(0, 0, pathBlurCanvas.width, pathBlurCanvas.height);
-  const lineColorParts = lineColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-  for (let i = shadowLength/shadowDistance; i >= 0; i--) {
-    for (let j = 0; j < path.length - 1; j++) {
-      const heightFactor = 1000 / path[j][0];
-      drawLine(ctx,
-        parseInt(path[j][1]),
-        parseInt(path[j][0] - 20 + i * shadowDistance * verticalScaleFactor),
-        parseInt(path[j+1][1]),
-        parseInt(path[j+1][0] - 20 + i * shadowDistance * verticalScaleFactor),
-        `rgba(${lineColorParts[0]}, ${lineColorParts[1]}, ${lineColorParts[2]}, ${(shadowLength/shadowDistance - i) / 200 * heightFactor})`,
-        1);
-    }
+  for (let j = shadowCount; j >= 0; j--) {
+    drawPath(pathBlurCanvas, (shadowCount - j) / shadowCount, j * shadowDistance * verticalScaleFactor - 10);
   }
-
-  pathBlurCanvas.style.filter = 'blur(5px)';
 }
 
 function hidePathBlurTop() {
-  const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   ctx = pathBlurCanvas.getContext('2d');
 
   // Fill the area below the graph with a fade effect
@@ -468,7 +445,7 @@ function hidePathBlurTop() {
     ctx.moveTo(parseInt(path[0][1]), parseInt(path[0][0]));
   }
 
-  ctx.fillStyle = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
+  ctx.fillStyle = backgroundColor;
 
   // Draw the shape
   for (let i = 1; i < path.length; i++) {
@@ -482,14 +459,14 @@ function hidePathBlurTop() {
 }
 
 function setAmounts() {
-  const backgroundColorParts = backgroundColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
   uiCanvasVertical.style.marginTop = -(EXTRAAREA + CANVAS_HEIGHT) + 'px';
+
   let valueTop = document.createElement('p');
   valueTop.id = 'ui-element-value-top';
-  valueTop.innerHTML = '<p class="uiElementTop">max:</p> <p class="uiElementBot">' + formatNumber(highest) + '€</p>';
+  valueTop.innerHTML = `<p class="uiElementTop">max:</p> <p class="uiElementBot">${formatNumber(highest)}€</p><p class="uiElementTop">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
   valueTop.className = 'uiElement';
   valueTop.classList.add('amount-text-max');
-  valueTop.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
+  valueTop.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
   valueTop.style.marginTop = '' + parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA) + 'px';
   valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvasVertical.appendChild(valueTop);
@@ -498,24 +475,21 @@ function setAmounts() {
   valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';
   valueBottom.className = 'uiElement';
   valueBottom.classList.add('amount-text-min');
-  valueBottom.style.backgroundColor = `rgba(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]}, 0.75)`;
+  valueBottom.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
   valueBottom.style.marginTop = '' + (525 + EXTRAAREA) + 'px'
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
   uiCanvasVertical.appendChild(valueBottom);
 
   // draw Lines
+  const uiColorClear = removeRGB(uiColor);
   for (let i = 0; i <= 200; i++) {
     let valueLine = document.createElement('div');
     valueLine.classList.add('value-line');
-    const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-    const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
-
-    valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.02)';
-    if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.1)'; }
-    if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.4)'; }
-    if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.7)'; }
-    if (i === 0)      { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 1.0)'; valueLine.style.height = '3px'; }
-
+    if (i === 0)           { valueLine.style.backgroundColor = uiColor; valueLine.style.height = '3px'; }
+    else if (i % 20 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.7)'; }
+    else if (i % 10 === 0) { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.4)'; }
+    else if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.1)'; }
+    else                   { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.02)'; }
     valueLine.style.opacity = '100%';
     valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
     uiCanvasVertical.appendChild(valueLine);
@@ -524,15 +498,12 @@ function setAmounts() {
   // draw Amounts
   let amountHolder = document.createElement('div');
   amountHolder.classList.add('amount-holder');
-  amountHolder.style.backgroundColor = `rgb(${backgroundColorParts[0]}, ${backgroundColorParts[1]}, ${backgroundColorParts[2]})`;
+  amountHolder.style.backgroundColor = backgroundColor;
   for (let i = 100; i >= -10; i--) {
     if (pxToValue('0px') < 30000 || (pxToValue('0px') < 150000 && i % 5 === 0) || i % 10 === 0) {
       let valueText = document.createElement('div');
       valueText.classList.add('value-text');
       valueText.innerHTML = i + 'k';
-
-      const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-      const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
       valueText.style.color = 'rgba(' + uiColorClear + ', 0.4)';
       if (i % 5 === 0)  { valueText.style.color = 'rgba(' + uiColorClear + ', 0.7)'; }
       if (i % 10 === 0) { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
@@ -548,6 +519,8 @@ function setAmounts() {
 }
 
 function setDates() {
+  const uiColorClear = removeRGB(uiColor);
+  const dateLineHeight = 2000 + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
   uiCanvasHorizontal.style.marginLeft = -EXTRAAREA + 'px';
 
   let dateLeft = document.createElement('p');
@@ -575,19 +548,16 @@ function setDates() {
     let dateLine = document.createElement('div');
     dateLine.style.position = 'absolute';
     dateLine.style.zIndex = '80';
-    dateLine.style.height = 2000 + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
+    dateLine.style.height = dateLineHeight;
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
     dateLine.style.marginTop = '-2000px';
     dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
 
-    const uiColorParts = uiColor.replace('rgb(', '').replace(')', '').replace(' ', '').split(',');
-    const uiColorClear = `${uiColorParts[0]}, ${uiColorParts[1]}, ${uiColorParts[0]}`;
-
     dateLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.2)';;
     if (dateLines[i].charAt(0) === 'y') {
       dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
-      dateLine.style.backgroundColor = 'rgb(' + uiColorClear + ')';
+      dateLine.style.backgroundColor = uiColor;
     }
 
     if (dateLines[i].charAt(0) === 'w') {
@@ -637,12 +607,6 @@ function drawCanvas() {
   const totalDays = (sortType === 'amount') ? dates.length : Math.abs(differenceInDays(firstDay, lastDay) + 2);
   const dayWidth = 875 / totalDays;
   const foregroundOffset = dayWidth / 4;
-
-  // Precompute shared dates using a hashmap
-  const sharedDateCount = {};
-  for (const entry of dates) {
-    sharedDateCount[entry.date] = (sharedDateCount[entry.date] || 0) + 1;
-  }
 
   // Pushing date lines
   for (let year = 0; year < 30; year++) {
@@ -764,7 +728,8 @@ function drawCanvas() {
 
     // Adding Popups
     square.index = i;
-    setupHover(square, value, entry.date, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, ' ').replace(/-/g, ' ').replace(/\./g, ' ').replace(/  /g, ' ').replace(/ ,/g, '').replace(/ :/g, ''));
+    const total = numberToCurrency(parseFloat(entries[selectors.total].slice(1, -1)));
+    setupHover(square, value, entry.date, total, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, ' ').replace(/-/g, ' ').replace(/\./g, ' ').replace(/  /g, ' ').replace(/ ,/g, '').replace(/ :/g, ''));
     fragment.appendChild(square);
   }
 
@@ -787,7 +752,7 @@ function categorizeEntries(entries, decided, index) {
   }
 }
 
-function setupHover(square, value, date, content) {
+function setupHover(square, value, date, total, content) {
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
@@ -795,7 +760,7 @@ function setupHover(square, value, date, content) {
     popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
     const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
-    const dateParts = allTextLines[square.index].split(';')[selectors.date].slice(1, -1).split('.');
+    const dateParts = date.split('.');
     popup.innerHTML = `
       <div class="grid-wrapper">
         <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
@@ -804,7 +769,7 @@ function setupHover(square, value, date, content) {
         <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
         <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(value)}</span>
         <hr></hr><hr></hr>
-        <span class="popup-text">Total                  </span><span class="popup-text">${numberToCurrency(parseFloat(allTextLines[square.index].split(';')[selectors.total].slice(1, -1)))}</span>
+        <span class="popup-text">Total                  </span><span class="popup-text">${total}</span>
         <span class="popup-text">Category               </span><span class="popup-text">${square.category}</span>
         <hr></hr><hr></hr>
         <span class="popup-text-small">Margin-Top       </span><span class="popup-text-small">${square.style.marginTop}</span>

@@ -256,24 +256,22 @@ function updateMaxHeightAround() {
   }
 }
 
+function addRGB(input) {
+  return `rgb(${input.replace('rgb(', '').replace(')', '')})`;
+}
+
+function removeRGB(input) {
+  return input.replace('rgb(', '').replace(')', '').replace(/\s/g, '');
+}
+
 function hexToRgb(hex) {
   hex = hex.replace('#', '');
-  if (hex.length === 3) {
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-  }
-
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-
-  return `rgb(${r}, ${g}, ${b})`;
+  const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+  return `rgb(${parseInt(fullHex.slice(0, 2), 16)}, ${parseInt(fullHex.slice(2, 4), 16)}, ${parseInt(fullHex.slice(4, 6), 16)})`;
 }
 
 function rgbToHex(input) {
-  input = input.replace('rgb(', '');
-  input = input.replace(')', '');
-  input = input.replace(/\s/g, '');
-
+  input = input.replace('rgb(', '').replace(')', '').replace(/\s/g, '');
   const inputParts = input.split(',');
   if (inputParts.length === 3) {
     const componentToHex = (c) => {
@@ -281,12 +279,7 @@ function rgbToHex(input) {
       return hex.length === 1 ? '0' + hex : hex;
     };
 
-    const hexR = componentToHex(inputParts[0]);
-    const hexG = componentToHex(inputParts[1]);
-    const hexB = componentToHex(inputParts[2]);
-
-    return `#${hexR}${hexG}${hexB}`;
+    return '#' + componentToHex(inputParts[0]) + componentToHex(inputParts[1]) + componentToHex(inputParts[2]);
   }
-
-  return '';
+  return '#000000';
 }

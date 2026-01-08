@@ -1,1 +1,1 @@
-node parse-groceries-to-csv.js
+node js/scripts/parse-groceries-to-csv.js

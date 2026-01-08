@@ -149,13 +149,7 @@ function drawGroceries() {
   const uniqueDates = [...new Set(dates.map(d => d.date))];
   const uniqueStores = [...new Set(dates.map(d => d.store))];
   const totalDays = (2 * uniqueDates.length) + uniqueStores.length;
-  const dayWidth = (850 / totalDays).toFixed(2);
-
-  // Precompute shared dates using a hashmap
-  const sharedDateCount = {};
-  for (const entry of dates) {
-    sharedDateCount[entry.date] = (sharedDateCount[entry.date] || 0) + 1;
-  }
+  const dayWidth = (800 / totalDays).toFixed(2);
 
   let bar = document.createElement('div');
   bar.classList = 'square-holder-bar';
@@ -212,7 +206,7 @@ function drawGroceries() {
 
     // adding Popups
     square.index = i;
-    setupHover(square, amountValue, entry.date, entry.productName);
+    setupHover(square, amountValue, entry.date, '-', entry.productName);
     bar.appendChild(square);
   }
 
