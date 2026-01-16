@@ -810,7 +810,7 @@ function handlePrediction(event) {
   let divisor = 1.5 - Math.abs(firstPointLeft - secondPointLeft) / 200;
   divisor = divisor < 1.5 ? 1.5 : divisor;
   divisor = divisor > 2.5 ? 2.5 : divisor;
-  console.log(divisor);
+
   if (firstPointLeft - secondPointLeft < 0) {
     dateFrom.style.marginLeft = '';
     dateTo.style.marginLeft = secondPointLeft - firstPointLeft - dateTo.offsetWidth + 10 + 'px';

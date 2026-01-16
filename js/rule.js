@@ -461,15 +461,41 @@ function hidePathBlurTop() {
 function setAmounts() {
   uiCanvasVertical.style.marginTop = -(EXTRAAREA + CANVAS_HEIGHT) + 'px';
 
-  let valueTop = document.createElement('p');
-  valueTop.id = 'ui-element-value-top';
-  valueTop.innerHTML = `<p class="uiElementTop">max:</p> <p class="uiElementBot">${formatNumber(highest)}€</p><p class="uiElementTop">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
-  valueTop.className = 'uiElement';
-  valueTop.classList.add('amount-text-max');
-  valueTop.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
-  valueTop.style.marginTop = '' + parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA) + 'px';
-  valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
-  uiCanvasVertical.appendChild(valueTop);
+  const highestOffsetTop = parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA);
+  const currentOffsetTop = parseInt(530 - valueToPx(totalBudget) + valueToPx(lowest) + EXTRAAREA);
+
+  if (currentOffsetTop - highestOffsetTop > 45) {
+    let valueTop = document.createElement('p');
+    valueTop.id = 'ui-element-value-top';
+    valueTop.innerHTML = `<p class="uiElementTop">max:</p> <p class="uiElementBot">${formatNumber(highest)}€</p>`;
+    valueTop.className = 'uiElement';
+    valueTop.classList.add('amount-text-max');
+    valueTop.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
+    valueTop.style.marginTop = '' + highestOffsetTop + 'px';
+    valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    uiCanvasVertical.appendChild(valueTop);
+  
+    let valueCurrent = document.createElement('p');
+    valueCurrent.id = 'ui-element-value-top';
+    valueCurrent.innerHTML = `<p class="uiElementTop">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
+    valueCurrent.className = 'uiElement';
+    valueCurrent.classList.add('amount-text-max');
+    valueCurrent.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
+    valueCurrent.style.marginTop = '' + currentOffsetTop + 'px';
+    valueCurrent.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    uiCanvasVertical.appendChild(valueCurrent);
+  } else {
+    let valueBoth = document.createElement('p');
+    valueBoth.id = 'ui-element-value-top';
+    valueBoth.innerHTML = `<p class="uiElementTop small">max:</p> <p class="uiElementBot small">${formatNumber(highest)}€</p><p class="uiElementTop small">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
+    valueBoth.className = 'uiElement';
+    valueBoth.classList.add('amount-text-max');
+    valueBoth.classList.add('combined');
+    valueBoth.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
+    valueBoth.style.marginTop = '' + highestOffsetTop + 'px';
+    valueBoth.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    uiCanvasVertical.appendChild(valueBoth);
+  }
 
   let valueBottom = document.createElement('p');
   valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';

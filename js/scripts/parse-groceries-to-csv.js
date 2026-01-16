@@ -12,16 +12,20 @@ function getCategory(productName) {
     return 'pfand';
   }
 
-  if (productName.includes('bürste')
+  if (productName.includes('alltag')
+   || productName.includes('bürste')
    || productName.includes('haushalt')
    || productName.includes('luftballon')
    || productName.includes('luftpolste')
    || productName.includes('papier')
    || productName.includes('shampoo')
    || productName.includes('seifenblasen')
+   || productName.includes('shoulders')
    || productName.includes('sonnenspray')
    || productName.includes('spülbürste')
+   || productName.includes('spülmittel')
    || productName.includes('stam.')
+   || productName.includes('tücher')
    || productName.includes('waschmittel')
    || productName.includes('wäscheleine')
    || productName.includes('zugbandsäcke')) {
@@ -40,10 +44,12 @@ function getCategory(productName) {
    || productName.includes('banane')
    || productName.includes('butter')
    || productName.includes('brokkoli')
+   || productName.includes('creme fraiche')
    || productName.includes('eier')
    || productName.includes('erbsen')
    || productName.includes('filet')
    || productName.includes('gemüse')
+   || productName.includes('geschnetzeltes')
    || productName.includes('gurke')
    || productName.includes('hackfleisch')
    || productName.includes('haferfloc')
@@ -53,7 +59,7 @@ function getCategory(productName) {
    || productName.includes('milch')
    || productName.includes('rapsöl')
    || productName.includes('reis')
-   || productName.includes('zwiebel')) {
+   || (productName.includes('zwiebel') && !productName.includes('röstzwiebeln'))) {
     return 'healthy'
   }
 
@@ -86,6 +92,7 @@ function getCategory(productName) {
   || productName.includes('plombir')
   || productName.includes('pringles')
   || productName.includes('sahnekapseln')
+  || productName.includes('salzstangen')
   || productName.includes('schoko')
   || productName.includes('snickers')) {
     return 'sweets'
@@ -100,14 +107,22 @@ function parseGroceriesToCSV() {
   let currentStore = '';
   const lines = data.split('\n');
   const csvRows = ['"date";"store";"productName";"price";"quantity";"category"'];
-
   for (let line of lines) {
     line = line.trim();
     if (!line) continue;
-    if (line.startsWith('// ')) {
-      const content = line.substring(3).trim();
-      if (/^\d{2}\.\d{2}\.\d{4}$/.test(content)) {
-        currentDate = content;
+
+    if (line.startsWith('//')) {
+      const content = line.replace('//', '').trim();
+      // Match both DD.MM.YYYY and DD.MM.YY
+      const dateMatch = content.match(/^(\d{2})\.(\d{2})\.(\d{2}|\d{4})$/);
+      if (dateMatch) {
+        let [ , day, month, year ] = dateMatch;
+        if (year.length === 2) {
+          year = '20' + year;
+        }
+
+        const formattedDate = `${day}.${month}.${year}`;
+        currentDate = formattedDate;
       } else {
         currentStore = content;
       }
