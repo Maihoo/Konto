@@ -114,29 +114,10 @@ function initTextLines() {
   }
 
   // apply date filter
-  if (startDate.length === 8) {
-    allTextLines = allTextLines.filter(function(item, index) {
-      const entries = item.split(';');
-      if (index === 0) { return false; }
-      if (differenceInDays(startDate, entries[selectors.date].slice(1, -1)) < 0) {
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  if (endDate.length === 8) {
-    allTextLines = allTextLines.filter(function(item, index) {
-      const entries = item.split(';');
-      if (index === 0) { return false; }
-      if (differenceInDays(endDate, entries[selectors.date].slice(1, -1)) > 0) {
-        return false;
-      }
-
-      return true;
-    });
-  }
+  allTextLines = allTextLines.filter(function(item, index) {
+    const date = item.split(';')[selectors.date].slice(1, -1);
+    return (index > 0 && date && (startDate.length !== 8 || differenceInDays(startDate, date) > 0) && (endDate.length !== 8 || differenceInDays(endDate, date) < 0));
+  });
 
   // filter out categories
   allTextLines = allTextLines.filter(function(item, index) {

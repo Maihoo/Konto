@@ -6,8 +6,8 @@ function differenceInDays(input1, input2) {
 
   let temp1 = input1.split('.');
   let temp2 = input2.split('.');
-  let date1 = new Date('20' + temp1[2] + '-' + temp1[1] + '-' + temp1[0]);
-  let date2 = new Date('20' + temp2[2] + '-' + temp2[1] + '-' + temp2[0]);
+  let date1 = new Date((temp1[2] && temp1[2].length === 2 ? '20' : '') + temp1[2] + '-' + temp1[1] + '-' + temp1[0]);
+  let date2 = new Date((temp2[2] && temp2[2].length === 2 ? '20' : '') + temp2[2] + '-' + temp2[1] + '-' + temp2[0]);
   return (Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)));
 }
 

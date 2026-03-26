@@ -111,9 +111,10 @@ function groupCategoriesWithinDatesAndStores(arr) {
 }
 
 function prepareFoodData(inputLines) {
-
+  // apply date filter
   foodTextLines = inputLines.filter(function(item, index) {
-    return item !== '' && item !== '.' && index !== 0;
+    const date = item.split(';')[0].slice(1, -1);
+    return (index !== 0 && item !== '' && item !== '.' && (startDate.length !== 8 || differenceInDays(startDate, date) > 0) && (endDate.length !== 8 || differenceInDays(endDate, date) < 0));
   });
 
   groceriesEntries = [];
@@ -143,6 +144,7 @@ function drawGroceries() {
   let dayOffset = 0;
   let heightOffset = 0;
 
+  console.log(dates)
   let lastDay = dates[0].date;
   let lastStore = dates[0].store;
   // Get the number of distinct dates
@@ -150,6 +152,7 @@ function drawGroceries() {
   const uniqueStores = [...new Set(dates.map(d => d.store))];
   const totalDays = (2 * uniqueDates.length) + uniqueStores.length;
   const dayWidth = (800 / totalDays).toFixed(2);
+  foodCanvas.innerHTML = '';
 
   let bar = document.createElement('div');
   bar.classList = 'square-holder-bar';
@@ -214,7 +217,7 @@ function drawGroceries() {
 }
 
 function drawCircleDiagram(data) {
-  const CATEGORY_ORDER = ['catfood', 'toiletries', 'sweets', 'drinks', 'food', 'healthy'];
+  const CATEGORY_ORDER = ['healthy', 'food', 'sweets', 'drinks', 'catfood', 'toiletries'];
   const ctx = circleCanvas.getContext("2d");
   ctx.clearRect(0, 0, circleCanvas.width, circleCanvas.height);
 

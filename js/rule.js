@@ -22,7 +22,7 @@ $(document).ready(function () {
 });
 
 // Constants
-const startbudgetString = "8.616,46";
+const startbudgetString = "10.166,45";
 const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
@@ -43,7 +43,7 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"comdirect";"";"";"1100";"EUR";""',
+  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"comdirect";"";"";"-200";"EUR";""',
   '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""'
 ];
 

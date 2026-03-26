@@ -108,6 +108,10 @@ function handleRefreshButton() {
   initTextLines();
   initDrawing();
   initRangeSlider1();
+  const foodExpensesLayer = document.getElementById('food-expenses-layer');
+  if (foodExpensesLayer && foodExpensesLayer.classList.contains('layer--open')) {
+    initGroceries();
+  }
 }
 
 function checkRadios() {
@@ -660,8 +664,8 @@ function initRangeSlider1() {
       change: function(event) {
         if (event.button === 0) {
           setTimeout(function() {
-            let value1 = $( '#range-slider-1' ).slider( 'values', 0 );
-            let value2 = $( '#range-slider-1' ).slider( 'values', 1 );
+            let value1 = $('#range-slider-1').slider( 'values', 0 );
+            let value2 = $('#range-slider-1').slider( 'values', 1 );
             let tempDate = new Date();
             tempDate.setDate(currentDate.getDate() + 100);
             // find first day within bounds
@@ -684,12 +688,8 @@ function initRangeSlider1() {
               document.getElementById('date-range-end').value = tempDateString;
             }
 
-            let event = new KeyboardEvent('keydown', {
-              bubbles: true,
-              key: 'Enter'
-            });
-
-            document.getElementById('date-range-start').dispatchEvent(event);
+            console.log('startDate', startDate, 'endDate', endDate);
+            document.getElementById('date-range-start').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
           }, 100);
         }
       }
