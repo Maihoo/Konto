@@ -295,10 +295,10 @@ function toggleSettingsOrientation() {
   sessionStorage.setItem('settingsVertical', settingsVertical);
 
   if (settingsVertical) {
-    document.getElementById('graph-area-wrapper').classList.add('graph-area-wrapper-vertical');
+    document.getElementById('settings').classList.add('settings-vertical');
     document.getElementById('settings').classList.remove('settings-hidden');
   } else {
-    document.getElementById('graph-area-wrapper').classList.remove('graph-area-wrapper-vertical');
+    document.getElementById('settings').classList.remove('settings-vertical');
   }
 }
 
@@ -401,7 +401,7 @@ function toggleGrid() {
 }
 
 function handleEscape(event) {
-  if (event.key === 'Escape') {
+  if ((event instanceof KeyboardEvent && event.key === 'Escape') || event.type === 'contextmenu') {
     linepoints[linepoints.length - 1] = [];
     overflowWrapper.style.cursor = '';
     let uiLine = document.getElementById('uiLine');
@@ -413,6 +413,26 @@ function handleEscape(event) {
     }
 
     document.removeEventListener('keydown', handleEscape);
+    document.onmousemove = () => {};
+    linepoints[linepoints.length - 1] = [];
+
+    let valueFrom = document.getElementById('prediction-value-from');
+    if (valueFrom) { uiCanvas.removeChild(valueFrom); }
+
+    let valueTo = document.getElementById('prediction-value-to');
+    if (valueTo) { uiCanvas.removeChild(valueTo); }
+
+    let valueDiff = document.getElementById('prediction-value-diff');
+    if (valueDiff) { uiCanvas.removeChild(valueDiff); }
+
+    let dateFrom = document.getElementById('prediction-date-from');
+    if (dateFrom) { uiCanvas.removeChild(dateFrom); }
+  
+    let dateTo = document.getElementById('prediction-date-to');
+    if (dateTo) { uiCanvas.removeChild(dateTo); }
+
+    let dateDiff = document.getElementById('prediction-date-diff');
+    if (dateDiff) { uiCanvas.removeChild(dateDiff); }
   }
 }
 
@@ -429,19 +449,23 @@ function handleDragClick(event) {
     uiLine.index = 0;
   }
 
+  // first click
   if (linepoints.length === 0 || linepoints[linepoints.length - 1].length === 0) {
     overflowWrapper.style.cursor = 'crosshair';
     linepoints[linepoints.length] = [
       cursorPosToMargin(event.clientX, 'left'),
       cursorPosToMargin(event.clientY, 'top'),
       event.clientX - overflowWrapper.offsetLeft,
-      cursorPosToMargin(event.clientY, 'top', '#canvas')
+      cursorPosToMargin(event.clientY, 'top', '#uiCanvas')
     ];
 
     const debouncedMouseMove = throttle(handlePrediction, 10);
     document.onmousemove = debouncedMouseMove;
-
     document.addEventListener('keydown', handleEscape);
+    overflowWrapper.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      handleEscape(event);
+    });
   } else {
     // finish prediction line
     let uiltCtx = uiLineTemp.getContext('2d');
@@ -474,14 +498,14 @@ function handleDragClick(event) {
     circle.className = 'circle'
     circle.index = linepoints.length - 1;
     circle.id = linepoints.length - 1;
-    circle.style.top = (cursorPosToMargin(event.clientY, 'top', '#canvas') - 6 - 0) + 'px';
-    circle.style.left = (cursorPosToMargin(event.clientX, 'left', '#canvas') - 6) + 'px';
+    circle.style.top = (cursorPosToMargin(event.clientY, 'top', '#uiCanvas') - 6 - 0) + 'px';
+    circle.style.left = (cursorPosToMargin(event.clientX, 'left', '#uiCanvas') - 6) + 'px';
 
     circle.onmouseover = function(event) {
       const popup = document.getElementById('singlePopup'); // Get the single popup element
       popup.classList.add('fade');
-      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
-      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
 
       // Update popup content
       const dateParts = pxToDate(circle.style.left).split('.');
@@ -504,15 +528,15 @@ function handleDragClick(event) {
 
     circle.onmousemove = function(event) {
       let popup = document.getElementById('singlePopup');
-      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
-      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
     };
 
     circle.onmouseout = function() {
       document.getElementById('singlePopup').classList.remove('fade');
     };
 
-    canvas.appendChild(circle);
+    uiCanvas.appendChild(circle);
     linepoints.push([]);
   }
 }
@@ -524,18 +548,23 @@ function handleZoomScroll(zoomIn) {
     zoomLevel /= 1.02;
   }
 
-  zoomingWrapper.forEach(zWrapper => {
-    zWrapper.style.transform = 'scale(' + zoomLevel + ')';
-    zWrapper.style.width = (originalWidth / zoomLevel) + 'px';
-    zWrapper.style.height = (originalHeight / zoomLevel) + 'px';
-    zWrapper.style.top = (originalTop - ((zWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
-    zWrapper.style.left = (originalLeft - ((zWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
+  document.documentElement.style.setProperty('--canvas-zoom', zoomLevel);
+
+  zoomingWrappers.forEach(zoomingWrapper => {
+    zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
+    zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
+    zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
+    zoomingWrapper.style.top = (originalTop - ((zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
+    zoomingWrapper.style.left = (originalLeft - ((zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
   });
 
-  const top = document.getElementById('ui-element-value-top');
-  if (top instanceof HTMLElement) {
-    top.style.right = (originalWidth / zoomLevel) + 'px';
-  }
+  const rightValue = (originalWidth / zoomLevel) + 'px';
+  const stickRightElements = document.querySelectorAll('.sticky-right');
+  stickRightElements.forEach(stickRightElement => {
+    if (stickRightElement instanceof HTMLElement) {
+      stickRightElement.style.right = rightValue;
+    }
+  });
 
   sessionStorage.setItem('zoomLevel', zoomLevel);
 }
@@ -591,7 +620,7 @@ function handleDragMouseDown(event) {
       moveOffsetY -= diffY;
 
       // move canvases
-      movingWrapper.forEach(mWrapper => {
+      movingWrappers.forEach(mWrapper => {
         mWrapper.style.marginLeft = '' + (mWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
         mWrapper.style.marginTop = '' + (mWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
       });
@@ -688,7 +717,6 @@ function initRangeSlider1() {
               document.getElementById('date-range-end').value = tempDateString;
             }
 
-            console.log('startDate', startDate, 'endDate', endDate);
             document.getElementById('date-range-start').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
           }, 100);
         }
@@ -760,13 +788,7 @@ function handlePrediction(event) {
   let uiLineTemp = document.getElementById('uiLineTemp');
   let uiltCtx = uiLineTemp.getContext('2d');
   uiltCtx.clearRect(0, 0, uiLineTemp.width, uiLineTemp.height);
-  drawLine(uiltCtx,
-    firstPointLeft,
-    firstPointTop,
-    secondPointLeft,
-    secondPointTop,
-    'rgba(255, 0, 0, 0.5)'
-  );
+  drawLine(uiltCtx, firstPointLeft, firstPointTop, secondPointLeft, secondPointTop, 'rgba(255, 0, 0, 0.5)');
 
   drawLine(uiltCtx, firstPointLeft, firstPointTop, secondPointLeft, firstPointTop, 'rgba(255, 255, 255, 0.25)', 1);
   drawLine(uiltCtx, firstPointLeft, firstPointTop, firstPointLeft, secondPointTop, 'rgba(255, 255, 255, 0.25)', 1);
@@ -779,7 +801,7 @@ function handlePrediction(event) {
     dateFrom = document.createElement('span');
     dateFrom.id = 'prediction-date-from';
     dateFrom.classList.add('prediction-text');
-    canvas.appendChild(dateFrom);
+    uiCanvas.appendChild(dateFrom);
   }
 
   let dateTo = document.getElementById('prediction-date-to');
@@ -787,7 +809,7 @@ function handlePrediction(event) {
     dateTo = document.createElement('span');
     dateTo.id = 'prediction-date-to';
     dateTo.classList.add('prediction-text');
-    canvas.appendChild(dateTo);
+    uiCanvas.appendChild(dateTo);
   }
 
   let dateDiff = document.getElementById('prediction-date-diff');
@@ -795,7 +817,7 @@ function handlePrediction(event) {
     dateDiff = document.createElement('span');
     dateDiff.id = 'prediction-date-diff';
     dateDiff.classList.add('prediction-text');
-    canvas.appendChild(dateDiff);
+    uiCanvas.appendChild(dateDiff);
   }
 
   dateFrom.style.left = (parseInt(linepoints[linepoints.length - 1][2])) + 'px';
@@ -805,7 +827,7 @@ function handlePrediction(event) {
   const heightOffset = firstPointTop - secondPointTop > 0 ? 10 : -20;
   dateFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3]) + heightOffset) - 5 + 'px';
   dateDiff.style.top = (parseInt(linepoints[linepoints.length - 1][3]) + heightOffset) - 5 + 'px';
-  dateTo.style.top = cursorPosToMargin(event.clientY, 'top', '#canvas') - heightOffset - 15 + 'px';
+  dateTo.style.top = cursorPosToMargin(event.clientY, 'top', '#uiCanvas') - heightOffset - 15 + 'px';
 
   let divisor = 1.5 - Math.abs(firstPointLeft - secondPointLeft) / 200;
   divisor = divisor < 1.5 ? 1.5 : divisor;
@@ -832,7 +854,7 @@ function handlePrediction(event) {
     valueFrom = document.createElement('span');
     valueFrom.id = 'prediction-value-from';
     valueFrom.classList.add('prediction-text');
-    canvas.appendChild(valueFrom);
+    uiCanvas.appendChild(valueFrom);
   }
 
   let valueTo = document.getElementById('prediction-value-to');
@@ -840,7 +862,7 @@ function handlePrediction(event) {
     valueTo = document.createElement('span');
     valueTo.id = 'prediction-value-to';
     valueTo.classList.add('prediction-text');
-    canvas.appendChild(valueTo);
+    uiCanvas.appendChild(valueTo);
   }
 
   let valueDiff = document.getElementById('prediction-value-diff');
@@ -848,7 +870,7 @@ function handlePrediction(event) {
     valueDiff = document.createElement('span');
     valueDiff.id = 'prediction-value-diff';
     valueDiff.classList.add('prediction-text');
-    canvas.appendChild(valueDiff);
+    uiCanvas.appendChild(valueDiff);
   }
 
   const widthOffset = firstPointLeft - secondPointLeft > 0 ? 10 : -20;
@@ -856,10 +878,10 @@ function handlePrediction(event) {
   valueTo.style.left   = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px';
   valueDiff.style.left = (parseInt(linepoints[linepoints.length - 1][2]) - widthOffset) + 'px';
 
-  const diff = (parseInt(linepoints[linepoints.length - 1][3])) - (cursorPosToMargin(event.clientY, 'top', '#canvas') - 10);
+  const diff = (parseInt(linepoints[linepoints.length - 1][3])) - (cursorPosToMargin(event.clientY, 'top', '#uiCanvas') - 10);
   valueFrom.style.top = (parseInt(linepoints[linepoints.length - 1][3])) + 'px';
-  valueTo.style.top   = cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + 'px';
-  valueDiff.style.top = (cursorPosToMargin(event.clientY, 'top', '#canvas') - 10 + (diff / 2)) + 'px';
+  valueTo.style.top   = cursorPosToMargin(event.clientY, 'top', '#uiCanvas') - 10 + 'px';
+  valueDiff.style.top = (cursorPosToMargin(event.clientY, 'top', '#uiCanvas') - 10 + (diff / 2)) + 'px';
 
   if (firstPointLeft - secondPointLeft < 0) {
     valueFrom.style.marginLeft = - valueFrom.offsetWidth + 25 + 'px';
@@ -872,7 +894,7 @@ function handlePrediction(event) {
   }
 
   const numberFrom = parseFloat(pxToValue(linepoints[linepoints.length - 1][3] - 2 + 'px'));
-  const numberTo = parseFloat(pxToValue(cursorPosToMargin(event.clientY, 'top', '#canvas') + 'px'));
+  const numberTo = parseFloat(pxToValue(cursorPosToMargin(event.clientY, 'top', '#uiCanvas') + 'px'));
   const numberDiff = numberTo - numberFrom;
 
   valueFrom.innerHTML = numberToCurrency(numberFrom);

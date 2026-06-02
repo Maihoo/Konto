@@ -11,92 +11,94 @@ function differenceInDays(input1, input2) {
   return (Math.floor((date2 - date1) / (1000 * 60 * 60 * 24)));
 }
 
-function getEntrieCategorie(entryParts) {
-  const beneficiary = entryParts[selectors.beneficiary]
-  const purpose = entryParts[selectors.purpose]
+function getEntrieCategory(entryParts) {
+  const beneficiary = entryParts[selectors.beneficiary].toLowerCase();
+  const purpose = entryParts[selectors.purpose].toLowerCase();
 
-  if (purpose.toLowerCase().includes('bafoeg') ||
-      purpose.toLowerCase().includes('lohn/gehalt')) {
+  if (purpose.includes('bafoeg') ||
+      purpose.includes('lohn/gehalt')) {
     return 'income';
   }
 
-  if (beneficiary.toLowerCase().includes('adac') ||
-      beneficiary.toLowerCase().includes('apotheke') ||
-      beneficiary.toLowerCase().includes('axa versicherung') ||
-      beneficiary.toLowerCase().includes('buendingen med') ||
-      beneficiary.toLowerCase().includes('buedingen med') ||
-      beneficiary.toLowerCase().includes('bundeskasse do kiel') ||
-      beneficiary.toLowerCase().includes('bundeskasse - dienstort kiel') ||
-      beneficiary.toLowerCase().includes('klarmobil') ||
-      beneficiary.toLowerCase().includes('landeszentralkasse') ||
-      beneficiary.toLowerCase().includes('techniker krankenkasse') ||
-      beneficiary.toLowerCase().includes('wg union') ||
-      beneficiary.toLowerCase().includes('mecklenburgische') ||
-      purpose.toLowerCase().includes('123-reg') ||
-      purpose.toLowerCase().includes('netflix') ||
-      purpose.toLowerCase().includes('miete') ||
-      purpose.toLowerCase().includes('spotify')) {
+  if (beneficiary.includes('adac') ||
+      beneficiary.includes('apotheke') ||
+      beneficiary.includes('axa versicherung') ||
+      beneficiary.includes('buendingen med') ||
+      beneficiary.includes('buedingen med') ||
+      beneficiary.includes('bundeskasse do kiel') ||
+      beneficiary.includes('bundeskasse - dienstort kiel') ||
+      beneficiary.includes('klarmobil') ||
+      beneficiary.includes('landeszentralkasse') ||
+      beneficiary.includes('techniker krankenkasse') ||
+      beneficiary.includes('wg union') ||
+      beneficiary.includes('mecklenburgische') ||
+      beneficiary.includes('wilhelm.tel') ||
+      purpose.includes('123-reg') ||
+      purpose.includes('netflix') ||
+      purpose.includes('miete') ||
+      purpose.includes('spotify')) {
     return 'monthly';
   }
 
-  if (beneficiary.toLowerCase().includes('amazon') ||
-      purpose.toLowerCase().includes('aliexpress') ||
-      purpose.toLowerCase().includes('temu.com')) {
+  if (beneficiary.includes('amazon') ||
+      purpose.includes('aliexpress') ||
+      purpose.includes('temu.com')) {
     return 'amazon';
   }
   
-  if (beneficiary.toLowerCase().includes('hot chickeria') ||
-      beneficiary.toLowerCase().includes('b sieben') ||
-      beneficiary.toLowerCase().includes('mcdonalds') ||
-      beneficiary.toLowerCase().includes('restaurant') ||
-      beneficiary.toLowerCase().includes('pizza') ||
-      purpose.toLowerCase().includes('burgerme') ||
-      purpose.toLowerCase().includes('takeaway.com')) {
+  if (beneficiary.includes('hot chickeria') ||
+      beneficiary.includes('b sieben') ||
+      beneficiary.includes('mcdonalds') ||
+      beneficiary.includes('restaurant') ||
+      beneficiary.includes('pizza') ||
+      purpose.includes('burgerme') ||
+      purpose.includes('takeaway.com')) {
     return 'takeout';
   }
 
-  if (beneficiary.toLowerCase().includes('otto payments') ||
-      beneficiary.toLowerCase().includes('paypal')) {
+  if (beneficiary.includes('otto payments') ||
+      beneficiary.includes('paypal')) {
     return 'paypal';
   }
 
-  if (beneficiary.toLowerCase().includes('ostseesparkasse') ||
-      purpose.toLowerCase().includes('bargeldausz')) {
+  if (beneficiary.includes('ostseesparkasse') ||
+      purpose.includes('bargeldausz')) {
     return 'cash';
   }
 
-  if (beneficiary.toLowerCase().includes('avia') ||
-      beneficiary.toLowerCase().includes('aral') ||
-      beneficiary.toLowerCase().includes('classic') ||
-      beneficiary.toLowerCase().includes('esso') ||
-      beneficiary.toLowerCase().includes('famila tank') ||
-      beneficiary.toLowerCase().includes('jet dankt') ||
-      beneficiary.toLowerCase().includes('mecklenburgische') ||
-      beneficiary.toLowerCase().includes('sb tank') ||
-      (beneficiary.toLowerCase().includes('shell') && !beneficiary.toLowerCase().includes('shell-autoservice')) ||
-      beneficiary.toLowerCase().includes('tankstelle') ||
-      beneficiary.toLowerCase().includes('total') ||
-      beneficiary.toLowerCase().includes('warnowquerung') ||
-      purpose.toLowerCase().includes('kfz-kauf')) {
+  if (beneficiary.includes('avia') ||
+      beneficiary.includes('aral') ||
+      beneficiary.includes('classic') ||
+      beneficiary.includes('esso') ||
+      beneficiary.includes('famila tank') ||
+      beneficiary.includes('jet dankt') ||
+      beneficiary.includes('mecklenburgische') ||
+      beneficiary.includes('sb tank') ||
+      (beneficiary.includes('shell') && !beneficiary.includes('shell-autoservice')) ||
+      beneficiary.includes('tankstelle') ||
+      beneficiary.includes('total') ||
+      beneficiary.includes('warnowquerung') ||
+      purpose.includes('kfz-kauf')) {
     return 'gas';
   }
 
-  if (beneficiary.toLowerCase().includes('aldi') ||
-      beneficiary.toLowerCase().includes('baeckerei') ||
-      beneficiary.toLowerCase().includes('edeka') ||
-      beneficiary.toLowerCase().includes('famila') ||
-      beneficiary.toLowerCase().includes('getraenkemark') ||
-      beneficiary.toLowerCase().includes('globus') ||
-      beneficiary.toLowerCase().includes('kaufland') ||
-      beneficiary.toLowerCase().includes('lidl') ||
-      beneficiary.toLowerCase().includes('netto') ||
-      beneficiary.toLowerCase().includes('penny') ||
-      beneficiary.toLowerCase().includes('rewe') ||
-      beneficiary.toLowerCase().includes('tabak')) {
+  if (beneficiary.includes('aldi') ||
+      beneficiary.includes('baeckerei') ||
+      beneficiary.includes('edeka') ||
+      beneficiary.includes('famila') ||
+      beneficiary.includes('getraenkemark') ||
+      beneficiary.includes('globus') ||
+      beneficiary.includes('kaufland') ||
+      beneficiary.includes('lidl') ||
+      beneficiary.includes('netto') ||
+      beneficiary.includes('penny') ||
+      beneficiary.includes('rewe') ||
+      beneficiary.includes('tabak') ||
+      purpose.includes('tobacco')) {
     return 'food';
   }
 
-  if (purpose.toLowerCase().includes('schulden')) {
+  if (purpose.includes('schulden')) {
     return 'debt';
   }
 

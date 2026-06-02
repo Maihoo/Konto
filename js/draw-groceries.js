@@ -144,7 +144,6 @@ function drawGroceries() {
   let dayOffset = 0;
   let heightOffset = 0;
 
-  console.log(dates)
   let lastDay = dates[0].date;
   let lastStore = dates[0].store;
   // Get the number of distinct dates

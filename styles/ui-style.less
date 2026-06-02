@@ -21,6 +21,12 @@ body {
     height: 100%;
   }
 
+  .single-popup-wrapper {
+    position: relative;
+    pointer-events: none;
+    margin-left: calc(-1 * (var(--canvas-width) / var(--canvas-zoom)));
+  }
+
   h1 {
     color: @custom-ui-color;
   }
@@ -97,243 +103,221 @@ body {
 
 .graph-area-wrapper {
   display: inline-flex;
+  z-index: 1001;
+  position: relative;
   border: solid 1px black;
   border-radius: 0.5rem;
+  background-color: @custom-background-color;
 
   [data-zoom] {
     z-index: 1200;
   }
 
-  #ui-wrapper {
-    overflow: hidden;
-    display: block;
-    width: 26rem;
-    height: 43.7rem;
-    z-index: 1100;
-    border-top-right-radius: 0.6rem;
-    border-bottom-right-radius: 0.6rem;
-    border-left: 1px solid black;
+  &.graph-area-wrapper-vertical {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}
 
-    .settings {
-      position: relative;
-      background-color: @custom-background-color;
-      z-index: 2000;
-      overflow: hidden;
-      width: 19rem;
-      margin-top: -46.5rem;
-      margin-left: 4.2rem;
-      height: 50rem;
-      max-height: 50rem;
-      border-top-right-radius: 0.6rem;
-      border-top-left-radius: 0.6rem;
-      border-top: 1px solid black;
-      border-right: 1px solid black;
-      border-left: 1px solid black;
-      box-shadow: 0px 0px 8px 2px rgba(0, 0, 0, 0.5);
-      transition: top 0.5s, margin-top 0.5s;
+.settings {
+  position: relative;
+  background-color: @custom-background-color;
+  z-index: 1000;
+  overflow: hidden;
+  width: 19rem;
+  height: 50rem;
+  top: -0.25rem;
+  border-top-right-radius: 0.6rem;
+  border-top-left-radius: 0.6rem;
+  border-top: 1px solid black;
+  border-right: 1px solid black;
+  border-left: 1px solid black;
+  box-shadow: 0px 0px 8px 2px rgba(0, 0, 0, 0.5);
+  transition: height 0.25s ease-in;
 
-      #settings-toolbar {
-        .toolbar-button-wrapper {
-          padding: 0;
+  #settings-toolbar {
+    .toolbar-button-wrapper {
+      padding: 0;
 
-          #button-move-settings {
-            margin: -2.4rem 0 0 13rem !important;
-            width: 2rem;
-            max-height: 2rem;
-            height: 3.5rem;
-            z-index: 2000;
-          }
-
-          #button-expand-settings {
-            margin: -2.4rem 0 0 16.0rem !important;
-            width: 2rem;
-            max-height: 2.0rem;
-            height: 3.5rem;
-            z-index: 2000;
-
-            #button-expand-settings-icon {
-              margin-left: -1px;
-              transform: rotate(-90deg) !important;
-            }
-          }
-        }
+      #button-move-settings {
+        margin: -2.4rem 0 0 13rem !important;
+        width: 2rem;
+        max-height: 2rem;
+        height: 3.5rem;
+        z-index: 2000;
       }
 
-      #settings-content {
-        .settings-button-collection {
-          display: flex !important;
-          margin-top: -0.25rem;
+      #button-expand-settings {
+        margin: -2.4rem 0 0 16.0rem !important;
+        width: 2rem;
+        max-height: 2.0rem;
+        height: 3.5rem;
+        z-index: 2000;
 
-          &:first-child {
-            .settings-button-group {
-              margin-top: -1rem;
-            }
-          }
-
-          .settings-button-group {
-            display: flex;
-            justify-content: top;
-            flex-direction: column;
-            width: 50%;
-
-            h3 {
-              color: @custom-ui-color;
-              padding-left: 1rem;
-              margin-bottom: 0;
-            }
-
-            &.settings-button-group-small {
-              width: 5rem;
-
-              .buttonwrapper {
-                margin-top: -0.15rem;
-
-                button {
-                  height: 2.15rem;
-                  width: 4rem;
-                }
-              }
-            }
-
-            &.settings-button-group-large {
-              width: 12.5rem;
-            }
-          }
+        #button-expand-settings-icon {
+          margin-left: -1px;
+          transform: rotate(-90deg) !important;
         }
-
-        .color-picker-holder {
-          p {
-            width: 10rem;
-            margin-top: -0.125rem;
-            margin-bottom: 0;
-          }
-
-          .color-picker-wrapper {
-            display: flex ;
-            width: 9.5rem;
-            height: auto;
-            justify-content: center;
-            margin-top: 0.75rem;
-            margin-left: 1rem;
-            padding: 0.1rem 0.7rem 0 0.5rem;
-
-            .switch {
-              right: 0 !important;
-            }
-
-            .color-picker {
-              background-color: @button-color;
-              border: none;
-              width: 3rem;
-              height: 1.7rem;
-              margin: -0.0625rem 0 0 auto;
-            }
-          }
-        }
-      }
-    }
-
-    .settings-hidden {
-      margin-top: -7.5rem;
-
-      h1 {
-        padding-top: 0.35rem;
-      }
-
-      #settings-toolbar {
-        .toolbar-button-wrapper {
-          #button-expand-settings {
-            #button-expand-settings-icon {
-              transform: rotate(90deg) !important;
-            }
-          }
-        }
-      }
-
-      #expand-button {
-        background-color: transparent;
-        border: none;
       }
     }
   }
 
-  &.graph-area-wrapper-vertical {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 14rem;
+  #settings-content {
+    transition: opacity 0.5s;
 
-    #ui-wrapper {
-      overflow: visible;
+    .settings-button-collection {
+      display: flex !important;
+      margin-top: -0.25rem;
 
-      .settings {
-        box-shadow: none;
-        position: absolute;
-        width: 98%;
-        top: 1495px;
-        left: -3.75rem;
-        height: 14rem;
-        border-top-right-radius: 0;
-        border: 1px solid black;
-        border-bottom-left-radius: 0.5rem;
-        border-bottom-right-radius: 0.5rem;
+      &:first-child {
+        .settings-button-group {
+          margin-top: -1rem;
+        }
+      }
 
-        #settings-toolbar {
-          flex-direction: row;
+      .settings-button-group {
+        display: flex;
+        justify-content: top;
+        flex-direction: column;
+        width: 50%;
 
-          .toolbar-button-wrapper {
-            margin-top: 0;
-            max-width: 2rem;
-            margin-left: auto;
-            margin-right: 17rem;
+        h3 {
+          color: @custom-ui-color;
+          padding-left: 1rem;
+          margin-bottom: 0;
+        }
 
-            #button-move-settings-icon {
-              width: 0.7rem;
-              transform: rotate(180deg) !important;
-            }
+        &.settings-button-group-small {
+          width: 5rem;
 
-            #button-expand-settings {
-              opacity: 0.5;
-              pointer-events: none;
+          .buttonwrapper {
+            margin-top: -0.15rem;
+
+            button {
+              height: 2.15rem;
+              width: 4rem;
             }
           }
         }
 
-        #settings-content {
-          display: flex;
-          justify-content: top;
-          flex-direction: row;
-          margin-top: -1.5rem;
-          margin-left: 7.5rem;
+        &.settings-button-group-large {
+          width: 12.5rem;
+        }
+      }
+    }
 
-          .settings-button-group {
-            flex-direction: column;
-            width: 10rem;
+    .color-picker-holder {
+      p {
+        width: 10rem;
+        margin-top: -0.125rem;
+        margin-bottom: 0;
+      }
 
-            h3 {
-              margin-top: -1rem;
-              font-size: 12px;
-            }
+      .color-picker-wrapper {
+        display: flex ;
+        width: 9.5rem;
+        height: auto;
+        justify-content: center;
+        margin-top: 0.75rem;
+        margin-left: 1rem;
+        padding: 0.1rem 0.7rem 0 0.5rem;
 
-            .buttonwrapper {
-              margin-top: -0.25rem;
-              margin-bottom: -0.25rem;
+        .switch {
+          right: 0 !important;
+        }
 
-              &.special-padding {
-                margin-top: 0.35rem;
-              }
-            }
-          }
+        .color-picker {
+          background-color: @button-color;
+          border: none;
+          width: 3rem;
+          height: 1.7rem;
+          margin: -0.0625rem 0 0 auto;
+        }
+      }
+    }
+  }
 
-          .color-picker-wrapper {
-            margin-top: 0.65rem !important;
-            margin-bottom: -0.25rem;
-          }
+  &.settings-hidden {
+    height: 3.5rem !important;
 
-          .rangewrapper {
-            margin-top: 0 !important;
-            width: 17.75rem;
+    #settings-toolbar {
+      .toolbar-button-wrapper {
+        #button-expand-settings {
+          #button-expand-settings-icon {
+            transform: rotate(90deg) !important;
           }
         }
+      }
+    }
+
+    #settings-content {
+      opacity: 0;
+    }
+
+    #expand-button {
+      background-color: transparent;
+      border: none;
+    }
+  }
+
+  &.settings-vertical {
+    box-shadow: none;
+    position: relative;
+    width: 100%;
+    height: 14rem;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border: 1px solid black;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+
+    #settings-toolbar {
+      .toolbar-button-wrapper {
+        margin-top: 0;
+        max-width: 2rem;
+        margin-left: auto;
+        margin-right: 17rem;
+
+        #button-move-settings-icon {
+          width: 0.7rem;
+          transform: rotate(180deg) !important;
+        }
+      }
+    }
+
+    #settings-content {
+      display: flex;
+      flex-direction: row;
+      margin-top: -1.5rem;
+      margin-left: 7.5rem;
+
+      .settings-button-group {
+        flex-direction: column;
+        width: 10rem;
+
+        h3 {
+          margin-top: -1rem;
+          font-size: 12px;
+        }
+
+        .buttonwrapper {
+          margin-top: -0.25rem;
+          margin-bottom: -0.25rem;
+
+          &.special-padding {
+            margin-top: 0.35rem;
+          }
+        }
+      }
+
+      .color-picker-wrapper {
+        margin-top: 0.65rem !important;
+        margin-bottom: -0.25rem;
+      }
+
+      .rangewrapper {
+        margin-top: 0 !important;
+        width: 17.75rem;
       }
     }
   }
@@ -382,11 +366,10 @@ p {
 }
 
 #table {
-  width: 99%;
+  width: 100%;
   overflow: hidden;
   display: block;
   border-radius: 0.6rem;
-  margin-top: 1rem;
   outline: 1px solid black;
 }
 
@@ -456,11 +439,7 @@ p {
     margin-left: 12px;
     max-width: 8px;
     width: 8px;
-    min-height: 575px;
-
-    &.range-slider-vertical-smaller {
-      min-height: 535px;
-    }
+    min-height: 95%;
 
     .ui-slider-handle {
       max-height: 8px;
@@ -493,7 +472,7 @@ p {
   }
 
   &.single {
-    
+  
   }
 }
 

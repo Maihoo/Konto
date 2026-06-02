@@ -1,0 +1,38 @@
+Verarbeite diesen Kassenbon wie ein deterministischer Parser, nicht interpretierend
+
+Zustand:
+Verwende eine Variable pending_multiplier = null
+Regeln (streng einhalten)
+Lies alle Zeilen von oben nach unten.
+Jede Zeile endet mit einem €-Symbol. 
+Die Zahl nach dem € Symbol in Produktzeilen ist zu ignorieren. 
+Wenn eine Zeile dem Muster N x P € entspricht:
+Setze pending_multiplier = (N, P)
+Fahre mit der nächsten Zeile fort
+Diese Zeile darf niemals selbst ein Produkt sein
+Wenn eine normale Produktzeile kommt:
+Wenn pending_multiplier != null:
+Verwende diese Werte für genau diese eine Zeile
+Setze danach pending_multiplier = null
+
+Sonst:
+Menge = 1
+Zeilen mit kg × €/kg gehören zur aktuellen Produktzeile und dürfen pending_multiplier NICHT überschreiben
+Pfand ist ein normales Produkt (keine Sonderlogik!)
+WICHTIG
+Es ist VERBOTEN, Multiplikatoren rückwirkend zuzuordnen
+Es ist VERBOTEN, Multiplikatoren zu „erraten“
+Jede Multiplikationszeile darf genau einmal verwendet werden
+Ausgabeformat
+
+Name (N × Preis €) -- Gesamtpreis € -- N
+
+Validierung (zwingend)
+Berechne die Gesamtsumme aus allen Positionen
+Vergleiche mit der Bon-Summe
+Wenn sie nicht exakt übereinstimmt:
+Gib eine Fehlermeldung aus
+Liste alle offenen pending_multiplier
+Wiederhole die Zuordnung korrekt
+
+Gib die finale Liste erst aus, wenn die Summe exakt  ergibt.

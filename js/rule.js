@@ -1,33 +1,44 @@
-$(document).ready(function () {
+$(document).ready(async function () {
   // Set the worker source for pdf.js
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 
-  // Read the first file (umsatz.csv)
-  $.ajax({
-    type: 'GET',
-    url: 'umsatz.csv',
-    dataType: 'text',
-    error: function (xhr, status, error) {
-      console.error('AJAX Error:', error);
-    },
-    success: function (data) {
-      dataset = data;
-      getFromSessionStorage();
-      handleDateChange();
-      initTextLines();
-      initControls();
-      initDrawing();
+  try {
+    const fileNames = await $.getJSON('files.json');
+    datasets = [];
+    for (const name of fileNames) {
+      const csv = await $.get(`data/${name}.csv`);
+      let txt = null;
+
+      try {
+        txt = await $.get(`data/${name}-conversion.txt`);
+      } catch (e) {}
+      datasets.push({name, csv, txt});
     }
-  });
+
+    // Runs only AFTER everything finished
+    getFromSessionStorage();
+    handleDateChange();
+    initTextLines();
+    initControls();
+    initDrawing();
+  } catch (e) {
+    console.error("Loading failed", e);
+  }
 });
 
+let canvasWidth = window.innerWidth - 490;
+let canvasHeight = window.innerHeight - 300;
+document.documentElement.style.setProperty('--canvas-zoom', 1);
+document.documentElement.style.setProperty('--canvas-width', canvasWidth + 'px');
+document.documentElement.style.setProperty('--cavas-height', canvasHeight + 'px');
+
 // Constants
-const startbudgetString = "10.166,45";
-const STARTBUDGET = parseFloat(startbudgetString.replace('.', '').replace(',', '.'));
+const startbudgetString1 = "6.506,75";
+const startbudgetString2 = "19.032,24";
+const STARTBUDGET = parseFloat(startbudgetString1.replace('.', '').replace(',', '.')) + parseFloat(startbudgetString2.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 700;
+
 const categories = ['monthly', 'income', 'cash', 'amazon', 'paypal', 'food', 'takeout', 'gas', 'others'];
 
 let activeCategories = {
@@ -43,8 +54,11 @@ let activeCategories = {
 };
 
 const constantPositions = [
-  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"comdirect";"";"";"-200";"EUR";""',
-  '"DE45150505001101110771";"";"";"Cash";"Bargeld";"";"";"";"";"";"";"Ich";"";"";"0";"EUR";""'
+  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"comdirect";"";"";"2598";"EUR";""',
+  '"DE45150505001101110771";"";"";"Investitionen";"Profit";"";"";"";"";"";"";"Kraken";"";"";"-685";"EUR";""',
+  '"DE45150505001101110771";"27.04.26";"";"Kraken";"BitCoin";"";"";"";"";"";"";"Ich";"";"";"2000";"EUR";""',
+  '"DE45150505001101110771";"30.01.26";"";"Kraken";"BitCoin";"";"";"";"";"";"";"Ich";"";"";"1800";"EUR";""',
+  '"DE45150505001101110771";"21.11.25";"";"Kraken";"BitCoin";"";"";"";"";"";"";"Ich";"";"";"500";"EUR";""',
 ];
 
 const selectors= {
@@ -138,7 +152,7 @@ let showInvestments = true;
 let showFoodExpenses = false;
 let oneRadioUnchecked = false;
 
-let dataset;
+let datasets;
 let foodDataset;
 
 let verticalScaleFactor = 1.0;
@@ -161,7 +175,7 @@ let dragstartYstorage = 0.0;
 let ts1 = 0;
 let ts2 = 0;
 
-let startDate = '01.11.25';
+let startDate = '01.03.26';
 let endDate = '';
 let sortType = 'date';
 let firstLine = '';
@@ -206,18 +220,18 @@ let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
 let overflowWrapper = document.getElementById('overflowWrapper');
-let zoomingWrapper = document.querySelectorAll('[data-zoom]');
-let movingWrapper = document.querySelectorAll('[data-move]');
+let zoomingWrappers = document.querySelectorAll('[data-zoom]');
+let movingWrappers = document.querySelectorAll('[data-move]');
 let settingsElement = document.getElementById('settings');
 let circleCanvas = document.getElementById('circleCanvas');
 let foodCanvas = document.getElementById('foodCanvas');
 
-if (!zoomingWrapper.length || !movingWrapper.length) {
+if (!zoomingWrappers.length || !movingWrappers.length) {
   const observer = new MutationObserver(() => {
     const zoomEl = document.querySelector('[data-zoom]');
     if (zoomEl) {
-      zoomingWrapper = document.querySelectorAll('[data-zoom]');
-      movingWrapper = document.querySelectorAll('[data-move]');
+      zoomingWrappers = document.querySelectorAll('[data-zoom]');
+      movingWrappers = document.querySelectorAll('[data-move]');
       observer.disconnect();
     }
   });
@@ -260,7 +274,7 @@ function resetSettings() {
   ts1 = 0;
   ts2 = 0;
 
-  startDate = '01.11.25';
+  startDate = '01.03.26';
   endDate = '';
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
@@ -268,7 +282,7 @@ function resetSettings() {
 
   settingsElement.style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
-  zoomingWrapper.forEach(zWrapper => {
+  zoomingWrappers.forEach(zWrapper => {
     zWrapper.style.backgroundColor = backgroundColor;
   });
 
@@ -305,21 +319,23 @@ function resetHTML() {
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
   overflowWrapper = document.getElementById('overflowWrapper');
-  zoomingWrapper = document.querySelectorAll('[data-zoom]');
-  movingWrapper = document.querySelectorAll('[data-move]');
+  zoomingWrappers = document.querySelectorAll('[data-zoom]');
+  movingWrappers = document.querySelectorAll('[data-move]');
   settingsElement = document.getElementById('settings');
   circleCanvas = document.getElementById('circleCanvas');
   foodCanvas = document.getElementById('foodCanvas');
 
-  overflowWrapper.style.width = CANVAS_WIDTH + 'px';
-  overflowWrapper.style.height = CANVAS_HEIGHT + 'px';
-  zoomingWrapper.forEach(zWrapper => {
-    zWrapper.style.width = CANVAS_WIDTH + 'px';
-    zWrapper.style.height = CANVAS_HEIGHT + 'px';
+  overflowWrapper.style.width = canvasWidth + 'px';
+  overflowWrapper.style.height = canvasHeight + 'px';
+
+  zoomingWrappers.forEach(zoomingWrapper => {
+    zoomingWrapper.style.width = canvasWidth + 'px';
+    zoomingWrapper.style.height = canvasHeight + 'px';
   });
-  movingWrapper.forEach(mWrapper => {
-    mWrapper.style.width = CANVAS_WIDTH + 'px';
-    mWrapper.style.height = CANVAS_HEIGHT + 'px';
+
+  movingWrappers.forEach(movingWrapper => {
+    movingWrapper.style.width = canvasWidth + 'px';
+    movingWrapper.style.height = canvasHeight + 'px';
   });
 
   canvas.style.opacity = '100%';
@@ -346,24 +362,24 @@ function resetHTML() {
   uiCanvasHorizontal.style.marginTop = '';
   uiCanvasHorizontal.style.marginLeft = '';
 
-  uiCanvasVertical.style.marginTop = CANVAS_WIDTH + 'px';
-  pathCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
-  pathCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
-  pathBlurCanvas.setAttribute('height', (CANVAS_HEIGHT) + 'px');
-  pathBlurCanvas.setAttribute('width', (CANVAS_WIDTH - 100) + 'px');
+  uiCanvasVertical.style.marginTop = canvasWidth + 'px';
+  pathCanvas.setAttribute('height', (canvasHeight) + 'px');
+  pathCanvas.setAttribute('width', (canvasWidth - 100) + 'px');
+  pathBlurCanvas.setAttribute('height', (canvasHeight) + 'px');
+  pathBlurCanvas.setAttribute('width', (canvasWidth - 100) + 'px');
   uiLine.style.marginLeft = '';
-  uiLine.style.width = (2 * CANVAS_WIDTH) + 'px';
-  uiLine.style.height = (2 * CANVAS_HEIGHT) + 'px';
-  uiLine.style.marginTop = - CANVAS_HEIGHT + 'px';
-  uiLine.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
-  uiLine.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
+  uiLine.style.width = (2 * canvasWidth) + 'px';
+  uiLine.style.height = (2 * canvasHeight) + 'px';
+  uiLine.style.marginTop = - canvasHeight + 'px';
+  uiLine.setAttribute('width', (2 * canvasWidth) + 'px');
+  uiLine.setAttribute('height', (2 * canvasHeight) + 'px');
   uiLineTemp.style.marginLeft = '';
   uiLineTemp.style.marginTop = '-700px';
-  uiLineTemp.style.width = (2 * CANVAS_WIDTH) + 'px';
-  uiLineTemp.style.height = (2 * CANVAS_HEIGHT) + 'px';
-  uiLineTemp.style.marginTop = - CANVAS_HEIGHT + 'px';
-  uiLineTemp.setAttribute('width', (2 * CANVAS_WIDTH) + 'px');
-  uiLineTemp.setAttribute('height', (2 * CANVAS_HEIGHT) + 'px');
+  uiLineTemp.style.width = (2 * canvasWidth) + 'px';
+  uiLineTemp.style.height = (2 * canvasHeight) + 'px';
+  uiLineTemp.style.marginTop = - canvasHeight + 'px';
+  uiLineTemp.setAttribute('width', (2 * canvasWidth) + 'px');
+  uiLineTemp.setAttribute('height', (2 * canvasHeight) + 'px');
 
   for (let i = 0; i < categories.length; i++) {
     document.getElementById('legend-' + categories[i] + '-negative').innerHTML = '';
@@ -378,12 +394,12 @@ function initDrawing() {
     resetHTML();
     clearCanvases();
 
-    originalWidth = zoomingWrapper[0].offsetWidth;
-    originalHeight = zoomingWrapper[0].offsetHeight;
-    originalMarginTop = parseInt(zoomingWrapper[0].style.marginTop.slice('0, -2'));
-    originalMarginLeft = parseInt(zoomingWrapper[0].style.marginLeft.slice('0, -2'));
-    originalTop = zoomingWrapper[0].offsetTop;
-    originalLeft = zoomingWrapper[0].offsetLeft;
+    originalWidth = zoomingWrappers[0].offsetWidth;
+    originalHeight = zoomingWrappers[0].offsetHeight;
+    originalMarginTop = parseInt(zoomingWrappers[0].style.marginTop.slice('0, -2'));
+    originalMarginLeft = parseInt(zoomingWrappers[0].style.marginLeft.slice('0, -2'));
+    originalTop = zoomingWrappers[0].offsetTop;
+    originalLeft = zoomingWrappers[0].offsetLeft;
 
     maxHeight = getMaxPriceDiff();
     updateMaxHeightAround();
@@ -452,55 +468,55 @@ function hidePathBlurTop() {
     ctx.lineTo(parseInt(path[i][1]), parseInt(path[i][0]));
   }
 
-  ctx.lineTo(1200, -100);
-  ctx.lineTo(-500, -100);
+  ctx.lineTo(canvasWidth, -100);
+  ctx.lineTo(-canvasHeight, -100);
   ctx.closePath();
   ctx.fill();
 }
 
 function setAmounts() {
-  uiCanvasVertical.style.marginTop = -(EXTRAAREA + CANVAS_HEIGHT) + 'px';
+  uiCanvasVertical.style.marginTop = -(EXTRAAREA + canvasHeight) + 'px';
 
   const highestOffsetTop = parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA);
   const currentOffsetTop = parseInt(530 - valueToPx(totalBudget) + valueToPx(lowest) + EXTRAAREA);
 
+  const rightValue = (originalWidth / zoomLevel) + 'px';
   if (currentOffsetTop - highestOffsetTop > 45) {
     let valueTop = document.createElement('p');
     valueTop.id = 'ui-element-value-top';
     valueTop.innerHTML = `<p class="uiElementTop">max:</p> <p class="uiElementBot">${formatNumber(highest)}€</p>`;
-    valueTop.className = 'uiElement';
-    valueTop.classList.add('amount-text-max');
+    valueTop.className = 'uiElement amount-text-max sticky-right';
     valueTop.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
     valueTop.style.marginTop = '' + highestOffsetTop + 'px';
     valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueTop.style.right = rightValue;
     uiCanvasVertical.appendChild(valueTop);
-  
+
     let valueCurrent = document.createElement('p');
     valueCurrent.id = 'ui-element-value-top';
     valueCurrent.innerHTML = `<p class="uiElementTop">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
-    valueCurrent.className = 'uiElement';
-    valueCurrent.classList.add('amount-text-max');
+    valueCurrent.className = 'uiElement amount-text-max sticky-right';
     valueCurrent.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
+    valueCurrent.style.position = 'absolute';
     valueCurrent.style.marginTop = '' + currentOffsetTop + 'px';
     valueCurrent.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueCurrent.style.right = rightValue;
     uiCanvasVertical.appendChild(valueCurrent);
   } else {
     let valueBoth = document.createElement('p');
     valueBoth.id = 'ui-element-value-top';
     valueBoth.innerHTML = `<p class="uiElementTop small">max:</p> <p class="uiElementBot small">${formatNumber(highest)}€</p><p class="uiElementTop small">current:</p> <p class="uiElementBot">${formatNumber(totalBudget)}€</p>`;
-    valueBoth.className = 'uiElement';
-    valueBoth.classList.add('amount-text-max');
-    valueBoth.classList.add('combined');
+    valueBoth.className = 'uiElement amount-text-max sticky-right combined';
     valueBoth.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
     valueBoth.style.marginTop = '' + highestOffsetTop + 'px';
     valueBoth.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueBoth.style.right = rightValue;
     uiCanvasVertical.appendChild(valueBoth);
   }
 
   let valueBottom = document.createElement('p');
   valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';
-  valueBottom.className = 'uiElement';
-  valueBottom.classList.add('amount-text-min');
+  valueBottom.className = 'uiElement amount-text-min';
   valueBottom.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
   valueBottom.style.marginTop = '' + (525 + EXTRAAREA) + 'px'
   valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
@@ -598,20 +614,11 @@ function setDates() {
 function drawCanvas() {
   path = [];
   dateLines = [];
-  const paddingLeft = 980 + moveOffsetX;
+  const paddingLeft = canvasWidth - 150 + moveOffsetX;
   let lastDayDiff = 0;
   let fgOffset = 0;
 
-  monthlyEntries = [];
-  incomeEntries = [];
-  cashEntries = [];
-  amazonEntries = [];
-  paypalEntries = [];
-  foodEntries = [];
-  takeoutEntries = [];
-  gasEntries = [];
-  debtEntries = [];
-  restEntries = [];
+  monthlyEntries = incomeEntries = cashEntries = amazonEntries = paypalEntries = foodEntries = takeoutEntries = gasEntries = debtEntries = restEntries = [];
 
   // Remove last line if total is invalid
   if (!parseInt(allTextLines[allTextLines.length - 1][selectors.total].slice(1, -1))) {
@@ -631,7 +638,7 @@ function drawCanvas() {
   const lastDay = dates[0].date;
   const firstDay = dates[dates.length - 1].date;
   const totalDays = (sortType === 'amount') ? dates.length : Math.abs(differenceInDays(firstDay, lastDay) + 2);
-  const dayWidth = 875 / totalDays;
+  const dayWidth = (canvasWidth - 300) / totalDays;
   const foregroundOffset = dayWidth / 4;
 
   // Pushing date lines
@@ -673,7 +680,7 @@ function drawCanvas() {
 
     const square = document.createElement('div');
     square.className = 'square';
-    const category = getEntrieCategorie(entries);
+    const category = getEntrieCategory(entries);
     if (diffDays > 0) {
       square.id = `linePoint${i * 2}`;
     }
@@ -763,15 +770,16 @@ function drawCanvas() {
 }
 
 function categorizeEntries(entries, decided, index) {
-  if (getEntrieCategorie(entries) === 'monthly') { monthlyEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'income') { incomeEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'cash') { cashEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'amazon') { amazonEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'paypal') { paypalEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'food') { foodEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'takeout') { takeoutEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'gas') { gasEntries.push(allTextLines[index]); }
-  if (getEntrieCategorie(entries) === 'debt') { debtEntries.push(allTextLines[index]); }
+  const entryCatergory = getEntrieCategory(entries);
+  if (entryCatergory === 'monthly') { monthlyEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'income') { incomeEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'cash') { cashEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'amazon') { amazonEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'paypal') { paypalEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'food') { foodEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'takeout') { takeoutEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'gas') { gasEntries.push(allTextLines[index]); }
+  if (entryCatergory === 'debt') { debtEntries.push(allTextLines[index]); }
 
   if (!decided) {
     restEntries.push(allTextLines[index]);
@@ -782,8 +790,8 @@ function setupHover(square, value, date, total, content) {
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
-    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
-    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
+    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
     const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
     const dateParts = date.split('.');
@@ -809,8 +817,8 @@ function setupHover(square, value, date, total, content) {
 
   square.onmousemove = function(event) {
     let popup = document.getElementById('singlePopup');
-    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
-    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
+    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
+    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
   };
 
   square.onmouseout = function() {
@@ -936,8 +944,8 @@ function drawTable() {
     { index: 0, width: '2.5vw', align: 'end', isIndex: true },
     { index: selectors.date, width: '7vw', align: 'end' },
     { index: selectors.content, width: '10vw' },
+    { index: selectors.beneficiary, width: '20vw' },
     { index: selectors.purpose, width: '30vw' },
-    { index: selectors.beneficiary, width: '24vw' },
     { index: selectors.category, width: '4vw' },
     { index: selectors.amount, width: 'auto', align: 'end' },
     { index: selectors.total, width: '4vw', align: 'end' }

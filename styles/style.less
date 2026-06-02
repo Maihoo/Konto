@@ -28,28 +28,27 @@
   padding-left: 0.5rem;
 }
 
-.amount-text-min {
-  position: absolute;
-  border: 1px solid @custom-ui-color;
-  color: @custom-ui-color;
-  left: 2.2rem;
-  border-left: none;
-  border-start-end-radius: 0.5rem;
-  border-end-end-radius: 0.5rem;
-  height: 1.6rem;
-  z-index: 2001;
-}
-
+.amount-text-min,
 .amount-text-max {
   position: absolute;
   border: 1px solid @custom-ui-color;
   color: @custom-ui-color;
-  right: 1200px;
+  z-index: 2001;
+  height: 1.6rem;
+}
+
+.amount-text-min {
+  left: 2.2rem;
+  border-left: none;
+  border-start-end-radius: 0.5rem;
+  border-end-end-radius: 0.5rem;
+}
+
+.amount-text-max {
+  right: var(--cavas-height);
   border-right: none;
   border-end-start-radius: 0.5rem;
   border-start-start-radius: 0.5rem;
-  height: 1.6rem;
-  z-index: 2001;
 
   &.combined {
     height: 3.6rem;

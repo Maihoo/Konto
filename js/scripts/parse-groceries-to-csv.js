@@ -43,6 +43,8 @@ function getCategory(productName) {
   if (productName.includes('apfel')
    || productName.includes('äpfel')
    || productName.includes('banane')
+   || productName.includes('blumenkohl')
+   || productName.includes('brötchen')
    || productName.includes('brombeeren')
    || productName.includes('butter')
    || productName.includes('brokkoli')
@@ -70,6 +72,7 @@ function getCategory(productName) {
 
   if (productName.includes('actimel')
    || productName.includes('beck')
+   || productName.includes('capri sun')
    || productName.includes('cola')
    || productName.includes('cc zero')
    || productName.includes('durstlöscher')

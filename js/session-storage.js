@@ -1,5 +1,5 @@
 function clearSessionStorage() {
-  sessionStorage.setItem('startDate', '01.11.25');
+  sessionStorage.setItem('startDate', '01.03.26');
   sessionStorage.setItem('endDate', '');
   sessionStorage.setItem('backgroundColor', 'rgb(25, 25, 25)');
   sessionStorage.setItem('lineColor', 'rgb(255, 0, 0)');

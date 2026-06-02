@@ -2,16 +2,118 @@ function initTextLines() {
   checkRadios();
   // insert permanent replacements
   for (let i = 0; i < permanentReplacements.length; i++) {
-    permanentReplacements[i]
-    dataset = dataset.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
+    datasets.forEach(dataset => {
+      dataset.csv = dataset.csv.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
+      dataset.csv = dataset.csv.replace(/\.2026";"/g, '.26";"');
+    });
   }
 
-  allTextLines = dataset.split(/\r\n|\n/);
-  allTextLines = allTextLines.filter(function(item) {
-    return item !== '' && item !== '.';
+  // align dataset field headers
+  datasets.forEach(dataset => {
+    const lines = dataset.csv.split(/\r\n|\n/);
+    const normalizedLines = [];
+    let headerFields = [];
+    let mapping = {};
+    let insertedFields = 0;
+    lines.forEach(line => {
+      if (!line.trim()) return;
+      const entries = line.split(';');
+      const fields = line.replace(/"/g, '').split(';');
+
+      // HEADER
+      if (line.includes('Buchungstag')) {
+        headerFields = fields;
+
+        mapping.date = fields.indexOf('Buchungstag');
+
+        if (fields.indexOf('Vorgang') >= 0) {
+          mapping.content = fields.indexOf('Vorgang');
+        } else if (fields.indexOf('Buchungstext') >= 0) {
+          mapping.content = fields.indexOf('Buchungstext');
+        }
+
+        if (fields.indexOf('Verwendungszweck') >= 0) {
+          mapping.purpose = fields.indexOf('Verwendungszweck');
+        } else if (fields.indexOf('Buchungstext') >= 0) {
+          mapping.purpose = fields.indexOf('Buchungstext');
+        }else if (fields.indexOf('Vorgang') >= 0) {
+          mapping.purpose = fields.indexOf('Vorgang');
+        } else {
+          mapping.purpose = mapping.content;
+        }
+
+        if (fields.indexOf('Beguenstigter/Zahlungspflichtiger') >= 0) {
+          mapping.beneficiary = fields.indexOf('Beguenstigter/Zahlungspflichtiger');
+        }
+
+        mapping.amount = fields.indexOf('Umsatz in EUR') >= 0 ? fields.indexOf('Umsatz in EUR') : fields.indexOf('Betrag');
+
+        // Build normalized header
+        const normalizedHeader = new Array(17).fill('""');
+        normalizedHeader[selectors.date] = '"Buchungstag"';
+        normalizedHeader[selectors.content] = '"Buchungstext"';
+        normalizedHeader[selectors.purpose] = '"Verwendungszweck"';
+        normalizedHeader[selectors.beneficiary] = '"Beguenstigter"';
+        normalizedHeader[selectors.amount] = '"Betrag"';
+        normalizedLines.push(normalizedHeader.join(';'));
+        return;
+      }
+
+      // in case there's no obvious beneficiary field, try to extract it from content
+      if ((!mapping.beneficiary || insertedFields === 1) && headerFields.indexOf('Buchungstext') >= 0) {
+        const contentIndex = headerFields.indexOf('Buchungstext');
+        if (contentIndex && entries[contentIndex] && (entries[contentIndex].includes('Auftraggeber: ') || entries[contentIndex].includes('Empfänger: '))) {
+          const beneficiary = '"' + entries[contentIndex].split(/Auftraggeber:|Empfänger:/)[1];
+          if (beneficiary.includes('Buchungstext: ')) {
+            // content also includes booking text
+            entries.splice(contentIndex + 1, 0, beneficiary.split('Buchungstext:')[0].trim() + '"');
+            entries[contentIndex] = '"' + beneficiary.split('Buchungstext:')[1].trim();
+          } else {
+            entries[contentIndex] = '""';
+            entries.splice(contentIndex + 1, 0, entries[contentIndex]);
+          }
+        } else {
+          entries.splice(contentIndex + 1, 0, '""');
+        }
+
+        insertedFields = 1;
+        mapping.beneficiary = contentIndex + 1;
+      }
+
+      // Create normalized row with enough columns
+      const normalized = new Array(17).fill('""');
+      normalized[selectors.date] = entries[mapping.date] || '""';
+      normalized[selectors.content] = entries[mapping.content] || '""';
+      normalized[selectors.purpose] = entries[mapping.purpose] || '""';
+      normalized[selectors.beneficiary] = mapping.beneficiary >= 0 ? entries[mapping.beneficiary] || '""' : '""';
+      normalized[selectors.amount] = entries[mapping.amount + insertedFields] || '""';
+      if (Object.keys(mapping).length > 0) {
+        normalizedLines.push(normalized.join(';'));
+      }
+    });
+
+    if (!mapping.beneficiary) {
+      mapping.beneficiary = headerFields.indexOf('Buchungstext') + 1;
+    }
+
+    dataset.normalizedCsv = normalizedLines.join('\n');
   });
 
-  firstLine = allTextLines[0] + ';"Category";"Total";"Amount"';
+  allTextLines = [];
+  datasets.forEach((dataset) => {
+    allTextLines.push(...dataset.normalizedCsv.split(/\r\n|\n/));
+    const lastLine = allTextLines[allTextLines.length - 1].split(';');
+    const lastDay = lastLine[selectors.date].slice(1, -1);
+    if (differenceInDays(lastDay, startDate) > differenceInDays(globallyLastDay, startDate)) {
+      globallyLastDay = lastDay;
+    }
+  });
+
+  allTextLines = allTextLines.filter(function(item) {
+    return item !== '' && item !== '.' && item.length > 20 && item.split(';').length > 5;
+  });
+
+  firstLine = (allTextLines[0] + ';"Category";"Total";"Amount"').replace(';;', ';');
 
   // insert replacements
   for (let i = 0; i < replacements.length; i++) {
@@ -96,17 +198,14 @@ function initTextLines() {
     allTextLines = allTextLines.filter(function(item) {
       const entries = item.split(';');
       if (entries[selectors.purpose].includes('Kontofüllung')) {
-        const value = entries[selectors.amount].slice(1, -1);
-        totalBudget += Math.abs(parseInt(value));
+        // const value = entries[selectors.amount].slice(1, -1);
+        // totalBudget += Math.abs(parseInt(value));
         return false;
       }
 
       return true;
     });
   }
-
-  const lastLine = allTextLines[allTextLines.length - 1].split(';');
-  globallyLastDay = lastLine[selectors.date].slice(1, -1);
 
   // spreading monthly income onto every day
   if (spreadMonthlyIncomeTo > 0) {
@@ -119,28 +218,31 @@ function initTextLines() {
     return (index > 0 && date && (startDate.length !== 8 || differenceInDays(startDate, date) > 0) && (endDate.length !== 8 || differenceInDays(endDate, date) < 0));
   });
 
-  // filter out categories
-  allTextLines = allTextLines.filter(function(item, index) {
-    const entries = item.split(';');
-    // if (index === 0) { return false; }
-    if (document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked' && getEntrieCategorie(entries) === 'monthly') { return false; }
-    if (document.getElementById('toggle-income').getAttribute('checked')  !== 'checked' && getEntrieCategorie(entries) === 'income')  { return false; }
-    if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked' && getEntrieCategorie(entries) === 'cash')    { return false; }
-    if (document.getElementById('toggle-amazon').getAttribute('checked')  !== 'checked' && getEntrieCategorie(entries) === 'amazon')  { return false; }
-    if (document.getElementById('toggle-paypal').getAttribute('checked')  !== 'checked' && getEntrieCategorie(entries) === 'paypal')  { return false; }
-    if (document.getElementById('toggle-takeout').getAttribute('checked') !== 'checked' && getEntrieCategorie(entries) === 'takeout') { return false; }
-    if (document.getElementById('toggle-food').getAttribute('checked')    !== 'checked' && getEntrieCategorie(entries) === 'food')    { return false; }
-    if (document.getElementById('toggle-gas').getAttribute('checked')     !== 'checked' && getEntrieCategorie(entries) === 'gas')     { return false; }
-    if (document.getElementById('toggle-others').getAttribute('checked')  !== 'checked' && getEntrieCategorie(entries) === 'others')  { return false; }
-    return true;
+  allTextLines.forEach((line, index) => {
+    allTextLines[index] = line.replace('.2025";"', '.25";"').replace('.2026";"', '.26";"');
   });
 
+  // filter out categories
+  allTextLines = allTextLines.filter(function(line) {
+    const entries = line.split(';');
+    const category = getEntrieCategory(entries);
+    if (document.getElementById('toggle-monthly').getAttribute('checked') !== 'checked' && category === 'monthly') { return false; }
+    if (document.getElementById('toggle-income').getAttribute('checked')  !== 'checked' && category === 'income')  { return false; }
+    if (document.getElementById('toggle-cash').getAttribute('checked')    !== 'checked' && category === 'cash')    { return false; }
+    if (document.getElementById('toggle-amazon').getAttribute('checked')  !== 'checked' && category === 'amazon')  { return false; }
+    if (document.getElementById('toggle-paypal').getAttribute('checked')  !== 'checked' && category === 'paypal')  { return false; }
+    if (document.getElementById('toggle-takeout').getAttribute('checked') !== 'checked' && category === 'takeout') { return false; }
+    if (document.getElementById('toggle-food').getAttribute('checked')    !== 'checked' && category === 'food')    { return false; }
+    if (document.getElementById('toggle-gas').getAttribute('checked')     !== 'checked' && category === 'gas')     { return false; }
+    if (document.getElementById('toggle-others').getAttribute('checked')  !== 'checked' && category === 'others')  { return false; }
+    return true;
+  });
 
   // inserting category to entry
   for (let i = 0; i < allTextLines.length; i++) {
     let entries = allTextLines[i].split(';');
     if (entries.length > 13) {
-      allTextLines[i] += ';"' + getEntrieCategorie(entries) + '"';
+      allTextLines[i] += ';"' + getEntrieCategory(entries) + '"';
     }
   }
 
@@ -149,9 +251,7 @@ function initTextLines() {
     fixSortedArray(allTextLines, selectors.amount);
   } else {
     // sorting by date
-    if (spreadMonthlyIncomeTo > 0) {
-      fixSortedArray(allTextLines, selectors.date);
-    }
+    fixSortedArray(allTextLines, selectors.date);
   }
 
   if (groupByCategory) {

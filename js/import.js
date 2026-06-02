@@ -1,6 +1,5 @@
 function processAllPDFs() {
   document.getElementById('spinner-element').style.display = 'block';
-  // dataset = '';
 
   pdfNames = [
     'statements/Konto_1101110771-Auszug_2019_0004.pdf',
@@ -172,7 +171,7 @@ function processPage(content) {
 
               totalAmount += amountFloat;
               //                                        date              text           purpose                             beneficiary                     amount
-              dataset += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
+              datasets[0] += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
             }
             // break loop
             k = 20;
