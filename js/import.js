@@ -40,7 +40,6 @@ function processSinglePDF(index) {
   } else {
     // All PDFs processed, perform any final actions
     initTextLines();
-    initTextLines();
     initControls();
     initDrawing();
   }
@@ -141,15 +140,15 @@ function processPage(content) {
               let text = allLines[j - 3];
 
               if (k === 5) {
-                text = allLines[j - 2]
+                text = allLines[j - 2];
               }
 
               if (isValidDate(text)) {
-                text = allLines[j - 3]
+                text = allLines[j - 3];
               }
 
               if (isValidValue(text)) {
-                text = allLines[j - 1]
+                text = allLines[j - 1];
               }
 
               let purpose = allLines[j - 2];
@@ -170,8 +169,7 @@ function processPage(content) {
               }
 
               totalAmount += amountFloat;
-              //                                        date              text           purpose                             beneficiary                     amount
-              datasets[0] += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
+              datasets[0].csv += '"DE45150505001101110771";"' + date + '";"";"' + text + '";"' + purpose + '";"";"";"";"";"";"";"' + allLines[j - 3] + '";"";"";"' + amount + '";"EUR";""\n';
             }
             // break loop
             k = 20;

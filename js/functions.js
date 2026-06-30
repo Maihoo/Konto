@@ -121,22 +121,22 @@ Date.prototype.addDays = function(days) {
 }
 
 function pxToValue(yPixel, maximumHeight = maxHeight) {
-  let pixel = 550 - parseInt(yPixel.slice(0, -2));
-  return parseInt((pixel * (maximumHeight / 500) + lowest) / verticalScaleFactor);
+  let pixel = canvasHeight - parseInt(yPixel.slice(0, -2));
+  return parseInt((pixel * (maximumHeight / (canvasHeight * 0.7)) + lowest) / verticalScaleFactor);
 }
 
 function valueToPx(value, maximumHeight = maxHeight) {
-  return parseFloat(value) * verticalScaleFactor * (500 / maximumHeight);
+  return (parseFloat(value) * verticalScaleFactor * (canvasHeight * 0.7)) / maximumHeight;
 }
 
 function valueToMarginTop(value, maximumHeight = maxHeight) {
-  let pixel = (parseFloat(value) - lowest) * verticalScaleFactor * 500 / (maximumHeight);
-  return 550 - pixel;
+  let pixel = valueToPx(value - lowest, maximumHeight);
+  return canvasHeight - pixel - 0.15 * canvasHeight;
 }
 
 function cursorPosToMargin(cursorPos, orientation = 'top', parentSelector = '#uiLine') {
   if (orientation === 'top') {
-    return parseInt((cursorPos - $(parentSelector).offset().top) / zoomLevel + window.scrollY );
+    return parseInt((cursorPos - $(parentSelector).offset().top) / zoomLevel + window.scrollY);
   } else {
     return parseInt((cursorPos - $(parentSelector).offset().left) / zoomLevel);
   }
@@ -234,7 +234,7 @@ function getMaxPriceDiff() {
   for (let i = allTextLines.length - 1; i > 0; i--) {
     if (allTextLines[i]) {
       let current = parseFloat(allTextLines[i].split(';')[selectors.total].slice(1, -1));
-      if (current < tempLowest)  { tempLowest  = current; }
+      if (current < tempLowest) { tempLowest = current; }
       if (current > tempHighest) { tempHighest = current; }
     }
   }
@@ -250,11 +250,9 @@ function updateMaxHeightAround() {
     let entries = allTextLines[i].split(';');
     const current = parseFloat(entries[selectors.total].slice(1, -1));
     if (i > 1) {
-      if (current < lowest)  { lowest  = current; }
+      if (current < lowest) { lowest = current; }
       if (current > highest) { highest = current; }
     }
-
-    endbudget = current;
   }
 }
 

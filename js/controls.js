@@ -105,9 +105,7 @@ function handleDateInput(event) {
 }
 
 function handleRefreshButton() {
-  initTextLines();
-  initDrawing();
-  initRangeSlider1();
+  init();
   const foodExpensesLayer = document.getElementById('food-expenses-layer');
   if (foodExpensesLayer && foodExpensesLayer.classList.contains('layer--open')) {
     initGroceries();
@@ -306,9 +304,7 @@ function toggleShowInvestments () {
   showInvestments = !showInvestments;
   sessionStorage.setItem('showInvestments', showInvestments);
 
-  initTextLines();
-  initRangeSlider2();
-  initDrawing();
+  init();
 }
 
 function toggleFoodExpenses() {
@@ -328,7 +324,7 @@ function toggleGroupByCategory() {
   sessionStorage.setItem('groupByCategory', groupByCategory);
   document.getElementById('path-toggle-span').toggleAttribute('disabled');
   if (document.getElementById('path-toggle-input').checked) {
-    pathVisible = false;
+    combined = false;
     document.getElementById('path-toggle-span').click();
   }
 
@@ -364,26 +360,24 @@ function toggleSpreadMonthlyIncome(event) {
   }
 }
 
-function toggleSquares() {
-  squaresVisible = !squaresVisible;
+function toggleSquares(event) {
+  squaresVisible = event.target.checked || !squaresVisible;
   if (squaresVisible) {
     canvas.style.opacity = 0;
+    pathCanvas.style.opacity = '100%';
+    pathBlurCanvas.style.opacity = '100%';
   } else {
     canvas.style.opacity = '100%';
+    pathCanvas.style.opacity = 0;
+    pathBlurCanvas.style.opacity = 0;
   }
 }
 
-function togglePath() {
-  if (!groupByCategory) {
-    pathVisible = !pathVisible;
-    if (pathVisible) {
-      pathCanvas.style.opacity = '100%';
-      pathBlurCanvas.style.opacity = '100%';
-    } else {
-      pathCanvas.style.opacity = 0;
-      pathBlurCanvas.style.opacity = 0;
-    }
-  }
+function toggleCombine(event) {
+  combined = event.target.checked || !combined;
+  initTextLines();
+  initControls();
+  initDrawing();
 }
 
 function toggleGrid() {
@@ -504,8 +498,8 @@ function handleDragClick(event) {
     circle.onmouseover = function(event) {
       const popup = document.getElementById('singlePopup'); // Get the single popup element
       popup.classList.add('fade');
-      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
-      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
 
       // Update popup content
       const dateParts = pxToDate(circle.style.left).split('.');
@@ -528,8 +522,8 @@ function handleDragClick(event) {
 
     circle.onmousemove = function(event) {
       let popup = document.getElementById('singlePopup');
-      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
-      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
+      popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrapper')}px`;
+      popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrapper') + 50}px`;
     };
 
     circle.onmouseout = function() {
@@ -543,20 +537,16 @@ function handleDragClick(event) {
 
 function handleZoomScroll(zoomIn) {
   if (zoomIn) {
-    zoomLevel *= 1.02;
+    zoomLevel *= 1.025;
   } else {
-    zoomLevel /= 1.02;
+    zoomLevel /= 1.025;
   }
 
   document.documentElement.style.setProperty('--canvas-zoom', zoomLevel);
-
-  zoomingWrappers.forEach(zoomingWrapper => {
-    zoomingWrapper.style.transform = 'scale(' + zoomLevel + ')';
-    zoomingWrapper.style.width = (originalWidth / zoomLevel) + 'px';
-    zoomingWrapper.style.height = (originalHeight / zoomLevel) + 'px';
-    zoomingWrapper.style.top = (originalTop - ((zoomingWrapper.offsetHeight - originalHeight) / 2) - 40) + 'px';
-    zoomingWrapper.style.left = (originalLeft - ((zoomingWrapper.offsetWidth - originalWidth) / 2) - 45) + 'px';
-  });
+  zoomingWrapper.style.width = `${originalWidth / zoomLevel}px`;
+  zoomingWrapper.style.height = `${originalHeight / zoomLevel}px`;
+  zoomingWrapper.style.height = `${originalHeight}px`;
+  zoomingWrapper.style.transform = `scale(${zoomLevel})`;
 
   const rightValue = (originalWidth / zoomLevel) + 'px';
   const stickRightElements = document.querySelectorAll('.sticky-right');
@@ -620,12 +610,10 @@ function handleDragMouseDown(event) {
       moveOffsetY -= diffY;
 
       // move canvases
-      movingWrappers.forEach(mWrapper => {
-        mWrapper.style.marginLeft = '' + (mWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
-        mWrapper.style.marginTop = '' + (mWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
-      });
+      movingWrapper.style.marginLeft = '' + (movingWrapper.style.marginLeft.slice(0, -2) - diffX) + 'px';
+      movingWrapper.style.marginTop = '' + (movingWrapper.style.marginTop.slice(0, -2) - diffY) + 'px';
 
-      uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) -diffX) + 'px';
+      uiCanvasHorizontal.style.marginLeft = '' + (uiCanvasHorizontal.style.marginLeft.slice(0, -2) - diffX) + 'px';
     }
   }
 }
@@ -751,6 +739,8 @@ function setColorDefault() {
   backgroundColor = '25, 25, 25';
   lineColor = '255, 0, 0';
   uiColor = '255, 255, 255';
+
+  document.body.style.setProperty('@custom-background-color', uiColor);
 
   document.getElementById('color-picker-background').value = rgbToHex(backgroundColor);
   document.getElementById('color-picker-line').value = rgbToHex(lineColor);

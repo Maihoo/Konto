@@ -3,8 +3,12 @@ function initTextLines() {
   // insert permanent replacements
   for (let i = 0; i < permanentReplacements.length; i++) {
     datasets.forEach(dataset => {
-      dataset.csv = dataset.csv.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
-      dataset.csv = dataset.csv.replace(/\.2026";"/g, '.26";"');
+      if (dataset.csv) {
+        dataset.csv = dataset.csv.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
+        dataset.csv = dataset.csv.replaceAll('.2026";"', '.26";"');
+      } else {
+        console.log('?', dataset);
+      }
     });
   }
 
@@ -18,7 +22,7 @@ function initTextLines() {
     lines.forEach(line => {
       if (!line.trim()) return;
       const entries = line.split(';');
-      const fields = line.replace(/"/g, '').split(';');
+      const fields = line.replaceAll('"', '').split(';');
 
       // HEADER
       if (line.includes('Buchungstag')) {
@@ -197,7 +201,20 @@ function initTextLines() {
   if (showInvestments) {
     allTextLines = allTextLines.filter(function(item) {
       const entries = item.split(';');
-      if (entries[selectors.purpose].includes('Kontofüllung')) {
+      if (entries[selectors.content].includes('Wertpapiere')) {
+        const value = entries[selectors.amount].slice(1, -1);
+        totalBudget += Math.abs(parseInt(value));
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  if (showInvestments) {
+    allTextLines = allTextLines.filter(function(item) {
+      const entries = item.split(';');
+      if (entries[selectors.purpose].includes('Kontofüllung') || entries[selectors.purpose].includes('Kontofullung')) {
         // const value = entries[selectors.amount].slice(1, -1);
         // totalBudget += Math.abs(parseInt(value));
         return false;
@@ -212,14 +229,17 @@ function initTextLines() {
     spreadIncomeToDaysOfMonth(allTextLines);
   }
 
+  for (let i = 0; i < allTextLines.length; i++) {
+    let entries = allTextLines[i].split(';');
+    entries[selectors.date] = entries[selectors.date].replace('.202', '.2');
+    entries[selectors.amount] = entries[selectors.amount].replace(/\./g, '').replace(',', '.');
+    allTextLines[i] = entries.join(';');
+  }
+
   // apply date filter
   allTextLines = allTextLines.filter(function(item, index) {
     const date = item.split(';')[selectors.date].slice(1, -1);
     return (index > 0 && date && (startDate.length !== 8 || differenceInDays(startDate, date) > 0) && (endDate.length !== 8 || differenceInDays(endDate, date) < 0));
-  });
-
-  allTextLines.forEach((line, index) => {
-    allTextLines[index] = line.replace('.2025";"', '.25";"').replace('.2026";"', '.26";"');
   });
 
   // filter out categories
@@ -271,7 +291,7 @@ function initTextLines() {
       }
 
       allTextLines[i] += ';"' + tempBudget.toFixed(2) + '"';
-      const nextValue = parseFloat(entries[selectors.amount].slice(1, -1).replace(',', '.'));
+      const nextValue = parseFloat(entries[selectors.amount].slice(1, -1));
       if (nextValue) {
         tempBudget -= nextValue;
       }

@@ -18,13 +18,17 @@ $(document).ready(async function () {
     // Runs only AFTER everything finished
     getFromSessionStorage();
     handleDateChange();
-    initTextLines();
-    initControls();
-    initDrawing();
+    init();
   } catch (e) {
     console.error("Loading failed", e);
   }
 });
+
+function init() {
+  initTextLines();
+  initControls();
+  initDrawing();
+}
 
 let canvasWidth = window.innerWidth - 490;
 let canvasHeight = window.innerHeight - 300;
@@ -33,9 +37,9 @@ document.documentElement.style.setProperty('--canvas-width', canvasWidth + 'px')
 document.documentElement.style.setProperty('--cavas-height', canvasHeight + 'px');
 
 // Constants
-const startbudgetString1 = "6.506,75";
-const startbudgetString2 = "19.032,24";
-const STARTBUDGET = parseFloat(startbudgetString1.replace('.', '').replace(',', '.')) + parseFloat(startbudgetString2.replace('.', '').replace(',', '.'));
+const startbudgetString1 = "11.284,31";
+const startbudgetString2 = "2.371,10";
+const STARTBUDGET = parseFloat(startbudgetString1.replaceAll('.', '').replace(',', '.')) + parseFloat(startbudgetString2.replace('.', '').replace(',', '.'));
 const ZOOMFACTOR = 0.8;
 const EXTRAAREA = 0.00;
 
@@ -142,7 +146,7 @@ let globallyLastDay = 0;
 let zoomInPressed = false;
 let zoomOutPressed = false;
 let squaresVisible = false;
-let pathVisible = false;
+let combined = false;
 let gridMode = false;
 let showShadow = true;
 let settingsExtended = false;
@@ -162,7 +166,6 @@ let spreadMonthlyIncomeTo = 0;
 let legendMultiplier = 100;
 let maxHeight = 500;
 let startHeight = 0.0;
-let endbudget = 0.0;
 let budget = 0.0;
 let lowest = 0.0;
 let highest = 0.0;
@@ -204,14 +207,6 @@ let restEntries = [];
 
 let groceriesEntries = [];
 
-// zooming
-let originalWidth;
-let originalHeight;
-let originalMarginTop;
-let originalMarginLeft;
-let originalTop;
-let originalLeft;
-
 let canvas = document.getElementById('canvas');
 let pathCanvas = document.getElementById('pathCanvas');
 let pathBlurCanvas = document.getElementById('pathBlurCanvas');
@@ -220,18 +215,23 @@ let uiCanvas = document.getElementById('uiCanvas');
 let uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
 let uiCanvasVertical = document.getElementById('uiCanvasVertical');
 let overflowWrapper = document.getElementById('overflowWrapper');
-let zoomingWrappers = document.querySelectorAll('[data-zoom]');
-let movingWrappers = document.querySelectorAll('[data-move]');
+let zoomingWrapper = document.getElementById('zoomingWrapper');
+let movingWrapper = document.querySelectorAll('[data-move]');
 let settingsElement = document.getElementById('settings');
 let circleCanvas = document.getElementById('circleCanvas');
 let foodCanvas = document.getElementById('foodCanvas');
 
-if (!zoomingWrappers.length || !movingWrappers.length) {
+// zooming
+let originalWidth;
+let originalHeight;
+let originalMarginTop;
+let originalMarginLeft;
+
+if (!zoomingWrapper || !movingWrapper) {
   const observer = new MutationObserver(() => {
-    const zoomEl = document.querySelector('[data-zoom]');
-    if (zoomEl) {
-      zoomingWrappers = document.querySelectorAll('[data-zoom]');
-      movingWrappers = document.querySelectorAll('[data-move]');
+    zoomingWrapper = document.getElementById('zoomingWrapper')
+    movingWrapper = document.querySelectorAll('movingWrapper');
+    if (zoomingWrapper && movingWrapper) {
       observer.disconnect();
     }
   });
@@ -243,7 +243,7 @@ function resetSettings() {
   zoomInPressed = false;
   zoomOutPressed = false;
   squaresVisible = false;
-  pathVisible = false;
+  combined = false;
   gridMode = false;
   showShadow = true;
   settingsExtended = false;
@@ -261,7 +261,6 @@ function resetSettings() {
   legendMultiplier = 100;
   maxHeight = 500;
   startHeight = 0.0;
-  endbudget = 0.0;
   budget = 0.0;
   lowest = 0.0;
   highest = 0.0;
@@ -282,9 +281,7 @@ function resetSettings() {
 
   settingsElement.style.backgroundColor = backgroundColor;
   document.body.style.backgroundColor = backgroundColor;
-  zoomingWrappers.forEach(zWrapper => {
-    zWrapper.style.backgroundColor = backgroundColor;
-  });
+  zoomingWrapper.style.backgroundColor = backgroundColor;
 
   clearSessionStorage();
   clearLines();
@@ -319,8 +316,8 @@ function resetHTML() {
   uiCanvasHorizontal = document.getElementById('uiCanvasHorizontal');
   uiCanvasVertical = document.getElementById('uiCanvasVertical');
   overflowWrapper = document.getElementById('overflowWrapper');
-  zoomingWrappers = document.querySelectorAll('[data-zoom]');
-  movingWrappers = document.querySelectorAll('[data-move]');
+  zoomingWrapper = document.getElementById('zoomingWrapper');
+  movingWrapper = document.getElementById('movingWrapper');
   settingsElement = document.getElementById('settings');
   circleCanvas = document.getElementById('circleCanvas');
   foodCanvas = document.getElementById('foodCanvas');
@@ -328,15 +325,11 @@ function resetHTML() {
   overflowWrapper.style.width = canvasWidth + 'px';
   overflowWrapper.style.height = canvasHeight + 'px';
 
-  zoomingWrappers.forEach(zoomingWrapper => {
-    zoomingWrapper.style.width = canvasWidth + 'px';
-    zoomingWrapper.style.height = canvasHeight + 'px';
-  });
+  zoomingWrapper.style.width = canvasWidth + 'px';
+  zoomingWrapper.style.height = canvasHeight + 'px';
 
-  movingWrappers.forEach(movingWrapper => {
-    movingWrapper.style.width = canvasWidth + 'px';
-    movingWrapper.style.height = canvasHeight + 'px';
-  });
+  movingWrapper.style.width = canvasWidth + 'px';
+  movingWrapper.style.height = canvasHeight + 'px';
 
   canvas.style.opacity = '100%';
   pathCanvas.style.opacity = '0%';
@@ -362,7 +355,7 @@ function resetHTML() {
   uiCanvasHorizontal.style.marginTop = '';
   uiCanvasHorizontal.style.marginLeft = '';
 
-  uiCanvasVertical.style.marginTop = canvasWidth + 'px';
+  uiCanvasVertical.style.marginTop = canvasHeight + 'px';
   pathCanvas.setAttribute('height', (canvasHeight) + 'px');
   pathCanvas.setAttribute('width', (canvasWidth - 100) + 'px');
   pathBlurCanvas.setAttribute('height', (canvasHeight) + 'px');
@@ -394,16 +387,13 @@ function initDrawing() {
     resetHTML();
     clearCanvases();
 
-    originalWidth = zoomingWrappers[0].offsetWidth;
-    originalHeight = zoomingWrappers[0].offsetHeight;
-    originalMarginTop = parseInt(zoomingWrappers[0].style.marginTop.slice('0, -2'));
-    originalMarginLeft = parseInt(zoomingWrappers[0].style.marginLeft.slice('0, -2'));
-    originalTop = zoomingWrappers[0].offsetTop;
-    originalLeft = zoomingWrappers[0].offsetLeft;
+    originalWidth = zoomingWrapper.offsetWidth;
+    originalHeight = zoomingWrapper.offsetHeight;
+    originalMarginTop = parseInt(zoomingWrapper.style.marginTop.slice('0, -2'));
+    originalMarginLeft = parseInt(zoomingWrapper.style.marginLeft.slice('0, -2'));
 
     maxHeight = getMaxPriceDiff();
     updateMaxHeightAround();
-
 
     requestIdleCallback(() => {
       drawPath(pathCanvas, 1, 0); // draws 2px solid line
@@ -475,10 +465,10 @@ function hidePathBlurTop() {
 }
 
 function setAmounts() {
-  uiCanvasVertical.style.marginTop = -(EXTRAAREA + canvasHeight) + 'px';
-
-  const highestOffsetTop = parseInt(530 - valueToPx(highest) + valueToPx(lowest) + EXTRAAREA);
-  const currentOffsetTop = parseInt(530 - valueToPx(totalBudget) + valueToPx(lowest) + EXTRAAREA);
+  uiCanvasVertical.style.marginTop = -(canvasHeight) + 'px';
+  const lowestOffsetTop = valueToMarginTop(lowest);
+  const highestOffsetTop = valueToMarginTop(highest);
+  const currentOffsetTop = valueToMarginTop(totalBudget);
 
   const rightValue = (originalWidth / zoomLevel) + 'px';
   if (currentOffsetTop - highestOffsetTop > 45) {
@@ -488,7 +478,7 @@ function setAmounts() {
     valueTop.className = 'uiElement amount-text-max sticky-right';
     valueTop.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
     valueTop.style.marginTop = '' + highestOffsetTop + 'px';
-    valueTop.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueTop.style.marginLeft = '5px';
     valueTop.style.right = rightValue;
     uiCanvasVertical.appendChild(valueTop);
 
@@ -499,7 +489,7 @@ function setAmounts() {
     valueCurrent.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
     valueCurrent.style.position = 'absolute';
     valueCurrent.style.marginTop = '' + currentOffsetTop + 'px';
-    valueCurrent.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueCurrent.style.marginLeft = '5px';
     valueCurrent.style.right = rightValue;
     uiCanvasVertical.appendChild(valueCurrent);
   } else {
@@ -509,7 +499,7 @@ function setAmounts() {
     valueBoth.className = 'uiElement amount-text-max sticky-right combined';
     valueBoth.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
     valueBoth.style.marginTop = '' + highestOffsetTop + 'px';
-    valueBoth.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+    valueBoth.style.marginLeft = '5px';
     valueBoth.style.right = rightValue;
     uiCanvasVertical.appendChild(valueBoth);
   }
@@ -518,8 +508,8 @@ function setAmounts() {
   valueBottom.innerHTML = '<p class="uiElementTop">min:</p> <p class="uiElementBot">' + formatNumber(lowest) + '€</p>';
   valueBottom.className = 'uiElement amount-text-min';
   valueBottom.style.backgroundColor = `rgba(${removeRGB(backgroundColor)}, 0.75)`;
-  valueBottom.style.marginTop = '' + (525 + EXTRAAREA) + 'px'
-  valueBottom.style.marginLeft = '' + (5 + EXTRAAREA) + 'px';
+  valueBottom.style.marginTop = '' + lowestOffsetTop + 'px'
+  valueBottom.style.marginLeft = '5px';
   uiCanvasVertical.appendChild(valueBottom);
 
   // draw Lines
@@ -533,13 +523,13 @@ function setAmounts() {
     else if (i % 2 === 0)  { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.1)'; }
     else                   { valueLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.02)'; }
     valueLine.style.opacity = '100%';
-    valueLine.style.marginTop = '' + parseInt(550 - valueToPx(i * 500) + valueToPx(lowest) + EXTRAAREA) + 'px';
+    valueLine.style.marginTop = '' + parseInt(valueToMarginTop(i * 500)) + 'px';
     uiCanvasVertical.appendChild(valueLine);
   }
 
   // draw Amounts
   let amountHolder = document.createElement('div');
-  amountHolder.classList.add('amount-holder');
+  amountHolder.id = 'amount-holder';
   amountHolder.style.backgroundColor = backgroundColor;
   for (let i = 100; i >= -10; i--) {
     if (pxToValue('0px') < 30000 || (pxToValue('0px') < 150000 && i % 5 === 0) || i % 10 === 0) {
@@ -552,7 +542,7 @@ function setAmounts() {
       if (i === 0)      { valueText.style.color = 'rgba(' + uiColorClear + ', 1.0)'; }
 
       valueText.style.opacity = '100%';
-      valueText.style.marginTop = '' + parseInt(550 - valueToPx(i * 1000) + valueToPx(lowest) + EXTRAAREA) + 'px';
+      valueText.style.marginTop = '' + parseInt(550 - valueToPx(i * 1000) + valueToPx(lowest)) + 'px';
       amountHolder.appendChild(valueText);
     }
   }
@@ -562,8 +552,7 @@ function setAmounts() {
 
 function setDates() {
   const uiColorClear = removeRGB(uiColor);
-  const dateLineHeight = 2000 + parseInt(550 + valueToPx(lowest) + EXTRAAREA) + 'px';
-  uiCanvasHorizontal.style.marginLeft = -EXTRAAREA + 'px';
+  const dateLineHeight = 2000 + valueToMarginTop(lowest) + 'px';
 
   let dateLeft = document.createElement('p');
   let tempLeft1 = allTextLines[allTextLines.length - 1].split(';');
@@ -571,10 +560,10 @@ function setDates() {
   dateLeft.innerHTML = tempLeft2[0] + '.' + tempLeft2[1] + '.' + '20' + tempLeft2[2];
   dateLeft.className = 'uiElement';
   dateLeft.style.position = 'absolute';
-  dateLeft.style.marginTop = '' + (570 + EXTRAAREA) + 'px';
-  dateLeft.style.marginLeft = '' + (70 + EXTRAAREA) + 'px';
+  dateLeft.style.marginTop = '-40px';
+  dateLeft.style.marginLeft = `${canvasWidth * 0.12}px`;
   dateLeft.style.visibility = 'visible';
-  uiCanvas.appendChild(dateLeft);
+  uiCanvasHorizontal.appendChild(dateLeft);
 
   let dateRight = document.createElement('p');
   let tempRight1 = allTextLines[1].split(';');
@@ -582,9 +571,9 @@ function setDates() {
   dateRight.innerHTML = tempRight2[0] + '.' + tempRight2[1] + '.' + '20' + tempRight2[2];
   dateRight.className = 'uiElement';
   dateRight.style.position = 'absolute';
-  dateRight.style.marginTop =  '' + (570 + EXTRAAREA) + 'px';
-  dateRight.style.marginLeft = '' + (960 + EXTRAAREA) + 'px';
-  uiCanvas.appendChild(dateRight);
+  dateRight.style.marginTop = '-40px';
+  dateRight.style.marginLeft = `${canvasWidth * 0.77}px`;
+  uiCanvasHorizontal.appendChild(dateRight);
 
   for (let i = 0; i < dateLines.length; i++) {
     let dateLine = document.createElement('div');
@@ -594,20 +583,20 @@ function setDates() {
     dateLine.style.width = '1px';
     dateLine.style.opacity = '100%';
     dateLine.style.marginTop = '-2000px';
-    dateLine.style.marginLeft = (parseInt(dateLines[i].slice(0, -2)) + EXTRAAREA) + 'px';
+    dateLine.style.marginLeft = `${parseInt(dateLines[i].slice(0, -2))}px`;
 
     dateLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.2)';;
     if (dateLines[i].charAt(0) === 'y') {
-      dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
+      dateLine.style.marginLeft = `${parseInt(dateLines[i].slice(1, -2))}px`;
       dateLine.style.backgroundColor = uiColor;
     }
 
     if (dateLines[i].charAt(0) === 'w') {
-      dateLine.style.marginLeft = (parseInt(dateLines[i].slice(1, -2)) + EXTRAAREA) + 'px';
+      dateLine.style.marginLeft = `${parseInt(dateLines[i].slice(1, -2))}px`;
       dateLine.style.backgroundColor = 'rgba(' + uiColorClear + ', 0.05)';;
     }
 
-    uiCanvas.appendChild(dateLine);
+    uiCanvasHorizontal.appendChild(dateLine);
   }
 }
 
@@ -671,9 +660,9 @@ function drawCanvas() {
       nextTotalValue = totalValue;
     }
 
-    const value = entries[selectors.amount].slice(1, -1);
+    const value = entry.amount;
     let height = valueToPx(value);
-    let diffDays = lastDayDiff - differenceInDays(entries[selectors.date].slice(1, -1), lastDay);
+    let diffDays = lastDayDiff - differenceInDays(entry.date, lastDay);
     if (diffDays < 0) {
       diffDays = 2;
     }
@@ -681,12 +670,9 @@ function drawCanvas() {
     const square = document.createElement('div');
     square.className = 'square';
     const category = getEntrieCategory(entries);
-    if (diffDays > 0) {
-      square.id = `linePoint${i * 2}`;
-    }
 
     if (performanceMode) {
-      square.classList.add('square-relative')
+      square.classList.add('square-relative');
       const amountSign = value.charAt(0) === '-' ? -1 : 1;
       const xPosition = paddingLeft - (lastDayDiff * dayWidth) + fgOffset;
       Object.assign(square.style, {
@@ -711,9 +697,10 @@ function drawCanvas() {
       const placeholder = document.createElement('div');
       placeholder.className = 'square placeholder';
       placeholder.classList.add(`${category}-background`);
+      const width = (diffDays - 1) * dayWidth;
       Object.assign(placeholder.style, {
         height: '1px',
-        width: `${(diffDays - 1) * dayWidth}px`,
+        width: `${width}px`,
         marginTop: `${performanceMode ? 0 : nextTotalValue}px`,
         marginLeft: `${paddingLeft - ((lastDayDiff - 1) * dayWidth)}px`
       });
@@ -742,7 +729,8 @@ function drawCanvas() {
     }
 
     // Adjust width and marginLeft after fgOffset
-    square.style.width = `${dayWidth - 2 - fgOffset}px`;
+    let width = dayWidth - 2 - fgOffset;
+    square.style.width = `${width > 0 ? width : 1}px`;
     square.style.marginLeft = `${paddingLeft - (lastDayDiff * dayWidth) + fgOffset}px`;
 
     if (entries[selectors.content] && entries[selectors.content].charAt('1') === '_') {
@@ -761,7 +749,7 @@ function drawCanvas() {
 
     // Adding Popups
     square.index = i;
-    const total = numberToCurrency(parseFloat(entries[selectors.total].slice(1, -1)));
+    const total = numberToCurrency(parseFloat(entry.total));
     setupHover(square, value, entry.date, total, entries[selectors.purpose].slice(1, -1).replace(/[0-9]/g, ' ').replace(/-/g, ' ').replace(/\./g, ' ').replace(/  /g, ' ').replace(/ ,/g, '').replace(/ :/g, ''));
     fragment.appendChild(square);
   }
@@ -790,15 +778,15 @@ function setupHover(square, value, date, total, content) {
   square.onmouseover = function(event) {
     const popup = document.getElementById('singlePopup'); // Get the single popup element
     popup.classList.add('fade');
-    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
-    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
+    popup.style.top = `${event.clientY}px`;
+    popup.style.left = `${event.clientX + 25}px`;
     const marginLeft = square.style.marginLeft ? square.style.marginLeft : window.getComputedStyle(square).marginLeft;
     // Update popup content
     const dateParts = date.split('.');
     popup.innerHTML = `
       <div class="grid-wrapper">
         <span class="popup-text">Index                  </span><span class="popup-text">${square.index + 1}</span>
-        <span class="popup-text">Content                </span><span class="popup-text marquee"><span>${content}</span></span>
+        <span class="popup-text">Content                </span><span class="popup-text-small marquee"><span>${content}</span></span>
         <hr></hr><hr></hr>
         <span class="popup-text">Date                   </span><span class="popup-text">${date}</span>
         <span class="popup-text">Value                  </span><span class="popup-text">${numberToCurrency(value)}</span>
@@ -808,6 +796,8 @@ function setupHover(square, value, date, total, content) {
         <hr></hr><hr></hr>
         <span class="popup-text-small">Margin-Top       </span><span class="popup-text-small">${square.style.marginTop}</span>
         <span class="popup-text-small">Margin-Left      </span><span class="popup-text-small">${marginLeft}</span>
+        <span class="popup-text-small">Width            </span><span class="popup-text-small">${square.style.width}</span>
+        <span class="popup-text-small">Height           </span><span class="popup-text-small">${square.style.height}</span>
         <span class="popup-text-small">Calculated Total </span><span class="popup-text-small">${numberToCurrency(parseFloat(pxToValue(square.offsetTop + 'px')) + (parseFloat(value) < 0 ? parseFloat(value) : 0))}</span>
         <span class="popup-text-small">Calculated Date  </span><span class="popup-text-small">${pxToDate(marginLeft)}</span>
         <span class="popup-text-small">Day of Week      </span><span class="popup-text-small">${getDayOfWeek(dateParts[0], dateParts[1], dateParts[2])}</span>
@@ -817,8 +807,8 @@ function setupHover(square, value, date, total, content) {
 
   square.onmousemove = function(event) {
     let popup = document.getElementById('singlePopup');
-    popup.style.top = `${cursorPosToMargin(event.clientY, 'top', '#movingWrappers')}px`;
-    popup.style.left = `${cursorPosToMargin(event.clientX, 'left', '#movingWrappers') + 50}px`;
+    popup.style.top = `${event.clientY}px`;
+    popup.style.left = `${event.clientX + 25}px`;
   };
 
   square.onmouseout = function() {
@@ -945,10 +935,10 @@ function drawTable() {
     { index: selectors.date, width: '7vw', align: 'end' },
     { index: selectors.content, width: '10vw' },
     { index: selectors.beneficiary, width: '20vw' },
-    { index: selectors.purpose, width: '30vw' },
-    { index: selectors.category, width: '4vw' },
-    { index: selectors.amount, width: 'auto', align: 'end' },
-    { index: selectors.total, width: '4vw', align: 'end' }
+    { index: selectors.purpose, width: '30vw', flex: 'auto' },
+    { index: selectors.category, width: '5vw' },
+    { index: selectors.amount, width: '5vw', align: 'end'},
+    { index: selectors.total, width: '5vw', align: 'end' }
   ];
 
   // Main table construction
@@ -969,10 +959,10 @@ function drawTable() {
       let style = '';
       if (config.width) style += `width:${config.width};`;
       if (config.align) style += `text-align:${config.align};`;
+      if (config.flex) style += `flex:${config.flex};`;
       cell.style.cssText = style;
       // Special amount handling
       if (config.index === selectors.amount && !isHeader) {
-        cell.style.flexGrow = '1';
         const amount = entries[config.index] || '';
         cell.classList.add(amount.charAt(1) !== '-' ? 'positive-background' : 'negative-background');
       }
