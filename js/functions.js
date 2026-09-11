@@ -34,6 +34,7 @@ function getEntrieCategory(entryParts) {
       beneficiary.includes('mecklenburgische') ||
       beneficiary.includes('wilhelm.tel') ||
       purpose.includes('123-reg') ||
+      purpose.includes('kfz-steuer') ||
       purpose.includes('netflix') ||
       purpose.includes('miete') ||
       purpose.includes('spotify')) {
@@ -105,13 +106,8 @@ function getEntrieCategory(entryParts) {
   return 'others';
 }
 
-function addZeroToSingleDigit(number) {
-  let numberString = number.toString();
-  if (numberString.length === 1) {
-    numberString = '0' + numberString;
-  }
-
-  return numberString;
+function dateToString(date) {
+  return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getFullYear()).slice(-2)}`;
 }
 
 Date.prototype.addDays = function(days) {

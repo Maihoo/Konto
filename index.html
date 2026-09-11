@@ -15,9 +15,10 @@
     <script src="https://cdn.jsdelivr.net/npm/less@4.2.0/dist/less.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
+    <script src="js/replacements.js"></script>
+    <script src="js/functions.js"></script>
     <script src="js/rule.js"></script>
     <script src="js/data.js"></script>
-    <script src="js/functions.js"></script>
     <script src="js/controls.js"></script>
     <script src="js/import.js"></script>
     <script src="js/session-storage.js"></script>
@@ -228,9 +229,9 @@
               </label>
             </div>
             <div class="buttonwrapper">
-              <span>show investment</span>
+              <span>filter swaps</span>
               <label class="switch">
-                <input id="show-investments-input" type="checkbox" checked="checked" onclick="toggleShowInvestments()">
+                <input id="filter-swaps-input" type="checkbox" checked="checked" onclick="toggleFilterSwaps()">
                 <span class="switch-slider"></span>
               </label>
             </div>
@@ -298,9 +299,9 @@
         <div class="rangewrapper">
           <h2 class="range-headline date-range-headline">Date Range</h2>
           <div class="dataset-range-wrapper" onkeydown="handleDateInput(event)">
-            <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="01.03.26" class="custom-input active"/>
+            <input id="date-range-start" placeholder="DD.MM.(YY)YY" value="" class="custom-input active"/>
             -
-            <input id="date-range-end" placeholder="DD.MM.(YY)YY" class="custom-input"/>
+            <input id="date-range-end" placeholder="Today" class="custom-input"/>
           </div>
           <div id="range-slider-1" class="range-slider"></div>
         </div>

@@ -1,16 +1,80 @@
+function containsDigit(value) {
+  return /\d/.test(String(value));
+}
+
+function parseCurrency(value) {
+  if (value == null) {
+    return 0.0;
+  }
+
+  value = String(value).replaceAll('"', '').trim();
+
+  if (!containsDigit(value)) {
+    return 0.0;
+  }
+
+  // Detect negative values
+  const negative = value.includes('-');
+
+  // Remove everything except digits and separators
+  value = value.replace(/[^\d.,]/g, '');
+
+  const lastDot = value.lastIndexOf('.');
+  const lastComma = value.lastIndexOf(',');
+
+  let result;
+
+  if (lastDot !== -1 && lastComma !== -1) {
+    // Both separators → last one is decimal separator
+    if (lastDot > lastComma) {
+      // 1,234.56
+      result = parseFloat(value.replace(/,/g, ''));
+    } else {
+      // 1.234,56
+      result = parseFloat(
+        value.replace(/\./g, '').replace(',', '.')
+      );
+    }
+  } else if (lastComma !== -1) {
+    // 12,34
+    result = parseFloat(value.replace(',', '.'));
+  } else {
+    // 12.34 or 1234
+    result = parseFloat(value);
+  }
+
+  result = negative ? -result : result;
+  return Number(result.toFixed(2));
+}
+
 function initTextLines() {
   checkRadios();
   // insert permanent replacements
   for (let i = 0; i < permanentReplacements.length; i++) {
     datasets.forEach(dataset => {
       if (dataset.csv) {
-        dataset.csv = dataset.csv.replace(permanentReplacements[i][0], permanentReplacements[i][1] ? permanentReplacements[i][1] : '');
         dataset.csv = dataset.csv.replaceAll('.2026";"', '.26";"');
+        dataset.csv = dataset.csv.replace(permanentReplacements[i][0].replaceAll('.2026";"', '.26";"'), permanentReplacements[i][1] ? permanentReplacements[i][1].replaceAll('.2026";"', '.26";"') : '');
       } else {
-        console.log('?', dataset);
+        console.error('?', dataset);
       }
     });
   }
+
+  // read current totals and set start budget
+  startBudget = 0;
+  datasets.forEach(({ csv }) => {
+    const lines = csv.split(/\r?\n/);
+    for (const line of lines.slice(0, 10)) {
+      const match = line.match(/(?<![\d.])-?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2})(?![\d.])/);
+      if (match && line.length < 200) {
+        startBudget += parseCurrency(match[0]);
+        return;
+      }
+    }
+  });
+
+  startBudget = parseFloat(startBudget.toFixed(2));
 
   // align dataset field headers
   datasets.forEach(dataset => {
@@ -105,11 +169,14 @@ function initTextLines() {
 
   allTextLines = [];
   datasets.forEach((dataset) => {
-    allTextLines.push(...dataset.normalizedCsv.split(/\r\n|\n/));
-    const lastLine = allTextLines[allTextLines.length - 1].split(';');
-    const lastDay = lastLine[selectors.date].slice(1, -1);
-    if (differenceInDays(lastDay, startDate) > differenceInDays(globallyLastDay, startDate)) {
-      globallyLastDay = lastDay;
+    let datasetLines = dataset.normalizedCsv.split(/\r\n|\n/);
+    const lastLineEntries = datasetLines[datasetLines.length - 1].split(';');
+    if (datasetLines.length > 0 && lastLineEntries.length > 0 && lastLineEntries[selectors.date]) {
+      allTextLines.push(...datasetLines.map(line => `${line};"${dataset.name}"`));
+      const lastDay = lastLineEntries[selectors.date].slice(1, -1);
+      if (differenceInDays(lastDay, startDate) > differenceInDays(globallyLastDay, startDate)) {
+        globallyLastDay = lastDay;
+      }
     }
   });
 
@@ -117,7 +184,7 @@ function initTextLines() {
     return item !== '' && item !== '.' && item.length > 20 && item.split(';').length > 5;
   });
 
-  firstLine = (allTextLines[0] + ';"Category";"Total";"Amount"').replace(';;', ';');
+  firstLine = (allTextLines[0] + ';"Category";"Source";"Total";"Amount"').replace(';;', ';');
 
   // insert replacements
   for (let i = 0; i < replacements.length; i++) {
@@ -156,12 +223,12 @@ function initTextLines() {
   if (oneRadioUnchecked) {
     totalBudget = 10000;
   } else {
-    totalBudget = STARTBUDGET;
+    totalBudget = startBudget;
   }
 
   const currentDate = new Date();
   currentDate.setDate(currentDate.getDate() + 4);
-  const currentDateString = '"' + addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2) + '"';
+  const currentDateString = `${dateToString(currentDate)}"`;
   // insert date into constant positions
   for (let i = 0; i < constantPositions.length; i++) {
     let positionParts = constantPositions[i].split(';');
@@ -182,9 +249,11 @@ function initTextLines() {
 
   // pushing constant positions
   for (let i = 0; i < constantPositions.length; i++) {
-    const value = constantPositions[i].split(';')[selectors.amount].slice(1, -1);
-    totalBudget += parseInt(value);
     let positionParts = constantPositions[i].split(';');
+    if (positionParts[selectors.amount]) {
+      totalBudget += parseCurrency(positionParts[selectors.amount]);
+    }
+
     if (positionParts[1] !== currentDateString) {
       let index = 1;
       while (differenceInDays(positionParts[1].slice(1, -1), allTextLines[index].split(';')[selectors.date].slice(1, -1)) > 0) {
@@ -198,25 +267,11 @@ function initTextLines() {
     }
   }
 
-  if (showInvestments) {
+  if (filterSwaps) {
     allTextLines = allTextLines.filter(function(item) {
       const entries = item.split(';');
-      if (entries[selectors.content].includes('Wertpapiere')) {
-        const value = entries[selectors.amount].slice(1, -1);
-        totalBudget += Math.abs(parseInt(value));
-        return false;
-      }
-
-      return true;
-    });
-  }
-
-  if (showInvestments) {
-    allTextLines = allTextLines.filter(function(item) {
-      const entries = item.split(';');
-      if (entries[selectors.purpose].includes('Kontofüllung') || entries[selectors.purpose].includes('Kontofullung')) {
-        // const value = entries[selectors.amount].slice(1, -1);
-        // totalBudget += Math.abs(parseInt(value));
+      if (entries[selectors.content].toLowerCase().includes('wertpapiere') || entries[selectors.content] === '""'
+       || entries[selectors.purpose].toLowerCase().replace('ü', 'u').includes('kontofullung')) {
         return false;
       }
 
@@ -232,7 +287,7 @@ function initTextLines() {
   for (let i = 0; i < allTextLines.length; i++) {
     let entries = allTextLines[i].split(';');
     entries[selectors.date] = entries[selectors.date].replace('.202', '.2');
-    entries[selectors.amount] = entries[selectors.amount].replace(/\./g, '').replace(',', '.');
+    entries[selectors.amount] = `"${parseCurrency(entries[selectors.amount])}"`;
     allTextLines[i] = entries.join(';');
   }
 
@@ -262,12 +317,12 @@ function initTextLines() {
   for (let i = 0; i < allTextLines.length; i++) {
     let entries = allTextLines[i].split(';');
     if (entries.length > 13) {
-      allTextLines[i] += ';"' + getEntrieCategory(entries) + '"';
+      allTextLines[i] += `;"${getEntrieCategory(entries)}"`;
     }
   }
 
-  // sorting by amount
   if (sortType === 'amount') {
+    // sorting by amount
     fixSortedArray(allTextLines, selectors.amount);
   } else {
     // sorting by date
@@ -275,7 +330,7 @@ function initTextLines() {
   }
 
   if (groupByCategory) {
-    allTextLines = groupArrayByField(allTextLines, selectors.category, currentDateString);
+    allTextLines = groupArrayByField(allTextLines, selectors.category);
     allTextLines.shift();
   }
 
@@ -284,14 +339,14 @@ function initTextLines() {
   let lastCategory = "";
   for (let i = 0; i < allTextLines.length; i++) {
     let entries = allTextLines[i].split(';');
-    if (entries.length > 10) {
+    if (entries.length > 5) {
       if (groupByCategory && lastCategory !== entries[selectors.category]) {
         lastCategory = entries[selectors.category];
         tempBudget = 0;
       }
 
-      allTextLines[i] += ';"' + tempBudget.toFixed(2) + '"';
-      const nextValue = parseFloat(entries[selectors.amount].slice(1, -1));
+      allTextLines[i] += `;"${parseCurrency(tempBudget)}"`;
+      const nextValue = parseCurrency(entries[selectors.amount]);
       if (nextValue) {
         tempBudget -= nextValue;
       }
@@ -302,21 +357,21 @@ function initTextLines() {
     return;
   }
   // align starts at 0
-  let categoryTotal = parseFloat(allTextLines[allTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.')).toFixed(2);
+  let categoryTotal = parseCurrency(allTextLines[allTextLines.length - 1].split(';')[selectors.total].slice(1, -1).replace(',', '.')).toFixed(2);
   if (groupByCategory) {
     for (let i = allTextLines.length - 3; i > 1; i--) {
       let entries = allTextLines[i].split(';');
-      let nextEntries = allTextLines[i - 2].split(';');
+      let nextEntries = allTextLines[i].split(';');
       if (lastCategory !== nextEntries[selectors.category]) {
         lastCategory = nextEntries[selectors.category];
-        categoryTotal = parseFloat(nextEntries[selectors.total].slice(1, -1).replace(',', '.')).toFixed(2);
+        categoryTotal = parseCurrency(nextEntries[selectors.total]) - parseCurrency(nextEntries[selectors.amount]);
       }
       // Calculate the difference and update the entry
       let currentValue = parseFloat(entries[selectors.total].slice(1, -1).replace(',', '.')).toFixed(2);
       let nextValue = currentValue - categoryTotal;
       // Update the entry only if the next value is different from the current value
       if (nextValue !== currentValue) {
-        allTextLines[i] = allTextLines[i].replace(entries[selectors.total], '"' + nextValue.toFixed(2).toString().replace('.', ',') + '"');
+        allTextLines[i] = allTextLines[i].replace(entries[selectors.total], `"${parseCurrency(nextValue)}"`);
       }
     }
   }
@@ -373,7 +428,7 @@ function spreadIncomeToDaysOfMonth() {
         let temp = lastDay.split('.');
         let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
         date.setDate(date.getDate() + j - index);
-        let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
+        let currentDateString = dateToString(date);
         let resultIndex = nextIndex - 20;
         let lastDifferenceInDays = 9999999;
 
@@ -435,7 +490,7 @@ function spreadIncomeToDaysOfMonth2() {
         let temp = lastDay.split('.');
         let date = new Date('20' + temp[2] + '-' + temp[1] + '-' + temp[0]);
         date.setDate(date.getDate() + j - index);
-        let currentDateString = addZeroToSingleDigit(date.getDate()) + '.' + addZeroToSingleDigit(date.getMonth() + 1) + '.' + ('' + date.getFullYear()).slice(2);
+        let currentDateString = dateToString(date);
         let resultIndex = nextIndex - 20;
         let lastDifferenceInDays = 9999999;
 
@@ -492,7 +547,7 @@ function sortArrayByField(array, fieldIndex) {
   });
 }
 
-function groupArrayByField(array, fieldIndex, currentDate) {
+function groupArrayByField(array, fieldIndex) {
   if (array.length <= 1) {
     return array;
   }
@@ -510,8 +565,6 @@ function groupArrayByField(array, fieldIndex, currentDate) {
   });
 
   for (const fieldValue in groups) {
-    // add a filler entry for today to each category
-    groupedArray.push(`"filler";${currentDate};${currentDate};"filler";"filler";"";"";"";"";"";"";"filler";"";"";"0";"EUR";"";${fieldValue};""`);
     // Collect groups maintaining chronological order
     groupedArray.push(...groups[fieldValue]);
   }

@@ -150,12 +150,12 @@ function drawGroceries() {
   const uniqueDates = [...new Set(dates.map(d => d.date))];
   const uniqueStores = [...new Set(dates.map(d => d.store))];
   const totalDays = (2 * uniqueDates.length) + uniqueStores.length;
-  const dayWidth = (800 / totalDays).toFixed(2);
+  const dayWidth = `${(canvasWidth * 0.7 / totalDays).toFixed(2)}px`;
   foodCanvas.innerHTML = '';
 
   let bar = document.createElement('div');
   bar.classList = 'square-holder-bar';
-  bar.style.marginLeft = dayWidth + 'px';
+  bar.style.marginLeft = dayWidth;
 
   for (let i = 0; i < dates.length; i++) {
     const entry = dates[i];
@@ -179,7 +179,7 @@ function drawGroceries() {
       bar = document.createElement('div');
       bar.classList = 'square-holder-bar';
       if (newDay) {
-        bar.style.marginLeft = dayWidth + 'px';
+        bar.style.marginLeft = dayWidth;
       } else {
         bar.style.marginLeft = '2px';
       }
@@ -199,7 +199,7 @@ function drawGroceries() {
     heightOffset += parseFloat(Math.abs(height));
     Object.assign(square.style, {
       height: `${Math.abs(height).toFixed(2)}px`,
-      width: `${dayWidth}px`
+      width: dayWidth
     });
 
     // legend filling - categories

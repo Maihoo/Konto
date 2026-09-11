@@ -1,5 +1,5 @@
 function clearSessionStorage() {
-  sessionStorage.setItem('startDate', '01.03.26');
+  sessionStorage.setItem('startDate', tempDateOffset.getDate() + '.' + (tempDateOffset.getMonth() + 1) + '.' + ('' + tempDateOffset.getFullYear()).slice(2));
   sessionStorage.setItem('endDate', '');
   sessionStorage.setItem('backgroundColor', 'rgb(25, 25, 25)');
   sessionStorage.setItem('lineColor', 'rgb(255, 0, 0)');
@@ -8,7 +8,7 @@ function clearSessionStorage() {
   sessionStorage.setItem('settingsVertical', '');
   sessionStorage.setItem('sortType', '');
   sessionStorage.setItem('groupByCategory', '');
-  sessionStorage.setItem('showInvestments', '');
+  sessionStorage.setItem('filterSwaps', '');
   sessionStorage.setItem('spreadMonthlyIncomeTo', '');
   sessionStorage.setItem('verticalScaleFactor', '');
   sessionStorage.setItem('zoomLevel', '');
@@ -134,14 +134,14 @@ function getFromSessionStorage() {
     }
   }
 
-  sessionValue = sessionStorage.getItem('showInvestments');
+  sessionValue = sessionStorage.getItem('filterSwaps');
   if (sessionValue && sessionValue.length > 0) {
     if (sessionValue === 'true') {
-      showInvestments = true;
-      document.getElementById('show-investments-input').setAttribute('checked', 'checked');
+      filterSwaps = true;
+      document.getElementById('filter-swaps-input').setAttribute('checked', 'checked');
     } else {
-      showInvestments = false;
-      document.getElementById('show-investments-input').removeAttribute('checked');
+      filterSwaps = false;
+      document.getElementById('filter-swaps-input').removeAttribute('checked');
     }
   }
 

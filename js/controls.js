@@ -1,26 +1,28 @@
 function resetControls() {
-  replace('range-slider-1'),
-
-  //toggles
-  replace('toggle-monthly'),
-  replace('toggle-income'),
-  replace('toggle-cash'),
-  replace('toggle-amazon'),
-  replace('toggle-paypal'),
-  replace('toggle-food'),
-  replace('toggle-takeout'),
-  replace('toggle-gas'),
-  replace('toggle-others'),
+  // toggles
+  replace('toggle-monthly');
+  replace('toggle-income');
+  replace('toggle-cash');
+  replace('toggle-amazon');
+  replace('toggle-paypal');
+  replace('toggle-food');
+  replace('toggle-takeout');
+  replace('toggle-gas');
+  replace('toggle-others');
 
   zoomLevel = 1.0;
   handleZoomScroll(true);
   handleZoomScroll(false);
 }
 
-function replace(id) {
-  let originalElement = document.getElementById(id);
+function replace(id, cleanup = null) {
+  const originalElement = document.getElementById(id);
   if (originalElement instanceof HTMLElement) {
-    clonedElement = originalElement.cloneNode(true);
+    if (cleanup) {
+      cleanup(originalElement);
+    }
+
+    const clonedElement = originalElement.cloneNode(true);
     originalElement.parentNode.replaceChild(clonedElement, originalElement);
   }
 }
@@ -50,6 +52,8 @@ function initControls() {
   document.getElementById('toggle-takeout').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-gas').addEventListener('mousedown', handleToggleClick);
   document.getElementById('toggle-others').addEventListener('mousedown', handleToggleClick);
+  window.removeEventListener('resize', resetSettings);
+  window.addEventListener('resize', resetSettings);
 
   // drag move
   overflowWrapper.onclick = handleDragClick;
@@ -98,10 +102,16 @@ function handleDateChange() {
 }
 
 function handleDateInput(event) {
-  if (event.key === 'Enter') {
+  if (event === null || event.key === 'Enter') {
     handleDateChange();
     handleRefreshButton();
   }
+
+  setTimeout(() => {
+    if ($('#range-slider-1').hasClass('ui-slider') && document.getElementById('date-range-end').value.length < 8) {
+      $('#range-slider-1').slider('values', 1, $('#range-slider-1').slider('option', 'max'));
+    }
+  }, 20);
 }
 
 function handleRefreshButton() {
@@ -300,9 +310,9 @@ function toggleSettingsOrientation() {
   }
 }
 
-function toggleShowInvestments () {
-  showInvestments = !showInvestments;
-  sessionStorage.setItem('showInvestments', showInvestments);
+function toggleFilterSwaps () {
+  filterSwaps = !filterSwaps;
+  sessionStorage.setItem('filterSwaps', filterSwaps);
 
   init();
 }
@@ -657,11 +667,18 @@ function initRangeSlider0() {
 }
 
 function initRangeSlider1() {
+  replace('range-slider-1', element => {
+    const $element = $(element);
+
+    if ($element.hasClass('ui-slider')) {
+      $element.slider('destroy');
+    }
+  });
+
   const currentDate = new Date();
   currentDate.setDate(currentDate.getDate() + 7);
-  const currentDateString = addZeroToSingleDigit(currentDate.getDate()) + '.' + addZeroToSingleDigit(currentDate.getMonth() + 1) + '.' + ('' + currentDate.getFullYear()).slice(2);
-
-  const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString)
+  const currentDateString = dateToString(currentDate);
+  const totalNumberOfDays = differenceInDays(globallyLastDay, currentDateString);
   let startNumberOfDays = differenceInDays(startDate, currentDateString);
   if (startDate.length < 8) {
     startNumberOfDays = 0;
@@ -681,31 +698,34 @@ function initRangeSlider1() {
       change: function(event) {
         if (event.button === 0) {
           setTimeout(function() {
-            let value1 = $('#range-slider-1').slider( 'values', 0 );
-            let value2 = $('#range-slider-1').slider( 'values', 1 );
+            let value1 = $('#range-slider-1').slider('values', 0);
+            let value2 = $('#range-slider-1').slider('values', 1);
             let tempDate = new Date();
             tempDate.setDate(currentDate.getDate() + 100);
             // find first day within bounds
-            let tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+            let tempDateString = dateToString(tempDate);
             while (differenceInDays(tempDateString, currentDateString) < totalNumberOfDays - value1) {
               tempDate.setDate(tempDate.getDate() - 1);
-              tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+              tempDateString = dateToString(tempDate);
             }
 
             startDate = tempDateString;
             document.getElementById('date-range-start').value = tempDateString;
             // find last day within bounds
+            console.log('!!', totalNumberOfDays, value2, totalNumberOfDays - value2);
             if (totalNumberOfDays - value2 !== 0) {
               while (differenceInDays(tempDateString, currentDateString) >= totalNumberOfDays - value2) {
                 tempDate.setDate(tempDate.getDate() + 1);
-                tempDateString = addZeroToSingleDigit(tempDate.getDate()) + '.' + addZeroToSingleDigit(tempDate.getMonth() + 1) + '.' + ('' + tempDate.getFullYear()).slice(2);
+                tempDateString = dateToString(tempDate);
               }
 
               endDate = tempDateString;
               document.getElementById('date-range-end').value = tempDateString;
+            } else {
+              document.getElementById('date-range-end').value = '';
             }
 
-            document.getElementById('date-range-start').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            handleDateInput(null);
           }, 100);
         }
       }

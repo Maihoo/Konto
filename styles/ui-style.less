@@ -90,8 +90,8 @@ body {
   position: fixed;
   top: 25px;
   left: 50px;
-  width: 1000px;
-  height: 600px;
+  width: calc(var(--canvas-width) * 0.9);
+  height: calc(var(--canvas-height) * 0.9);
   background-color: @custom-background-color;
   padding: 1rem;
   z-index: 300;
@@ -468,10 +468,6 @@ p {
 
   &.small {
     font-size: x-small;
-  }
-
-  &.single {
-  
   }
 }
 
